@@ -12,7 +12,7 @@ if [[ (! -x "$(which sha512sum 2> /dev/null)") || (! -x "$(which sqlite3 2> /dev
   exit 1
 fi
 
-hm="\nUsage: $(basename ${BASH_SOURCE[0]}) [db file name]\n\n" # Build some prompts and help messages.
+hm="\nUsage: $(basename ${BASH_SOURCE[0]}) [dbfile.db3]\n\n" # Build some prompts and help messages.
 for ((x=0;x<${#op[@]};x++)); do
   pr+="${x}:${op[$x]} "
   hm+="Use: ${bold}${x}${reset}, for ${op[$x]}, which will ${bold}${desc[$x]}${reset}\n"
