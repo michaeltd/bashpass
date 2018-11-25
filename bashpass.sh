@@ -2,7 +2,7 @@
 # bashpass.sh password management in ~50 lines.
 
 declare db="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)/${1:-git.db3}" dm em un pw cm pr hm act="ac"
-declare -a op=( "${grey}Quit${reset}" "${red}New${reset}" "${green}Find${reset}" "${magenta}All${reset}" "${yellow}sqlite${reset}" "${cyan}csv${reset}" "${blue}help${reset}" ) desc=( "exit this menu" "gathter details to generate a new password" "search records by domain" "print all records" "start a sqlite session against your db" "prompt for a csv file to import" "print this message" ) cmd="sqlite3 ${db}"
+declare -a op=( "${grey}Quit${reset}" "${red}New${reset}" "${green}Find${reset}" "${magenta}All${reset}" "${yellow}sqlite${reset}" "${cyan}csv${reset}" "${blue}help${reset}" ) desc=( "exit this menu" "gathter details to generate a new password" "search records by domain" "print all records" "start a sqlite session against your db" "prompt for a csv file to import (eg: test.csv)" "print this message" ) cmd="sqlite3 ${db}"
 
 if [[ (! -x "$(which sha512sum 2> /dev/null)") || (! -x "$(which sqlite3 2> /dev/null)") || (! $(${cmd} "select * from ${act};" 2> /dev/null)) ]]; then
   printf "Need sha512sum, sqlite3 and a working db to function.\nIf sha512sum and sqlite3 are in place,\nRun 'sqlite3 git.db3 < ac.sql && bashpass.sh'\nin this directory.\n"
@@ -24,7 +24,7 @@ function gatherdetails { # Get some data, hash a password
     elif [[ -z "${em}" ]]; then
       read -p "Email? " em
     elif [[ -z "${un}" ]]; then
-      read -p "User? " un
+      read -p "Username? " un
     elif [[ -z "${cm}" ]]; then
       read -p "Comment? " cm
     fi
