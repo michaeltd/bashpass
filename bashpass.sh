@@ -18,15 +18,11 @@ pr+="${bold}Choose[0-$((${#op[@]}-1))]:${reset}"
 hm+="\naccounts table format is as follows:\n$(${cmd} .schema)\n"
 
 function gatherdetails { # Get some data, hash a password
-  while [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${cm}" ]]; do
-    if [[ -z "${dm}" ]]; then
-      read -p "Domain? " dm
-    elif [[ -z "${em}" ]]; then
-      read -p "Email? " em
-    elif [[ -z "${un}" ]]; then
-      read -p "Username? " un
-    elif [[ -z "${cm}" ]]; then
-      read -p "Comment? " cm
+  while  [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${cm}" ]]; do
+    if   [[ -z "${dm}" ]]; then read -p "Domain? " dm
+    elif [[ -z "${em}" ]]; then read -p "Email? " em
+    elif [[ -z "${un}" ]]; then read -p "Username? " un
+    elif [[ -z "${cm}" ]]; then read -p "Comment? " cm
     fi
   done
   pw=$(echo "${RANDOM} ${dm} ${RANDOM} ${em} ${RANDOM} ${un} ${RANDOM} ${cm} ${RANDOM}"|sha512sum)
