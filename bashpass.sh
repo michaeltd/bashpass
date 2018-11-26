@@ -2,7 +2,7 @@
 # bashpass.sh terminal password management.
 
 declare db="${1:-git.db3}" dm em un pw cm pr hm act="ac"
-declare -a op=( "${grey}Quit    ${reset}" "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" ) desc=( "exit this menu." "gathter details to generate a new password." "search records by domain." "update an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against your db." "print this message." ) cmd="sqlite3 -line ${db}"
+declare -a op=( "${grey}Quit    ${reset}" "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" ) desc=( "exit this menu." "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against your db." "print this message." ) cmd="sqlite3 -line ${db}"
 
 if [[ (! -x "$(which sqlite3 2> /dev/null)") || (! $(${cmd} "select * from ${act};" 2> /dev/null)) ]]; then
   printf "Need sqlite3 and a working db to function.\nIf sqlite3 is in your path,\nRun 'sqlite3 my.db3 < ac.sql && bashpass.sh my.db3'\nfrom this directory: $(pwd)\n"
@@ -22,8 +22,7 @@ pr+="${bold}Choose[0-$((${#op[@]}-1))]:${reset}"
 hm+="\naccounts table format is as follows:\n$(${cmd} .schema)\n"
 
 while :; do
-  printf "${pr}"
-  read ui
+  printf "${pr}"; read ui
   case "${ui}" in
     0) break;;
     1)
