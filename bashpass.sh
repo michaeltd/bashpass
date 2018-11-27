@@ -34,11 +34,11 @@ while :; do
         fi
       done
       ${cmd} "insert into ${act} values('${dm//:/\:}', '${em}', '${un}', '$(gpw)', '${cm}');"
-      ${cmd} "select rowid as id,* from ${act} where dm like '${dm}';"
+      ${cmd} "select rowid as id,* from ${act} where dm like '${dm}';"|"${PAGER}"
       unset dm em un cm;;
-    2) read -p "Enter domain to look for (empty for All): " dm;${cmd} "select rowid as id,* from ${act} where dm like '%${dm}%';";unset dm;;
-    3) read -p "Select an id to update: " id;${cmd} "update ${act} set pw = '$(gpw)' where rowid = '${id}';";${cmd} "select rowid as id,* from ${act} where id = '${id}';";unset id rp;;
-    4) read -p "Select an id to delete: " id;${cmd} "delete from ${act} where rowid = '${id}';";unset id rp;;
+    2) read -p "Enter domain to look for (empty for All): " dm;${cmd} "select rowid as id,* from ${act} where dm like '%${dm}%';"|"${PAGER}";unset dm;;
+    3) read -p "Select an id to update: " id;${cmd} "update ${act} set pw = '$(gpw)' where rowid = '${id}';";${cmd} "select rowid as id,* from ${act} where id = '${id}';"|"${PAGER}";unset id;;
+    4) read -p "Select an id to delete: " id;${cmd} "delete from ${act} where rowid = '${id}';";unset id;;
     5) read -p "Enter a csv file: " csvf;sqlite3 -csv "${db}" ".import ${csvf} ${act}";;
     6) ${cmd};;
     7) printf "${hm[@]}\n";;
