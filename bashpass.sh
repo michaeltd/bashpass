@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bashpass.sh terminal password management.
 
-declare db="${1:-git.db3}" dm em un pw cm pr hm act="ac"
+declare db="${1:-git.db3}" dm em un cm pr hm act="ac"
 declare -a op=( "${grey}Quit    ${reset}" "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" ) desc=( "exit this menu." "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against your db." "print this message." ) cmd="sqlite3 -line ${db}"
 
 if [[ (! -x "$(which sqlite3 2> /dev/null)") || (! $(${cmd} "select * from ${act};" 2> /dev/null)) ]]; then
@@ -11,7 +11,7 @@ fi
 
 hm="\nUsage: $(basename ${BASH_SOURCE[0]}) [dbfile.db3]\n\n" # Build some prompts and help messages.
 for ((x=0;x<${#op[@]};x++)); do
-  if (( ( x + 1 ) % 4 == 0 )); then
+  if (((x+1)%4==0)); then
     pr+="${x}:${op[$x]}\n"
   else
     pr+="${x}:${op[$x]}\t"
@@ -20,6 +20,10 @@ for ((x=0;x<${#op[@]};x++)); do
 done
 pr+="${bold}Choose[0-$((${#op[@]}-1))]:${reset}"
 hm+="\naccounts table format is as follows:\n$(${cmd} .schema)\n"
+
+function gpw {
+  echo $(head /dev/urandom|tr -dc 'a-zA-Z0-9~!@#$%^&*_-'|head -c 64)
+}
 
 while :; do
   printf "${pr}"; read ui
@@ -33,13 +37,12 @@ while :; do
         elif [[ -z "${cm}" ]]; then read -p "Comment? " cm
         fi
       done
-      pw="$(head /dev/urandom|tr -dc 'a-zA-Z0-9~!@#$%^&*_-'|head -c 64)"
-      ${cmd} "insert into ${act} values('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
+      ${cmd} "insert into ${act} values('${dm//:/\:}', '${em}', '${un}', '$(gpw)', '${cm}');"
       ${cmd} "select rowid as id,* from ${act} where dm like '${dm}';"
-      unset dm em un pw cm;;
+      unset dm em un cm;;
     2) read -p "Enter domain to look for (empty for All): " dm;${cmd} "select rowid as id,* from ${act} where dm like '%${dm}%';";unset dm;;
-    3) read -p "Select an id to update: " id;pw="$(head /dev/urandom|tr -dc 'a-zA-Z0-9~!@#$%^&*_-'|head -c 64)";${cmd} "update ac set pw = '${pw}' where rowid = '${id}';";${cmd} "select rowid as id,* from ${act} where id = '${id}';";unset id rp pw;;
-    4) read -p "Select an id to delete: " id;${cmd} "delete from ac where rowid = '${id}';";unset id rp;;
+    3) read -p "Select an id to update: " id;${cmd} "update ${act} set pw = '$(gpw)' where rowid = '${id}';";${cmd} "select rowid as id,* from ${act} where id = '${id}';";unset id rp;;
+    4) read -p "Select an id to delete: " id;${cmd} "delete from ${act} where rowid = '${id}';";unset id rp;;
     5) read -p "Enter a csv file: " csvf;sqlite3 -csv "${db}" ".import ${csvf} ${act}";;
     6) ${cmd};;
     7) printf "${hm[@]}\n";;
