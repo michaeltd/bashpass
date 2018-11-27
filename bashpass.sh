@@ -11,11 +11,7 @@ fi
 
 hm="\nUsage: $(basename ${BASH_SOURCE[0]}) [dbfile.db3]\n\n" # Build some prompts and help messages.
 for ((x=0;x<${#op[@]};x++)); do
-  if (((x+1)%4==0)); then
-    pr+="${x}:${op[$x]}\n"
-  else
-    pr+="${x}:${op[$x]}\t"
-  fi
+  pr+="${x}:${op[$x]}"; (((x+1)%4==0)) && pr+="\n" || pr+="\t"
   hm+="Use ${bold}${x}${reset}, for ${op[$x]}, which will ${bold}${desc[$x]}${reset}\n"
 done
 pr+="${bold}Choose[0-$((${#op[@]}-1))]:${reset}"
