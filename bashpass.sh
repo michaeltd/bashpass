@@ -3,7 +3,7 @@
 
 declare db="${1:-git.db3}"
 declare dm em un cm pr hm act="ac"
-declare -a op=( "${grey}Quit    ${reset}" "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}"
+declare -a op=( "${grey}Quit    ${reset}" "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" )
 declare -a desc=( "exit this menu." "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against your db." "print this message." )
 declare -a cmd="sqlite3 -line ${db}"
 
@@ -21,7 +21,7 @@ pr+="${bold}Choose[0-$((${#op[@]}-1))]:${reset}"
 hm+="\naccounts table format is as follows:\n$(${cmd} .schema)\n"
 
 function gpw {
-  echo $(tr -dc '[:alnum:]~!@#$%^&*()_=+,<.>/?;:[{]}\|-' < /dev/urandom|head -c "${1:-64}")
+  echo $(tr -dc [:graph:] < /dev/urandom|tr -d [=\"=][=\'=]|head -c "${1:-64}")
 }
 
 function create {
@@ -63,6 +63,7 @@ function delete {
 function import {
   read -p "Enter a csv file: " csvf;
   sqlite3 -csv "${db}" ".import ${csvf} ${act}"
+  ${cmd} "select rowid as id,* from ${act};"|"${PAGER}"
   unset csvf
 }
 
