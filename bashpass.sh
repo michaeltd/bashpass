@@ -1,88 +1,91 @@
 #!/usr/bin/env bash
+#
 # bashpass.sh terminal password management.
 
-declare db="${1:-git.db3}"
-declare dm em un cm pr hm act="ac"
-declare -a op=( "${grey}Quit    ${reset}" "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" )
-declare -a desc=( "exit this menu." "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against your db." "print this message." )
-declare -a cmd="sqlite3 -line ${db}"
+declare SDN="$(dirname ${BASH_SOURCE[0]})" SBN="$(basename ${BASH_SOURCE[0]})"
 
-if [[ (! -x "$(which sqlite3 2> /dev/null)") || (! $(${cmd} "select * from ${act};" 2> /dev/null)) ]]; then
-  printf "Need sqlite3 and a working db to function.\nIf sqlite3 is in your path,\nRun 'sqlite3 my.db3 < ac.sql && bashpass.sh my.db3'\nfrom this directory: $(pwd)\n"
+source "${SDN}/common.sh"
+
+# Prerequisits
+if [[ ! -x "$(which sqlite3 2> /dev/null)" ]]; then
+  printf "Need sqlite3, install sqlite3 and try again.\n"
+  exit 1
+#
+#
+#
+elif [[ ! $(${DCM} "select * from ${ACT};" 2> /dev/null) ]]; then
+  printf "Need a working db to function.\nRun 'sqlite3 my.db3 < ${ACT}.sql && ${SBN} my.db3'\nfrom this directory: $(pwd)\n"
   exit 1
 fi
 
-hm="\nUsage: $(basename ${BASH_SOURCE[0]}) [dbfile.db3]\n\n" # Build some prompts and help messages.
-for ((x=0;x<${#op[@]};x++)); do
-  pr+="${x}:${op[$x]}"; (((x+1)%4==0)) && pr+="\n" || pr+="\t"
-  hm+="Use ${bold}${x}${reset}, for ${op[$x]}, which will ${bold}${desc[$x]}${reset}\n"
-done
-pr+="${bold}Choose[0-$((${#op[@]}-1))]:${reset}"
-hm+="\naccounts table format is as follows:\n$(${cmd} .schema)\n"
-
-function gpw {
-  echo $(tr -dc [:graph:] < /dev/urandom|tr -d [=\"=][=\'=]|head -c "${1:-64}")
-}
-
 function create {
-  while [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${cm}" ]]; do
-    if [[ -z "${dm}" ]]; then
-      read -p "Enter Domain: " dm
-    elif [[ -z "${em}" ]]; then
-      read -p "Enter Email: " em
-    elif [[ -z "${un}" ]]; then
-      read -p "Enter Username: " un
-    elif [[ -z "${cm}" ]]; then
-      read -p "Enter Comment: " cm
-    fi
+  local DM EM UN PW CM RDM REM RUN RPW RCM
+  while [[ "${RDM}" != "y" || "${REM}" != "y" || "${RUN}" != "y" || "${RPW}" != "y" || "${RCM}" != "y" ]]; do
+    while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
+      if [[ -z "${DM}" || "${RDM}" != "y" ]]; then
+        read -p "Enter Domain: " DM
+        read -p "Is this Domain ok with you? ${DM} [y/n]: " RDM
+      elif [[ -z "${EM}" || "${REM}" != "y" ]]; then
+        read -p "Enter Email: " EM
+        read -p "Is this Email ok with you? ${EM} [y/n]: " REM
+      elif [[ -z "${UN}" || "${RUN}" != "y" ]]; then
+        read -p "Enter Username: " UN
+        read -p "Is this Username ok with you? ${UN} [y/n]: " RUN
+      elif [[ -z "${PW}" || "${RPW}" != "y" ]]; then
+        read -p "Enter Password: " PW
+        read -p "Is this Password ok with you? ${PW} [y/n]: " RPW
+      elif [[ -z "${CM}" || "${RCM}" != "y" ]]; then
+        read -p "Enter Comment: " CM
+        read -p "Is this Comment ok with you? ${CM} [y/n]: " RCM
+      fi
+    done
   done
-  ${cmd} "insert into ${act} values('${dm//:/\:}', '${em}', '${un}', '$(gpw)', '${cm}');"
-  ${cmd} "select rowid as id,* from ${act} where dm like '${dm}';"|"${PAGER}"
-  unset dm em un cm
+  ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
+  ${RCM} "select rowid as id,* from ${ACT} where id = (select max(rowid) from ${ACT});"|"${PAGER}"
 }
 
 function retrieve {
-  read -p "Enter domain to look for (empty for All): " dm
-  ${cmd} "select rowid as id,* from ${act} where dm like '%${dm}%';"|"${PAGER}"
-  unset dm
+  local DM
+  read -p "Enter domain to look for (empty for All): " DM
+  ${RCM} "select rowid as id,* from ${ACT} where dm like '%${DM}%';"|"${PAGER}"
 }
 
 function update {
-  read -p "Select an id to update: " id
-  ${cmd} "update ${act} set pw = '$(gpw)' where rowid = '${id}';"
-  ${cmd} "select rowid as id,* from ${act} where id = '${id}';"|"${PAGER}"
-  unset id
+  local ID
+  read -p "Select an id to update: " ID
+  ${DCM} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
+  ${RCM} "select rowid as id,* from ${ACT} where id = '${ID}';"|"${PAGER}"
 }
 
 function delete {
-  read -p "Select an id to delete: " id
-  ${cmd} "delete from ${act} where rowid = '${id}';"
-  unset id
+  local ID
+  read -p "Select an id to delete: " ID
+  ${DCM} "delete from ${ACT} where rowid = '${ID}';"
 }
 
 function import {
-  read -p "Enter a csv file: " csvf;
-  sqlite3 -csv "${db}" ".import ${csvf} ${act}"
-  ${cmd} "select rowid as id,* from ${act};"|"${PAGER}"
-  unset csvf
+  local CSVF
+  read -p "Enter a csv file: " CSVF;
+  ${CCM} ".import ${CSVF} ${ACT}"
+  ${RCM} "select rowid as id,* from ${ACT};"|"${PAGER}"
 }
 
 function usage {
-  printf "${hm[@]}\n"
+  printf "${THM[@]}\n"
 }
 
-for ((;;)) {
-  printf "${pr}"
-  read ui
-  case "${ui}" in
-    0) break ;;
-    1) create ;;
-    2) retrieve ;;
-    3) update ;;
-    4) delete ;;
-    5) import ;;
-    6) ${cmd} ;;
-    7) usage ;;
-    *) printf "${red}Invalid${reset}: You chose ${red}%s${reset}. Choose again from 0 to %d\n" "${ui}" "$((${#op[@]}-1))" ;;
+while [[ true ]]; do
+  printf "${PR}"
+  read UI
+  case "${UI}" in
+    0) create ;;
+    1) retrieve ;;
+    2) update ;;
+    3) delete ;;
+    4) import ;;
+    5) ${RCM} ;;
+    6) usage ;;
+    7) break ;;
+    *) printf "${red}Invalid${reset}: You chose ${red}%s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
   esac
-}
+done
