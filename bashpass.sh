@@ -86,6 +86,6 @@ while [[ true ]]; do
     5) ${RCM} ;;
     6) usage ;;
     7) break ;;
-    *) printf "${red}Invalid${reset}: You chose ${red}%s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
+    *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
   esac
 done

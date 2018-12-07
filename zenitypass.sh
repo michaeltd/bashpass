@@ -90,12 +90,6 @@ function import {
   local MAXID=$(maxid)
 
   local CSVF=$(zenity --title="Select a csv file to import:" --file-selection)
-  # local CSVF=$(zenity --title="Select a csv file to import:" --file-selection --file-filter="*.csv" --filename="${SDN}/")
-
-  # ${CCM} ".import ${CSVF} ${ACT}" > $TF
-  # zenity --height=$H --width=$W --text-info --title="New Records" \
-  #   --text=<<<$(${RCM} "select rowid as id, * from ${ACT} where rowid > '${MID}';")
-  #
 
   if [[ -n ${CSVF} ]]; then
     ${CCM} ".import ${CSVF} ${ACT}" > ${TF}
@@ -119,7 +113,7 @@ while true; do
   OFS=$IFS IFS=$'\|'
 
   RES=$(zenity --height=$H --width=$W --list --title="Select action" \
-    --column="Option" --column="Desc" --column="Description" ${MT})
+    --hide-header --column="Option" --column="Desc" --column="Description" ${MT})
 
   IFS=$OFS
 

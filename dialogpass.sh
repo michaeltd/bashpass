@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 #
-# dialogpass.sh dialog assisted terminal password management.
+# dialogpass.sh dialog/Xdialog assisted password management.
 
-declare SDN="$(dirname ${BASH_SOURCE[0]})" SBN="$(basename ${BASH_SOURCE[0]})"
+declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
+
+cd ${SDN}
 
 source "${SDN}/common.sh"
 
@@ -22,15 +24,20 @@ function create {
 
   local MAXID=$(maxid)
 
-  ${DIALOG} --backtitle ${SBN} --clear --title dialog --inputbox "Enter domain" $L $C 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title dialog --inputbox "Enter domain:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local DM=$(cat ${TF}) || return
-  ${DIALOG} --backtitle ${SBN} --clear --title dialog --inputbox "Enter email" $L $C  2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title dialog --inputbox "Enter email:" $L $C  2> ${TF}
   (( $? == $DIALOG_OK )) && local EM=$(cat ${TF}) || return
-  ${DIALOG} --backtitle ${SBN} --clear --title dialog --inputbox "Enter username" $L $C 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title dialog --inputbox "Enter username:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local UN=$(cat ${TF}) || return
-  ${DIALOG} --backtitle ${SBN} --clear --title dialog --inputbox "Enter password" $L $C 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title dialog --inputbox "Enter password:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local PW=$(cat ${TF}) || return
-  ${DIALOG} --backtitle ${SBN} --clear --title dialog --inputbox "Enter comments" $L $C 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title dialog --inputbox "Enter comments:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local CM=$(cat ${TF}) || return
 
   ${DCM} "insert into ${ACT} (dm, em, un, pw, cm) values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
@@ -39,19 +46,15 @@ function create {
 }
 
 function retrieve {
-  ${DIALOG} --backtitle ${SBN} --clear --title "domain" --inputbox "search by domain" $L $C 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title "domain" --inputbox "search by domain" $L $C 2> ${TF}
   (( ${?} == ${DIALOG_OK} )) && ${RCM} "select rowid as id,* from ${ACT} where dm like '%$(cat ${TF})%';"|"${PAGER}"
 }
 
 function update {
-  for R in $(rids); do
-    local DM=$(${DCM} "select dm from ${ACT} where rowid = '${R}';")
-    local EM=$(${DCM} "select em from ${ACT} where rowid = '${R}';")
-    local RL+="${R} ${DM:-NULL}:${EM:-NULL} off "
-  done
-
-  ${DIALOG} --backtitle ${SBN} --clear --title "select accout" \
-            --radiolist "Select accout for password update:" $L $C 5 ${RL[@]} 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title "select accout" \
+            --radiolist "Select accout for password update:" $L $C 5 $(brl) 2> ${TF}
 
   if (( ${?} == ${DIALOG_OK} )); then
     local ID="$(cat ${TF})"
@@ -61,19 +64,15 @@ function update {
 }
 
 function delete {
-  for R in $(rids); do
-    local DM=$(${DCM} "select dm from ${ACT} where rowid = '${R}';")
-    local EM=$(${DCM} "select em from ${ACT} where rowid = '${R}';")
-    local RL+="${R} ${DM:-NULL}:${EM:-NULL} off "
-  done
-
-  ${DIALOG} --backtitle ${SBN} --clear --title "delete account" \
-            --radiolist "Select accout to delete:" $L $C 5 ${RL[@]} 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title "delete account" \
+            --radiolist "Select accout to delete:" $L $C 5 $(brl) 2> ${TF}
 
   if (( ${?} == ${DIALOG_OK} )); then
     local ID="$(cat ${TF})"
     ${DCM} "delete from ${ACT} where rowid = '${ID}';"
-    ${DIALOG} --backtitle ${SBN} --clear --title dialog --msgbox "Account ID #$ID deleted." $L $C
+    ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+              --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C
   fi
 }
 
@@ -81,7 +80,8 @@ function import {
 
   local MAXID=$(maxid)
 
-  ${DIALOG} --backtitle ${SBN} --clear --title "select file" --stdout --fselect "${SDN}/" $L $C 2> ${TF}
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title "select file" --stdout --fselect "${SDN}/" $L $C 2> ${TF}
   (( ${?} != ${DIALOG_OK} )) && return
 
   local CSVF=$(cat ${TF})
@@ -91,20 +91,22 @@ function import {
   if (( ${?} == 0 )); then
     ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};"|"${PAGER}"
   else
-    ${DIALOG} --backtitle ${SBN} --clear --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
+    ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+              --backtitle ${SBN} --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
   fi
 }
 
 function usage {
-  ${DIALOG} --backtitle ${SBN} --clear --title Help --msgbox "${HM[@]}" $L $C
+  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --backtitle ${SBN} --title Help --msgbox "${HM[@]}" $L $C
 }
 
 while [[ true ]]; do
 
   OFS=$IFS IFS=$'\|'
 
-  ${DIALOG} --backtitle ${SBN} --clear --title dialog \
-            --help-button --item-help --cancel-label "Quit" \
+  ${DIALOG} --backtitle ${SBN} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
+            --title dialog --help-button --item-help --cancel-label "Quit" \
             --menu "Menu:" $L $C $((${#GOP[@]})) ${MT} 2> ${TF}
 
   ERRLVL=$?

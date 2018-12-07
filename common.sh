@@ -11,13 +11,12 @@ declare -a GOP=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Q
 declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
 declare -a DESC=( "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
-declare DIALOG=$(which dialog) L="0" C="0"
 if [[ -x "$(which Xdialog)" && -n "${DISPLAY}" ]]; then
-  echo
-  # declare DIALOG=$(which Xdialog) L="30" C="100"
+  declare DIALOG=$(which Xdialog) L="30" C="100"
 else
   declare DIALOG=$(which dialog) L="0" C="0"
 fi
+
 declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
@@ -56,4 +55,13 @@ function maxid {
 
 function rcount {
   echo $(${DCM} "select count(rowid) from ${ACT};")
+}
+
+function brl {
+  for R in $(rids); do
+    local DM=$(${DCM} "select dm from ${ACT} where rowid = '${R}';"|sed 's/ /-/g')
+    local EM=$(${DCM} "select em from ${ACT} where rowid = '${R}';"|sed 's/ /-/g')
+    local RL+="${R} ${DM:-null}:${EM:-null} off "
+  done
+  echo ${RL[@]}
 }
