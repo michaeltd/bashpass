@@ -4,11 +4,11 @@
 
 ## <p align="center">Use case</p>
 
-  1. I can create passwords
-  1.    //  recall passwords
-  1.    //  update passwords
-  1.    //  delete accounts
-  1.    //  import a csv file.
+  * I can create passwords
+  *    //  recall passwords
+  *    //  update passwords
+  *    //  delete accounts
+  *    //  import a csv file.
 
 ### <p align="center">[bashpass.sh](bashpass.sh)</p>
 <p align="center"><a href="assets/bp.png"><img alt="bashpass" src="assets/bp.png"></a></p>
@@ -28,9 +28,9 @@ Using [zenity](https://help.gnome.org/users/zenity)
 
 ## <p align="center">TODOS</p>
 
- 1. [ ] Encryption
- 1. [ ] Clipboard
- 1. [x] Modularize UI usage depending on the environment.
+ * [ ] Encryption
+ * [ ] Clipboard
+ * [x] Modularize UI usage depending on the environment.
 
-   1. [x] GUI/TUI based on X
-   1. [x] GUI's based on availability
+   * [x] GUI's based on availability
+   * [x] GUI/TUI based on X
