@@ -12,7 +12,7 @@ declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "I
 declare -a DESC=( "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
 if [[ -x "$(which Xdialog)" && -n "${DISPLAY}" ]]; then
-  declare DIALOG=$(which Xdialog) L="30" C="100"
+  declare DIALOG=$(which Xdialog) L="30" C="80"
 else
   declare DIALOG=$(which dialog) L="0" C="0"
 fi

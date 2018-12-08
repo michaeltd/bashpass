@@ -30,14 +30,13 @@ function create {
   (( $? == $DIALOG_OK )) && local EM=$(cat ${TF}) || return
   ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter username:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local UN=$(cat ${TF}) || return
-  ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter password:" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --passwordbox "Enter password:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local PW=$(cat ${TF}) || return
   ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter comments:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local CM=$(cat ${TF}) || return
 
   ${DCM} "insert into ${ACT} (dm, em, un, pw, cm) values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
   ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));"|"${PAGER}"
-
 }
 
 function retrieve {
@@ -46,20 +45,28 @@ function retrieve {
 }
 
 function update {
-  ${DIALOG} --backtitle ${SBN} --title "select accout" --radiolist "Select accout for password update:" $L $C 5 $(brl) 2> ${TF}
 
-  if (( ${?} == ${DIALOG_OK} )); then
-    local ID="$(cat ${TF})"
-    ${DCM} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
-    ${RCM} "select rowid as id,* from ${ACT} where id = '${ID}';"|"${PAGER}"
+  >${TF} # clear TF
+
+  ${DIALOG} --backtitle ${SBN} --title "update accout:" --radiolist "Select account:" $L $C 5 $(brl) 2> ${TF}
+
+  local ERRLVL=${?} ID="$(cat ${TF})"
+
+  if (( ${ERRLVL} == ${DIALOG_OK} )) && [[ -n ${ID} ]]; then
+      ${DCM} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
+      ${RCM} "select rowid as id,* from ${ACT} where id = '${ID}';"|"${PAGER}"
   fi
 }
 
 function delete {
-  ${DIALOG} --backtitle ${SBN} --title "delete account" --radiolist "Select accout to delete:" $L $C 5 $(brl) 2> ${TF}
 
-  if (( ${?} == ${DIALOG_OK} )); then
-    local ID="$(cat ${TF})"
+  >${TF} # clear TF
+
+  ${DIALOG} --backtitle ${SBN} --title "delete account:" --radiolist "Select accout:" $L $C 5 $(brl) 2> ${TF}
+
+  local ERRLVL=${?} ID="$(cat ${TF})"
+
+  if (( ${ERRLVL} == ${DIALOG_OK} )) && [[ -n ${ID} ]]; then
     ${DCM} "delete from ${ACT} where rowid = '${ID}';"
     ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C
   fi
@@ -79,8 +86,7 @@ function import {
   if (( ${?} == 0 )); then
     ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};"|"${PAGER}"
   else
-    ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-              --backtitle ${SBN} --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
+    ${DIALOG} --backtitle ${SBN} --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
   fi
 }
 

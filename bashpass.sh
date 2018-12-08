@@ -21,26 +21,19 @@ elif [[ ! $(${DCM} "select * from ${ACT};" 2> /dev/null) ]]; then
 fi
 
 function create {
-  local DM EM UN PW CM RDM REM RUN RPW RCM
-  while [[ "${RDM}" != "y" || "${REM}" != "y" || "${RUN}" != "y" || "${RPW}" != "y" || "${RCM}" != "y" ]]; do
-    while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
-      if [[ -z "${DM}" || "${RDM}" != "y" ]]; then
-        read -p "Enter Domain: " DM
-        read -p "Is this Domain ok with you? ${DM} [y/n]: " RDM
-      elif [[ -z "${EM}" || "${REM}" != "y" ]]; then
-        read -p "Enter Email: " EM
-        read -p "Is this Email ok with you? ${EM} [y/n]: " REM
-      elif [[ -z "${UN}" || "${RUN}" != "y" ]]; then
-        read -p "Enter Username: " UN
-        read -p "Is this Username ok with you? ${UN} [y/n]: " RUN
-      elif [[ -z "${PW}" || "${RPW}" != "y" ]]; then
-        read -p "Enter Password: " PW
-        read -p "Is this Password ok with you? ${PW} [y/n]: " RPW
-      elif [[ -z "${CM}" || "${RCM}" != "y" ]]; then
-        read -p "Enter Comment: " CM
-        read -p "Is this Comment ok with you? ${CM} [y/n]: " RCM
-      fi
-    done
+  local DM EM UN PW CM
+  while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
+    if [[ -z "${DM}" ]]; then
+      read -p "Enter Domain: " DM
+    elif [[ -z "${EM}" ]]; then
+      read -p "Enter Email: " EM
+    elif [[ -z "${UN}" ]]; then
+      read -p "Enter Username: " UN
+    elif [[ -z "${PW}" ]]; then
+      read -p "Enter Password: " PW
+    elif [[ -z "${CM}" ]]; then
+      read -p "Enter Comment: " CM
+    fi
   done
   ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
   ${RCM} "select rowid as id,* from ${ACT} where id = (select max(rowid) from ${ACT});"|"${PAGER}"
