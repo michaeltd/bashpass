@@ -16,7 +16,7 @@ Terminal only
 
 ### <p align="center">[dialogpass.sh](dialogpass.sh)</p>
 <p align="center"><a href="assets/dp.png"><img alt="dialogpass" src="assets/dp.png"></a></p>
-Without X using dialog.
+Without X using dialog (unset DISPLAY to test).
 
 ### <p align="center">[dialogpass.sh](dialogpass.sh)</p>
 <p align="center"><a href="assets/xp.png"><img alt="dialogpass" src="assets/xp.png"></a></p>
