@@ -28,12 +28,9 @@ Using [zenity](https://help.gnome.org/users/zenity)
 
 ## <p align="center">TODOS</p>
 
-  1. [ ] Encryption
+ 1. [ ] Encryption
+ 1. [ ] Clipboard
+ 1. [x] Modularize UI usage depending on the environment.
 
-  1. [ ] Clipboard
-
-  1. [x] Modularize UI usage depending on the environment.
-
-    1. [x] GUI/TUI based on X
-
-    1. [x] GUI's based on availability
+   1. [x] GUI/TUI based on X
+   1. [x] GUI's based on availability
