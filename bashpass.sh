@@ -2,7 +2,9 @@
 #
 # bashpass.sh terminal password management.
 
-declare SDN="$(dirname ${BASH_SOURCE[0]})" SBN="$(basename ${BASH_SOURCE[0]})"
+declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
+
+cd ${SDN}
 
 source "${SDN}/common.sh"
 

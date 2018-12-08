@@ -2,7 +2,9 @@
 #
 # zenitypass.sh zenity assisted password management.
 
-declare SDN="$(dirname ${BASH_SOURCE[0]})" SBN="$(basename ${BASH_SOURCE[0]})"
+declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
+
+cd ${SDN}
 
 source "${SDN}/common.sh"
 
@@ -49,11 +51,11 @@ function retrieve {
 }
 
 function update {
-  local rec=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
-  local zen=$(zenity --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${rec[@]})
+  local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
+  local ZEN=$(zenity --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${REC[@]})
   OFS=$IFS
   IFS=$'\|'
-  for ID in $zen; do
+  for ID in $ZEN; do
     sqlite3 ${DB} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
     zenity --height=$H --width=$W --text-info --title="New password" \
       --text=<<<$(sqlite3 -line ${DB} "select * from ${ACT} where rowid = '${ID}';")
@@ -113,7 +115,7 @@ while true; do
   OFS=$IFS IFS=$'\|'
 
   RES=$(zenity --height=$H --width=$W --list --title="Select action" \
-    --hide-header --column="Option" --column="Desc" --column="Description" ${MT})
+               --hide-header --column="Option" --column="Desc" --column="Description" ${MT})
 
   IFS=$OFS
 

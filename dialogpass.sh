@@ -24,20 +24,15 @@ function create {
 
   local MAXID=$(maxid)
 
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title dialog --inputbox "Enter domain:" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter domain:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local DM=$(cat ${TF}) || return
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title dialog --inputbox "Enter email:" $L $C  2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter email:" $L $C  2> ${TF}
   (( $? == $DIALOG_OK )) && local EM=$(cat ${TF}) || return
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title dialog --inputbox "Enter username:" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter username:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local UN=$(cat ${TF}) || return
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title dialog --inputbox "Enter password:" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter password:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local PW=$(cat ${TF}) || return
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title dialog --inputbox "Enter comments:" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter comments:" $L $C 2> ${TF}
   (( $? == $DIALOG_OK )) && local CM=$(cat ${TF}) || return
 
   ${DCM} "insert into ${ACT} (dm, em, un, pw, cm) values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
@@ -46,15 +41,12 @@ function create {
 }
 
 function retrieve {
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title "domain" --inputbox "search by domain" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title "domain" --inputbox "search by domain" $L $C 2> ${TF}
   (( ${?} == ${DIALOG_OK} )) && ${RCM} "select rowid as id,* from ${ACT} where dm like '%$(cat ${TF})%';"|"${PAGER}"
 }
 
 function update {
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title "select accout" \
-            --radiolist "Select accout for password update:" $L $C 5 $(brl) 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title "select accout" --radiolist "Select accout for password update:" $L $C 5 $(brl) 2> ${TF}
 
   if (( ${?} == ${DIALOG_OK} )); then
     local ID="$(cat ${TF})"
@@ -64,15 +56,12 @@ function update {
 }
 
 function delete {
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title "delete account" \
-            --radiolist "Select accout to delete:" $L $C 5 $(brl) 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title "delete account" --radiolist "Select accout to delete:" $L $C 5 $(brl) 2> ${TF}
 
   if (( ${?} == ${DIALOG_OK} )); then
     local ID="$(cat ${TF})"
     ${DCM} "delete from ${ACT} where rowid = '${ID}';"
-    ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-              --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C
+    ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C
   fi
 }
 
@@ -80,8 +69,7 @@ function import {
 
   local MAXID=$(maxid)
 
-  ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --backtitle ${SBN} --title "select file" --stdout --fselect "${SDN}/" $L $C 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title "select file" --stdout --fselect "${SDN}/" $L $C 2> ${TF}
   (( ${?} != ${DIALOG_OK} )) && return
 
   local CSVF=$(cat ${TF})
@@ -105,9 +93,7 @@ while [[ true ]]; do
 
   OFS=$IFS IFS=$'\|'
 
-  ${DIALOG} --backtitle ${SBN} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") \
-            --title dialog --help-button --item-help --cancel-label "Quit" \
-            --menu "Menu:" $L $C $((${#GOP[@]})) ${MT} 2> ${TF}
+  ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GOP[@]})) ${MT} 2> ${TF}
 
   ERRLVL=$?
 
