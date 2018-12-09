@@ -2,14 +2,10 @@
 !assets/bp.png
 !assets/dp.png
 !assets/xp.png
-!assets/zp.png
 !.gitignore
 !ac.sql
 !bashpass.sh
-!common.sh
-!dialogpass.sh
 !git.db3
 !license
 !readme.md
 !test.csv
-!zenitypass.sh
