@@ -3,12 +3,10 @@
 # bashpass.sh Xdialog/dialog/terminal assisted password management.
 
 declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
+declare DB="${1:-git.db3}" ACT="ac"
+declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
 
 cd ${SDN}
-
-declare DB="${1:-git.db3}" ACT="ac"
-
-declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
 
 # Prerequisits
 if [[ ! -x "$(which sqlite3 2> /dev/null)" ]]; then
@@ -32,7 +30,6 @@ declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HEL
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
-
 trap "rm -f ${TF}" $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
 
 # Help message
@@ -76,11 +73,8 @@ function brl {
 }
 
 function create {
-
   local MAXID=$(maxid)
-
   if [[ -n "${DIALOG}" ]]; then
-
     ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter domain:" $L $C 2> ${TF}
     (( $? == $DIALOG_OK )) && local DM=$(cat ${TF}) || return
     ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter email:" $L $C  2> ${TF}
@@ -91,9 +85,7 @@ function create {
     (( $? == $DIALOG_OK )) && local PW=$(cat ${TF}) || return
     ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter comments:" $L $C 2> ${TF}
     (( $? == $DIALOG_OK )) && local CM=$(cat ${TF}) || return
-
   else
-
     while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
       if [[ -z "${DM}" ]]; then
         read -p "Enter Domain: " DM
@@ -107,12 +99,9 @@ function create {
         read -p "Enter Comment: " CM
       fi
     done
-
   fi
-
   ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
   ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));"|"${PAGER}"
-
 }
 
 function retrieve {
@@ -129,75 +118,47 @@ function retrieve {
 
 function update {
   local ID
-
   if [[ -n "${DIALOG}" ]]; then
-
     ${DIALOG} --backtitle ${SBN} --title "update accout:" --radiolist "Select account:" $L $C 5 $(brl) 2> ${TF}
-
     local ERRLVL=${?} ID="$(cat ${TF})"
-
     if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
       return
     fi
-
   else 
-
     read -p "Select an id to update (empty to cancel): " ID
     echo "${ID}" > ${TF}
-
   fi
-
   ${DCM} "update ${ACT} set pw = '$(gpw)' where rowid = '$(cat ${TF})';"
   ${RCM} "select rowid as id,* from ${ACT} where id = '$(cat ${TF})';"|"${PAGER}"
-
 }
 
 function delete {
-
   local ID
-
   if [[ -n "${DIALOG}" ]]; then
-
     ${DIALOG} --backtitle ${SBN} --title "delete account:" --radiolist "Select accout:" $L $C 5 $(brl) 2> ${TF}
-
     local ERRLVL=${?} ID="$(cat ${TF})"
-
     if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
       return
     fi
-
   else 
-
     read -p "Select an id to delete (empty to cancel): " ID
     echo "${ID}" > ${TF}
-
   fi
-
   ${DCM} "delete from ${ACT} where rowid = '$(cat ${TF})';"
   [[ -n "${DIALOG}" ]] && ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C || echo "Account ID #$ID deleted."
-
 }
 
 function import {
-
   local MAXID=$(maxid) CSVF
-
   if [[ -n "${DIALOG}" ]]; then
-
     ${DIALOG} --backtitle ${SBN} --title "select file" --stdout --fselect "${SDN}/" $L $C 2> ${TF}
     (( ${?} != ${DIALOG_OK} )) && return
-
     CSVF=$(cat ${TF})
-
   else 
-
     read -p "Enter a csv file: " CSVF;
     echo "${CSVF}" > ${TF}
-
   fi
-
   ${CCM} ".import ${CSVF} ${ACT}" 2> ${TF}
-
   if (( ${?} != 0 )); then
     if [[ -n "${DIALOG}" ]]; then 
       ${DIALOG} --backtitle ${SBN} --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
@@ -205,9 +166,7 @@ function import {
     echo "Error: $(cat ${TF})"
     return
   fi
-
   ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};"|"${PAGER}"
-
 }
 
 function usage {
@@ -215,17 +174,11 @@ function usage {
 }
 
 for ((;;)) {
-
   if [[ -n "${DIALOG}" ]]; then
-
     OFS=$IFS IFS=$'\|'
-
     ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GOP[@]})) ${MT} 2> ${TF}
-
     ERRLVL=$?
-
     IFS=$OFS
-
     case ${ERRLVL} in
       ${DIALOG_OK})
         case "$(cat ${TF})" in
@@ -243,7 +196,6 @@ for ((;;)) {
       ${DIALOG_ESC}) exit ;;
     esac
   else
-
     printf "${PR}"
     read UI
     case "${UI}" in
