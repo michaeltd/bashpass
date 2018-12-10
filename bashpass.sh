@@ -15,9 +15,9 @@ if [[ ! -x "$(which sqlite3 2> /dev/null)" ]]; then
 elif [[ ! $(${DCM} "select * from ${ACT};" 2> /dev/null) ]]; then
   printf "Need a working db to function.\nRun 'sqlite3 my.db3 < ${ACT}.sql && ${SBN} my.db3'\nfrom this directory: $(pwd)\n"
   exit 1
-elif [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then
+elif [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
   declare DIALOG=$(which Xdialog) L="30" C="80"
-elif [[ -x "$(which dialog 2> /dev/null)" ]]; then
+elif [[ -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
   declare DIALOG=$(which dialog) L="0" C="0"
 fi
 
@@ -32,11 +32,11 @@ declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
 trap "rm -f ${TF}" $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
 
-# Help message
-declare -a PR=()
-declare -a THM="\nUsage: ${SBN} [dbfile.db3]\n\n"
-declare -a HM="\nUsage: ${SBN} [dbfile.db3]\n\n"
-declare -a MT=()
+# Various Arrays
+declare -a PR=() # PRompt
+declare -a THM="\nUsage: ${SBN} [dbfile.db3]\n\n" # Terminal Help Message
+declare -a HM="\nUsage: ${SBN} [dbfile.db3]\n\n" # Help Message
+declare -a MT=() # Menu Text
 for ((x=0;x<${#TOP[@]};x++)); do
   PR+="${x}:${TOP[$x]}"; (( ( x + 1 ) % 4 == 0 )) && PR+="\n" || PR+="\t"
   THM+="Use ${bold}${x}${reset}, for ${TOP[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
@@ -174,40 +174,33 @@ function usage {
 }
 
 for ((;;)) {
-  if [[ -n "${DIALOG}" ]]; then
+  if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
     OFS=$IFS IFS=$'\|'
     ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GOP[@]})) ${MT} 2> ${TF}
     ERRLVL=$?
     IFS=$OFS
-    case ${ERRLVL} in
-      ${DIALOG_OK})
-        case "$(cat ${TF})" in
-          "${GOP[0]}") create ;;
-          "${GOP[1]}") retrieve ;;
-          "${GOP[2]}") update ;;
-          "${GOP[3]}") delete ;;
-          "${GOP[4]}") import ;;
-          "${GOP[5]}") ${RCM} ;;
-          "${GOP[6]}") usage ;;
-          "${GOP[7]}") exit ;;
-        esac ;;
-      ${DIALOG_CANCEL}) exit ;;
-      ${DIALOG_HELP}) usage;;
-      ${DIALOG_ESC}) exit ;;
-    esac
-  else
+  else # Just terminal menu.
     printf "${PR}"
     read UI
-    case "${UI}" in
-      0) create ;;
-      1) retrieve ;;
-      2) update ;;
-      3) delete ;;
-      4) import ;;
-      5) ${RCM} ;;
-      6) usage ;;
-      7) break ;;
-      *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
-    esac
+    ERRLVL=$?
+    echo ${UI} > ${TF}
   fi
+
+  case ${ERRLVL} in
+    ${DIALOG_OK})
+      case "$(cat ${TF})" in
+        "${GOP[0]}"|"0") create ;;
+        "${GOP[1]}"|"1") retrieve ;;
+        "${GOP[2]}"|"2") update ;;
+        "${GOP[3]}"|"3") delete ;;
+        "${GOP[4]}"|"4") import ;;
+        "${GOP[5]}"|"5") ${RCM} ;;
+        "${GOP[6]}"|"6") usage ;;
+        "${GOP[7]}"|"7") exit ;;
+        *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
+      esac ;;
+    ${DIALOG_CANCEL}) exit ;;
+    ${DIALOG_HELP}) usage;;
+    ${DIALOG_ESC}) exit ;;
+  esac
 }
