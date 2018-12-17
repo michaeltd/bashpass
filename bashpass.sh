@@ -16,21 +16,21 @@ elif [[ ! $(${DCM} "select * from ${ACT};" 2> /dev/null) ]]; then
   printf "Need a working db to function.\nRun 'sqlite3 my.db3 < ${ACT}.sql && ${SBN} my.db3'\nfrom this directory: $(pwd)\n"
   exit 1
 elif [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-  declare DIALOG=$(which Xdialog) L="30" C="80"
+  declare DIALOG=$(which Xdialog) L="30" C="60"
 elif [[ -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
   declare DIALOG=$(which dialog) L="0" C="0"
 fi
-
-declare -a TOP=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
-declare -a GOP=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
-declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
-declare -a DESC=( "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
 declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
 trap "rm -f ${TF}" $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
+
+declare -a TOP=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
+declare -a GOP=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
+declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
+declare -a DESC=( "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
 # Various Arrays
 declare -a PR=() # PRompt
@@ -102,12 +102,13 @@ function create {
   fi
   ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
   ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));"|"${PAGER}"
+  unset DM EM UN PW CM
 }
 
 function retrieve {
   local DM
   if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "domain" --inputbox "search by domain" $L $C 2> ${TF}
+    ${DIALOG} --backtitle ${SBN} --title "domain" --inputbox "Enter domain to look for (empty for All): " $L $C 2> ${TF}
     (( ${?} != ${DIALOG_OK} )) && return
   else
     read -p "Enter domain to look for (empty for All): " DM
@@ -119,7 +120,7 @@ function retrieve {
 function update {
   local ID
   if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "update accout:" --radiolist "Select account:" $L $C 5 $(brl) 2> ${TF}
+    ${DIALOG} --backtitle ${SBN} --title "update accout:" --radiolist "Select an id to update: " $L $C 5 $(brl) 2> ${TF}
     local ERRLVL=${?} ID="$(cat ${TF})"
     if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
       return
@@ -135,12 +136,12 @@ function update {
 function delete {
   local ID
   if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "delete account:" --radiolist "Select accout:" $L $C 5 $(brl) 2> ${TF}
+    ${DIALOG} --backtitle ${SBN} --title "delete account:" --radiolist "Select an id to delete: " $L $C 5 $(brl) 2> ${TF}
     local ERRLVL=${?} ID="$(cat ${TF})"
     if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
       return
     fi
-  else 
+  else
     read -p "Select an id to delete (empty to cancel): " ID
     echo "${ID}" > ${TF}
   fi
@@ -151,7 +152,7 @@ function delete {
 function import {
   local MAXID=$(maxid) CSVF
   if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "select file" --stdout --fselect "${SDN}/" $L $C 2> ${TF}
+    ${DIALOG} --backtitle ${SBN} --title "Enter a csv file: " --stdout --fselect "${SDN}/" $L $C 2> ${TF}
     (( ${?} != ${DIALOG_OK} )) && return
     CSVF=$(cat ${TF})
   else 
