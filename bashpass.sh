@@ -73,7 +73,7 @@ function brl {
 }
 
 function create {
-  local MAXID=$(maxid)
+  local MAXID=$(maxid) DM EM UN PW CM
   if [[ -n "${DIALOG}" ]]; then
     ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter domain:" $L $C 2> ${TF}
     (( $? == $DIALOG_OK )) && local DM=$(cat ${TF}) || return
@@ -102,7 +102,6 @@ function create {
   fi
   ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
   ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));"|"${PAGER}"
-  unset DM EM UN PW CM
 }
 
 function retrieve {
@@ -201,7 +200,7 @@ for ((;;)) {
         *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
       esac ;;
     ${DIALOG_CANCEL}) exit ;;
-    ${DIALOG_HELP}) usage;;
+    ${DIALOG_HELP}) usage ;;
     ${DIALOG_ESC}) exit ;;
   esac
 }
