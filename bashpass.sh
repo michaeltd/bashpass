@@ -102,8 +102,17 @@ function create {
       fi
     done
   fi
+
   ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
-  ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));"|"${PAGER}"
+
+  ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));" > ${TF}
+
+  if [[ -n "${DIALOG}" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  else
+    cat ${TF}|${PAGER}
+  fi
+
 }
 
 function retrieve {
@@ -115,8 +124,6 @@ function retrieve {
     read -p "Enter domain to look for (empty for All): " DM
     echo "${DM}" > ${TF}
   fi
-
-  # ${RCM} "select rowid as id,* from ${ACT} where dm like '%$(cat ${TF})%';"|"${PAGER}"
 
   DM=$(cat ${TF})
 
@@ -141,8 +148,19 @@ function update {
     read -p "Select an id to update (empty to cancel): " ID
     echo "${ID}" > ${TF}
   fi
+
   ${DCM} "update ${ACT} set pw = '$(gpw)' where rowid = '$(cat ${TF})';"
-  ${RCM} "select rowid as id,* from ${ACT} where id = '$(cat ${TF})';"|"${PAGER}"
+
+  ID=$(cat ${TF})
+
+  ${RCM} "select rowid as id,* from ${ACT} where id = '${ID}';" > ${TF}
+
+  if [[ -n "${DIALOG}" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  else
+    cat ${TF}|${PAGER}
+  fi
+
 }
 
 function delete {
@@ -164,7 +182,7 @@ function delete {
 function import {
   local MAXID=$(maxid) CSVF
   if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "Enter a csv file: " --stdout --fselect "${SDN}/" $L $C 2> ${TF}
+    ${DIALOG} --backtitle ${SBN} --title "Enter a csv file: " --stdout --fselect "${SDN}/" $L $C > ${TF}
     (( ${?} != ${DIALOG_OK} )) && return
     CSVF=$(cat ${TF})
   else 
@@ -179,7 +197,15 @@ function import {
     echo "Error: $(cat ${TF})"
     return
   fi
-  ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};"|"${PAGER}"
+
+  ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};" > ${TF}
+
+  if [[ -n "${DIALOG}" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  else
+    cat ${TF}|${PAGER}
+  fi
+
 }
 
 function usage {
