@@ -2,7 +2,7 @@
 #
 # bashpass.sh Xdialog/dialog/terminal assisted password management.
 
-declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
+declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})" 
 declare DB="${1:-git.db3}" ACT="ac"
 declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
 
@@ -107,8 +107,8 @@ function create {
 
   ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));" > ${TF}
 
-  if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
   else
     cat ${TF}|${PAGER}
   fi
@@ -129,8 +129,8 @@ function retrieve {
 
   ${RCM} "select rowid as id,* from ${ACT} where dm like '%${DM}%';" > ${TF}
 
-  if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
   else
     cat ${TF}|${PAGER}
   fi
@@ -155,8 +155,8 @@ function update {
 
   ${RCM} "select rowid as id,* from ${ACT} where id = '${ID}';" > ${TF}
 
-  if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
   else
     cat ${TF}|${PAGER}
   fi
@@ -182,7 +182,7 @@ function delete {
 function import {
   local MAXID=$(maxid) CSVF
   if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "Enter a csv file: " --stdout --fselect "${SDN}/" $L $C > ${TF}
+    ${DIALOG} --backtitle ${SBN} --title "Enter a csv file:" --fselect "${SDN}/" $L $C 2> ${TF}
     (( ${?} != ${DIALOG_OK} )) && return
     CSVF=$(cat ${TF})
   else 
@@ -200,8 +200,8 @@ function import {
 
   ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};" > ${TF}
 
-  if [[ -n "${DIALOG}" ]]; then
-    ${DIALOG} --backtitle ${SBN} --title "results" --textbox "${TF}" $L $C 2>/dev/null
+  if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
   else
     cat ${TF}|${PAGER}
   fi
