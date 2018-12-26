@@ -29,25 +29,25 @@ declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
 trap "rm -f ${TF}" $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
 
-declare -a TOP=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
-declare -a GOP=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
+declare -a TUI_OPS=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
+declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
 declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
-declare -a DESC=( "gathter details to generate a new password." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
+declare -a DESC=( "gathter details for a new account." "search records by domain." "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
 # Various Arrays
-declare -a PR=() # PRompt
-declare -a THM="\nUsage: ${SBN} [dbfile.db3]\n\n" # Terminal Help Message
-declare -a HM="\nUsage: ${SBN} [dbfile.db3]\n\n" # Help Message
-declare -a MT=() # Menu Text
-for ((x=0;x<${#TOP[@]};x++)); do
-  PR+="${x}:${TOP[$x]}"; (( ( x + 1 ) % 4 == 0 )) && PR+="\n" || PR+="\t"
-  THM+="Use ${bold}${x}${reset}, for ${TOP[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
-  HM+="Use ${GOP[$x]}, to ${DESC[$x]}\n"
-  MT+="${GOP[$x]}|${SDESC[$x]}|${DESC[$x]}|"
+declare -a TUI_MENU=() # PRompt
+declare -a TUI_HMSG="\nUsage: ${SBN} [dbfile.db3]\n\n" # Terminal Help Message
+declare -a GUI_MENU=() # Menu Text
+declare -a GUI_HMSG="\nUsage: ${SBN} [dbfile.db3]\n\n" # Help Message
+for ((x=0;x<${#TUI_OPS[@]};x++)); do
+  TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
+  TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
+  GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
+  GUI_HMSG+="Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n"
 done
-PR+="${bold}Choose[0-$((${#TOP[@]}-1))]:${reset}"
-THM+="\naccounts table format is as follows:\n$(${DCM} .schema)\n"
-HM+="\naccounts table format is as follows:\n$(${DCM} .schema)\n"
+TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
+TUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} .schema)\n"
+GUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} .schema)\n"
 
 function gpw {  # single/double quotes for strings, vertical bar for sqlite output field seperator
   echo $(tr -dc [:graph:] < /dev/urandom|tr -d [=\|=][=\"=][=\'=]|head -c "${1:-64}")
@@ -209,17 +209,17 @@ function import {
 }
 
 function usage {
-  [[ -n "${DIALOG}" ]] && ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") --backtitle ${SBN} --title Help --msgbox "${HM[@]}" $L $C || printf "${THM[@]}\n"
+  [[ -n "${DIALOG}" ]] && ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C || printf "${TUI_HMSG[@]}\n"
 }
 
 for ((;;)) {
   if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
     OFS=$IFS IFS=$'\|'
-    ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GOP[@]})) ${MT} 2> ${TF}
+    ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GUI_OPS[@]})) ${GUI_MENU} 2> ${TF}
     ERRLVL=$?
     IFS=$OFS
   else # Just terminal menu.
-    printf "${PR}"
+    printf "${TUI_MENU}"
     read UI
     ERRLVL=$?
     echo ${UI} > ${TF}
@@ -228,15 +228,15 @@ for ((;;)) {
   case ${ERRLVL} in
     ${DIALOG_OK})
       case "$(cat ${TF})" in
-        "${GOP[0]}"|"0") create ;;
-        "${GOP[1]}"|"1") retrieve ;;
-        "${GOP[2]}"|"2") update ;;
-        "${GOP[3]}"|"3") delete ;;
-        "${GOP[4]}"|"4") import ;;
-        "${GOP[5]}"|"5") ${RCM} ;;
-        "${GOP[6]}"|"6") usage ;;
-        "${GOP[7]}"|"7") exit ;;
-        *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TOP[@]}-1))" ;;
+        "${GUI_OPS[0]}"|"0") create ;;
+        "${GUI_OPS[1]}"|"1") retrieve ;;
+        "${GUI_OPS[2]}"|"2") update ;;
+        "${GUI_OPS[3]}"|"3") delete ;;
+        "${GUI_OPS[4]}"|"4") import ;;
+        "${GUI_OPS[5]}"|"5") ${RCM} ;;
+        "${GUI_OPS[6]}"|"6") usage ;;
+        "${GUI_OPS[7]}"|"7") exit ;;
+        *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" ;;
       esac ;;
     ${DIALOG_CANCEL}) exit ;;
     ${DIALOG_HELP}) usage ;;
