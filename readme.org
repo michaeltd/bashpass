@@ -9,15 +9,21 @@ password generator, storage, reference for the terminal.
 **   >>  import a csv file.
 
 * [bashpass.sh](bashpass.sh)
+
 Terminal only
+
 [[assets/bp.png]]
 
 * [bashpass.sh](bashpass.sh)
+
 Without X using dialog (unset DISPLAY to test).
+
 [[assets/dp.png]]
 
 * [bashpass.sh](bashpass.sh)
+
 On X using Xdialog.
+
 [[assets/xp.png]]
 
 * TODOS
