@@ -1,0 +1,29 @@
+bashpass
+
+password generator, storage, reference for the terminal.
+
+* Use case
+** I can create passwords
+**   \>> recall passwords
+**   \>> update passwords
+**   \>> delete accounts
+**   \>> import a csv file.
+
+* [bashpass.sh](bashpass.sh)
+[[assets/bp.png]]
+Terminal only
+
+* [bashpass.sh](bashpass.sh)
+[[assets/dp.png]]
+Without X using dialog (unset DISPLAY to test).
+
+* [bashpass.sh](bashpass.sh)
+[[assets/xp.png]]
+On X using Xdialog.
+
+* TODOS
+** TODO Encryption
+** TODO Clipboard
+** DONE Modularize UI usage depending on the environment.
+*** DONE GUI's based on availability
+*** DONE GUI/TUI based on X
