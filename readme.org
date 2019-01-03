@@ -1,5 +1,8 @@
 * bashpass
+
+#+BEGIN_VERSE
 password generator, storage, reference for the terminal.
+#+END_VERSE
 
 * Use case
 ** I can create passwords
@@ -16,7 +19,7 @@ Terminal only
 
 * [bashpass.sh](bashpass.sh)
 
-Without X using dialog (unset DISPLAY to test).
+Without X using dialog (=unset DISPLAY= to test).
 
 [[assets/dp.png]]
 
