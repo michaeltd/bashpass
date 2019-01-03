@@ -7,33 +7,33 @@
 #+END_VERSE
 
 * Use case
-** I can create passwords
-**   >>  recall passwords
-**   >>  update passwords
-**   >>  delete accounts
-**   >>  import a csv file.
+ - I can create passwords
+ -   >>  recall passwords
+ -   >>  update passwords
+ -   >>  delete accounts
+ -   >>  import a csv file.
 
-* bash
+- bash
 
 Terminal only
 
 [[assets/bp.png]]
 
-* dialog
+- dialog
 
 Without X using dialog (=unset DISPLAY= to test).
 
 [[assets/dp.png]]
 
-* Xdialog
+- Xdialog
 
 On X using Xdialog.
 
 [[assets/xp.png]]
 
 - TODO Todo's
-  - [] Encryption
-  - [] Clipboard
-  - [x] Modularize UI usage depending on the environment.
-    - [x] GUI's based on availability
-    - [x] GUI/TUI based on X
+  - [ ] Encryption
+  - [ ] Clipboard
+  - [X] Modularize UI usage depending on the environment.
+    - [X] GUI's based on availability
+    - [X] GUI/TUI based on X
