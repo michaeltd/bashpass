@@ -28,8 +28,8 @@ On X using Xdialog.
 [[assets/xp.png]]
 
 ** TODO Todo's
-  - [ ] Encryption
-  - [ ] Clipboard
+  - [-] Encryption
+  - [-] Clipboard
   - [X] Modularize UI usage depending on the environment.
     - [X] GUI's based on availability
     - [X] GUI/TUI based on X
