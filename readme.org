@@ -11,19 +11,19 @@ password generator, storage, reference for the terminal.
 **   >>  delete accounts
 **   >>  import a csv file.
 
-* [bashpass.sh](bashpass.sh)
+* bash
 
 Terminal only
 
 [[assets/bp.png]]
 
-* [bashpass.sh](bashpass.sh)
+* dialog
 
 Without X using dialog (=unset DISPLAY= to test).
 
 [[assets/dp.png]]
 
-* [bashpass.sh](bashpass.sh)
+* Xdialog
 
 On X using Xdialog.
 
