@@ -1,25 +1,24 @@
-bashpass
-
+* bashpass
 password generator, storage, reference for the terminal.
 
 * Use case
 ** I can create passwords
-**   \>> recall passwords
-**   \>> update passwords
-**   \>> delete accounts
-**   \>> import a csv file.
+**   >>  recall passwords
+**   >>  update passwords
+**   >>  delete accounts
+**   >>  import a csv file.
 
 * [bashpass.sh](bashpass.sh)
-[[assets/bp.png]]
 Terminal only
+[[assets/bp.png]]
 
 * [bashpass.sh](bashpass.sh)
-[[assets/dp.png]]
 Without X using dialog (unset DISPLAY to test).
+[[assets/dp.png]]
 
 * [bashpass.sh](bashpass.sh)
-[[assets/xp.png]]
 On X using Xdialog.
+[[assets/xp.png]]
 
 * TODOS
 ** TODO Encryption
