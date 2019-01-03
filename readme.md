@@ -1,8 +1,8 @@
-# <p align="center">bashpass</p>
+# bashpass
 
-  password generator, storage, reference for the terminal.
+password generator, storage, reference for the terminal.
 
-## <p align="center">Use case</p>
+## Use case
 
   * I can create passwords
   *    //  recall passwords
@@ -22,7 +22,7 @@
 <p align="center">On X using Xdialog.</p>
 <p align="center"><a href="assets/xp.png"><img alt="dialogpass" src="assets/xp.png"></a></p>
 
-## <p align="center">TODOS</p>
+## TODOS
 
  * [ ] Encryption
  * [ ] Clipboard
