@@ -1,37 +1,33 @@
-* bashpass
+** bashpass
 
-#+BEGIN_VERSE
+password generator, storage, reference for the terminal.
 
-  password generator, storage, reference for the terminal.
+** Use case
+*** I can create passwords
+***   >>  recall passwords
+***   >>  update passwords
+***   >>  delete accounts
+***   >>  import a csv file.
 
-#+END_VERSE
-
-* Use case
-** I can create passwords
-**   >>  recall passwords
-**   >>  update passwords
-**   >>  delete accounts
-**   >>  import a csv file.
-
-* bash
+** bash
 
 Terminal only
 
 [[assets/bp.png]]
 
-* dialog
+** dialog
 
 Without X using dialog (=unset DISPLAY= to test).
 
 [[assets/dp.png]]
 
-* Xdialog
+** Xdialog
 
 On X using Xdialog.
 
 [[assets/xp.png]]
 
-* TODO Todo's
+** TODO Todo's
   - [ ] Encryption
   - [ ] Clipboard
   - [X] Modularize UI usage depending on the environment.
