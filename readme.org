@@ -1,7 +1,9 @@
 * bashpass
 
 #+BEGIN_VERSE
-password generator, storage, reference for the terminal.
+
+  password generator, storage, reference for the terminal.
+
 #+END_VERSE
 
 * Use case
@@ -29,9 +31,9 @@ On X using Xdialog.
 
 [[assets/xp.png]]
 
-* TODO Todo's [1/3]
-  - [ ] Encryption
-  - [ ] Clipboard
-  - [X] Modularize UI usage depending on the environment. [2/2]
-    - [X] GUI's based on availability
-    - [X] GUI/TUI based on X
+- TODO Todo's
+  - [] Encryption
+  - [] Clipboard
+  - [x] Modularize UI usage depending on the environment.
+    - [x] GUI's based on availability
+    - [x] GUI/TUI based on X
