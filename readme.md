@@ -25,7 +25,7 @@ password generator, storage, reference for the terminal.
 ## TODOS
 
  * [ ] Encryption
- * [ ] Clipboard
+ * [ ] ~~Clipboard~~ 
  * [x] Modularize UI usage depending on the environment.
 
    * [x] GUI's based on availability
