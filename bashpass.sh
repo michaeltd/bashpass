@@ -2,7 +2,7 @@
 #
 # bashpass.sh Xdialog/dialog/terminal assisted password management.
 
-declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})" 
+declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
 declare DB="${1:-git.db3}" ACT="ac"
 declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
 
@@ -19,6 +19,15 @@ elif [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check f
   declare DIALOG=$(which Xdialog) L="30" C="60"
 elif [[ -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
   declare DIALOG=$(which dialog) L="0" C="0"
+fi
+
+# Check for fav. iface
+if [[ "${2}" == "xdialog" && -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+    declare DIALOG=$(which Xdialog) L="30" C="60"
+elif [[ "${2}" == "dialog" && -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
+    declare DIALOG=$(which dialog) L="0" C="0"
+elif [[ "${2}" == "bash" ]]; then
+    unset DIALOG
 fi
 
 export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
@@ -144,7 +153,7 @@ function update {
     if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
       return
     fi
-  else 
+  else
     read -p "Select an id to update (empty to cancel): " ID
     echo "${ID}" > ${TF}
   fi
@@ -185,13 +194,13 @@ function import {
     ${DIALOG} --backtitle ${SBN} --title "Enter a csv file:" --fselect "${SDN}/" $L $C 2> ${TF}
     (( ${?} != ${DIALOG_OK} )) && return
     CSVF=$(cat ${TF})
-  else 
+  else
     read -p "Enter a csv file: " CSVF;
     echo "${CSVF}" > ${TF}
   fi
   ${CCM} ".import ${CSVF} ${ACT}" 2> ${TF}
   if (( ${?} != 0 )); then
-    if [[ -n "${DIALOG}" ]]; then 
+    if [[ -n "${DIALOG}" ]]; then
       ${DIALOG} --backtitle ${SBN} --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
     fi
     echo "Error: $(cat ${TF})"
