@@ -8,11 +8,11 @@ declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}
 
 cd ${SDN}
 
-# Prerequisits
+# Prerequisites
 if [[ ! -x "$(which sqlite3 2> /dev/null)" ]]; then
   printf "Need sqlite3, install sqlite3 and try again.\n"
   exit 1
-elif [[ ! $(${DCM} "select * from ${ACT};" 2> /dev/null) ]]; then
+elif [[ ! $(${DCM} "SELECT * FROM ${ACT};" 2> /dev/null) ]]; then
   printf "Need a working db to function.\nRun 'sqlite3 my.db3 < ${ACT}.sql && ${SBN} my.db3'\nfrom this directory: $(pwd)\n"
   exit 1
 elif [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
@@ -63,21 +63,21 @@ function gpw {  # single/double quotes for strings, vertical bar for sqlite outp
 }
 
 function rids {
-  echo $(${DCM} "select rowid from ${ACT} order by rowid asc;")
+  echo $(${DCM} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
 }
 
 function maxid {
-  echo $(${DCM} "select max(rowid) from ${ACT};")
+  echo $(${DCM} "SELECT MAX(rowid) FROM ${ACT};")
 }
 
 function rcount {
-  echo $(${DCM} "select count(rowid) from ${ACT};")
+  echo $(${DCM} "SELECT COUNT(rowid) FROM ${ACT};")
 }
 
 function brl {
   for R in $(rids); do
-    local DM=$(${DCM} "select dm from ${ACT} where rowid = '${R}';"|sed 's/ /-/g')
-    local EM=$(${DCM} "select em from ${ACT} where rowid = '${R}';"|sed 's/ /-/g')
+    local DM=$(${DCM} "SELECT dm FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
+    local EM=$(${DCM} "SELECT em FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
     local RL+="${R} ${DM:-null}:${EM:-null} off "
   done
   echo ${RL[@]}
@@ -112,9 +112,9 @@ function create {
     done
   fi
 
-  ${DCM} "insert into ${ACT} values('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
+  ${DCM} "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
 
-  ${RCM} "select rowid as id,* from ${ACT} where id = $(( ++MAXID ));" > ${TF}
+  ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > ${TF}
 
   if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
     ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
@@ -136,7 +136,7 @@ function retrieve {
 
   DM=$(cat ${TF})
 
-  ${RCM} "select rowid as id,* from ${ACT} where dm like '%${DM}%';" > ${TF}
+  ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > ${TF}
 
   if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
     ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
@@ -158,11 +158,11 @@ function update {
     echo "${ID}" > ${TF}
   fi
 
-  ${DCM} "update ${ACT} set pw = '$(gpw)' where rowid = '$(cat ${TF})';"
+  ${DCM} "UPDATE ${ACT} SET pw = '$(gpw)' WHERE rowid = '$(cat ${TF})';"
 
   ID=$(cat ${TF})
 
-  ${RCM} "select rowid as id,* from ${ACT} where id = '${ID}';" > ${TF}
+  ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
 
   if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
     ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
@@ -184,7 +184,7 @@ function delete {
     read -p "Select an id to delete (empty to cancel): " ID
     echo "${ID}" > ${TF}
   fi
-  ${DCM} "delete from ${ACT} where rowid = '$(cat ${TF})';"
+  ${DCM} "DELETE FROM ${ACT} WHERE rowid = '$(cat ${TF})';"
   [[ -n "${DIALOG}" ]] && ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C || echo "Account ID #$ID deleted."
 }
 
@@ -207,7 +207,7 @@ function import {
     return
   fi
 
-  ${RCM} "select rowid as id,* from ${ACT} where rowid > ${MAXID};" > ${TF}
+  ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > ${TF}
 
   if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
     ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
