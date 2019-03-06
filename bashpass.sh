@@ -26,7 +26,7 @@ elif [[ ! -x "$(which gpg2 2> /dev/null)" ]]; then
 elif [[ ! -f "${DB}.asc" ]]; then
     printf "Need an encrypted db3 file to work with.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
-elif ! gpg2 --batch --yes --quiet --decrypt --default-recipient-self --output "${DB}" "${DB}.asc"; then
+elif ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     printf "Decryption failed.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
 elif [[ ! $(${DCM} "SELECT * FROM ${ACT};" 2> /dev/null) ]]; then
@@ -56,8 +56,8 @@ declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
 
 function clean_up {
     rm -f "${TF}"
-    gpg2 --batch --yes --quiet --encrypt --default-recipient-self --output "${DB}.asc" "${DB}"
-    shred --zero --remove --iterations=300 "${DB}"|| rm -f "${DB}"
+    gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+    shred --verbose --zero --remove --iterations=30 "${DB}"|| rm -f "${DB}"
     rm -f "${MUTEX}"
 }
 

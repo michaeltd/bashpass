@@ -26,8 +26,8 @@ password generator, storage, reference for the terminal and/or X.
 
 ### First time use:
 
- 1. Easy: Run [first_use.sh](first_use.sh) from [this](./) directory.
- 2. Manual: You'll need to build git.db3 like so: ```sqlite3 git.db3 < ac.sql``` and encrypt it like so: ```gpg2 --encrypt --default-recipient-self --output git.db3.asc git.db3```
+ 1. Easy: Run [first-use.sh](first-use.sh) from [this](./) directory.
+ 2. Manual: You'll need to build git.db3 like so: ```sqlite3 git.db3 < ac.sql``` and encrypt it like so: ```gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3```
 
 All relevant files must reside in [this](./) directory.
 
@@ -35,9 +35,11 @@ All relevant files must reside in [this](./) directory.
 
 For subsequent uses just fire up the script directly: ```bashpass.sh git.db3```
 
-### NOTE
+### NOTES
 
 You can only have one instance of [bashpass.sh](bashpass.sh) running at any given time.
+
+Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [bashpass-launcher.sh](bashpass-launcher.sh) if not (DE hotkey for example).
 
 ### Security concern
 
@@ -45,7 +47,7 @@ A potentially misplaced driver if examined by a file recovery tool could reveal 
 
 ### Workaround
 
-shred instead of rm unencrypted .db3 files upon trapped exit signals.
+by shredding along with removing unencrypted .db3 files upon trapped exit signals.
 
 ## TODOS
 

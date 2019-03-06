@@ -9,4 +9,5 @@
 !license
 !readme.md
 !test.csv
-!first_use.sh
+!first-use.sh
+!bashpass-launcher.sh
