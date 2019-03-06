@@ -57,7 +57,7 @@ declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
 function clean_up {
     rm -f "${TF}"
     gpg2 --batch --yes --quiet --encrypt --default-recipient-self --output "${DB}.asc" "${DB}"
-    rm -f "${DB}"
+    shred --zero --remove --iterations=300 "${DB}"|| rm -f "${DB}"
     rm -f "${MUTEX}"
 }
 

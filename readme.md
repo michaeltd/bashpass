@@ -1,6 +1,6 @@
 # bashpass
 
-password generator, storage, reference for the terminal.
+password generator, storage, reference for the terminal and/or X.
 
 ## Use case
 
@@ -38,6 +38,14 @@ For subsequent uses just fire up the script directly: ```bashpass.sh git.db3```
 ### NOTE
 
 You can only have one instance of [bashpass.sh](bashpass.sh) running at any given time.
+
+### Security concern
+
+A potentially misplaced driver if examined by a file recovery tool could reveal unencrypted version of password database files (.db3).
+
+### Workaround
+
+shred instead of rm unencrypted .db3 files upon trapped exit signals.
 
 ## TODOS
 
