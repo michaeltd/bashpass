@@ -2,21 +2,44 @@
 #
 # bashpass.sh Xdialog/dialog/terminal assisted password management.
 
+# Process optional arguments
+while [[ -n "${1}" ]]; do
+    case "${1}" in
+        "-db") shift
+            declare DB="${1}"
+            shift;;
+        *.db3)
+            declare DB="${1}"
+            shift;;
+        "-ui") shift
+            declare UI="${1}"
+            shift;;
+        "-help") shift
+            printf "Optional command line arguments: bashpass.sh [-db some.db3] [-ui Xdialog|dialog|terminal] (for ui testing) [-help] (for this message)";;
+        *) printf "Unrecognized option: ${1}"
+            printf "Optional command line arguments: bashpass.sh [-db some.db3] [-ui Xdialog|dialog|terminal] (for ui testing) [-help] (for this message)"
+            shift;;
+    esac
+done
+
 declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
-declare DB="${1:-git.db3}" ACT="ac"
+declare DB="${DB:-git.db3}" ACT="ac"
 declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
-declare MUTEX="${SDN}/.${SBN}.MUTEX"
+export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
+declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
+declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
+declare TF="${SDN}/.deleteme.${RANDOM}.${$}" MUTEX="${SDN}/.${SBN}.MUTEX"
 
 cd ${SDN}
 
-# Prerequisites
-if [[ -f "${MUTEX}" ]]; then
-    printf "You can only have one instance of ${SBN}.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
-    exit 1
-else
-    touch "${MUTEX}"
-fi
+function clean_up {
+    gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+    shred --verbose --zero --remove --iterations=30 "${DB}"|| rm -f "${DB}"
+    rm -f "${MUTEX}"
+    rm -f "${TF}"
+}
 
+# Dependencies or die.
 if [[ ! -x "$(which sqlite3 2> /dev/null)" ]]; then
     printf "Need sqlite3, install sqlite3 and try again.\n"
     exit 1
@@ -26,49 +49,52 @@ elif [[ ! -x "$(which gpg2 2> /dev/null)" ]]; then
 elif [[ ! -f "${DB}.asc" ]]; then
     printf "Need an encrypted db3 file to work with.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
-elif ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
+fi
+
+# No mutex or die.
+if [[ -f "${MUTEX}" ]]; then
+    printf "You can only have one instance of ${SBN}.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
+    exit 1
+fi
+
+# Decrypt db3 setup trap and mutex or die.
+if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     printf "Decryption failed.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
-elif [[ ! $(${DCM} "SELECT * FROM ${ACT};" 2> /dev/null) ]]; then
+else
+    touch "${MUTEX}"
+    # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
+    trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
+fi
+
+# SQL or die.
+if [[ ! $(${DCM} "SELECT * FROM ${ACT};" 2> /dev/null) ]]; then
     printf "Need a working db to function.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
-elif [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+fi
+
+# Pick a default available UI ...
+if [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     declare DIALOG=$(which Xdialog) L="30" C="60"
 elif [[ -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
     declare DIALOG=$(which dialog) L="0" C="0"
 fi
 
-# Check for fav. iface
-if [[ "${2}" == "Xdialog" && -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+# ... and try to accommodate optional preference.
+if [[ "${UI}" == "Xdialog" && -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     declare DIALOG=$(which Xdialog) L="30" C="60"
-elif [[ "${2}" == "dialog" && -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
+elif [[ "${UI}" == "dialog" && -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
     declare DIALOG=$(which dialog) L="0" C="0"
-elif [[ "${2}" == "bash" ]]; then
+elif [[ "${UI}" == "terminal" ]]; then
     unset DIALOG
 fi
 
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
-
-declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
-declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
-
-declare TF="${SDN}/.deleteme.${RANDOM}.${$}"
-
-function clean_up {
-    rm -f "${TF}"
-    gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-    shred --verbose --zero --remove --iterations=30 "${DB}"|| rm -f "${DB}"
-    rm -f "${MUTEX}"
-}
-
-trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
-
+# Build menus and help messages.
 declare -a TUI_OPS=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
 declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
 declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
 declare -a DESC=( "gathter details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
-# Various Arrays
 declare -a TUI_MENU=() # PRompt
 declare -a TUI_HMSG="\nUsage: ${SBN} [dbfile.db3]\n\n" # Terminal Help Message
 declare -a GUI_MENU=() # Menu Text
