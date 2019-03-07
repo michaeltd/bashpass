@@ -22,7 +22,7 @@ password generator, storage, reference for the terminal and/or X.
 <p align="center">On X using Xdialog.</p>
 <p align="center"><a href="assets/xp.png"><img alt="dialogpass" src="assets/xp.png"></a></p>
 
-## Usage
+## Usage ```bashpass.sh [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]```
 
 ### First time only:
 
@@ -44,7 +44,7 @@ For subsequent uses just fire up the script directly: ```bashpass.sh git.db3``` 
 
 ### Optional command line arguments
 
-If you'd like to test other UI options and take advantage of optional arguments, try: ```bashpass.sh [-db some.db3] [-ui Xdialog|dialog|terminal] [-help]```
+If you'd like to test other UI options try: ```bashpass.sh [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]```
 
 ### NOTES
 

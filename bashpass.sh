@@ -14,10 +14,7 @@ while [[ -n "${1}" ]]; do
         "-ui") shift
             declare UI="${1}"
             shift;;
-        "-help") shift
-            printf "Optional command line arguments: bashpass.sh [-db some.db3] [-ui Xdialog|dialog|terminal] (for ui testing) [-help] (for this message)";;
         *) printf "Unrecognized option: ${1}"
-            printf "Optional command line arguments: bashpass.sh [-db some.db3] [-ui Xdialog|dialog|terminal] (for ui testing) [-help] (for this message)"
             shift;;
     esac
 done
@@ -39,25 +36,13 @@ function clean_up {
     rm -f "${TF}"
 }
 
-# Dependencies or die.
-if [[ ! -x "$(which sqlite3 2> /dev/null)" ]]; then
-    printf "Need sqlite3, install sqlite3 and try again.\n"
-    exit 1
-elif [[ ! -x "$(which gpg2 2> /dev/null)" ]]; then
-    printf "Need gpg2, install gpg2 and try again.\n"
-    exit 1
-elif [[ ! -f "${DB}.asc" ]]; then
-    printf "Need an encrypted db3 file to work with.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
-    exit 1
-fi
-
 # No mutex or die.
 if [[ -f "${MUTEX}" ]]; then
     printf "You can only have one instance of ${SBN}.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
 fi
 
-# Decrypt db3 setup trap and mutex or die.
+# Decrypt db3, setup trap and mutex or die.
 if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     printf "Decryption failed.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
@@ -96,9 +81,9 @@ declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "I
 declare -a DESC=( "gathter details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
 declare -a TUI_MENU=() # PRompt
-declare -a TUI_HMSG="\nUsage: ${SBN} [dbfile.db3]\n\n" # Terminal Help Message
+declare -a TUI_HMSG="\nUsage: ${SBN} [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]\n\n" # Terminal Help Message
 declare -a GUI_MENU=() # Menu Text
-declare -a GUI_HMSG="\nUsage: ${SBN} [dbfile.db3]\n\n" # Help Message
+declare -a GUI_HMSG="\nUsage: ${SBN} [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]\n\n" # Help Message
 for ((x=0;x<${#TUI_OPS[@]};x++)); do
     TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
     TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
