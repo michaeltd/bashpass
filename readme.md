@@ -24,24 +24,29 @@ password generator, storage, reference for the terminal and/or X.
 
 ## Usage
 
-### First time use:
+### First time only:
 
- 1. Easy: Run [first-use.sh](first-use.sh) from [this](./) directory.
- 2. Manual: You'll need to build git.db3 like so: ```sqlite3 git.db3 < ac.sql``` and encrypt it like so: ```gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3```
+ * If you don't already have one, make a default [gpg2 keyring](https://www.gnupg.org/gph/en/manual/c14.html).
 
-Reason being sqlite3 *.db3 files you'll work with need to be encrypted to your own keyring(/s).
+ * Make and encrypt a demo .db3 file.
 
-All relevant files must reside in [this](./) directory.
+   * The easy way: Run [first-use.sh](first-use.sh) from [bashpass.sh](bashpass.sh)'s directory.
+
+   * The hard way: You'll need to build git.db3 like so: ```sqlite3 git.db3 < ac.sql``` and encrypt it like so: ```gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3```
+
+    Reason being sqlite3 *.db3 files you'll work with, needs to be encrypted to your own keyring(/s).
+
+    All relevant files must reside in [bashpass.sh](bashpass.sh)'s directory.
 
 ### Subsequent uses:
 
-For subsequent uses just fire up the script directly: ```bashpass.sh git.db3```
+For subsequent uses just fire up the script directly: ```bashpass.sh git.db3``` from a terminal, or ```bashpass-launcher.sh git.db3``` from X, launcher application, DE hotkey, menu, etc.
 
 ### NOTES
 
  1. You can only have one instance of [bashpass.sh](bashpass.sh) running at any given time for obvious reasons.
 
-     Internally enforced by a simple MUTEX implementation.
+    Internally enforced by a simple MUTEX implementation.
 
  2. Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [bashpass-launcher.sh](bashpass-launcher.sh) if not (DE hotkey for example).
 
