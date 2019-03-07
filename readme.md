@@ -44,7 +44,7 @@ First time use, on the other hand ...
 
 ### Subsequent uses:
 
-For subsequent uses just fire up the script directly: ```bashpass.sh git.db3``` from a terminal, or ```bashpass-launcher.sh git.db3``` from X, launcher application, DE hotkey, menu, etc.
+For subsequent uses just fire up the script directly: ```bashpass.sh git.db3``` from a terminal, or ```launcher.sh git.db3``` from X, launcher application, DE hotkey, menu, etc.
 
 ### Optional command line arguments
 
@@ -56,7 +56,7 @@ If you'd like to test other UI options try: ```bashpass.sh [Xdialog|dialog|termi
 
     Internally enforced by a simple MUTEX implementation.
 
- 2. Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [bashpass-launcher.sh](bashpass-launcher.sh) if no such option available. (DE hotkey for example).
+ 2. Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [launcher.sh](launcher.sh) if no such option available. (DE hotkey for example).
 
     For SQLite session availability mainly but also for troubleshooting reason.
 

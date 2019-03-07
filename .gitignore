@@ -8,6 +8,6 @@
 !git.db3
 !license
 !readme.md
-!test.csv
+!import.csv
 !first-use.sh
-!bashpass-launcher.sh
+!launcher.sh
