@@ -3,16 +3,11 @@
 # bashpass.sh Xdialog/dialog/terminal assisted password management.
 
 # Process optional arguments
-while [[ -n "${1}" ]]; do
+while [[ -n ${1} ]]; do
     case "${1}" in
-        "-db") shift
-            declare DB="${1}"
+        *.db3) declare DB="${1}"
             shift;;
-        *.db3)
-            declare DB="${1}"
-            shift;;
-        "-ui") shift
-            declare UI="${1}"
+        Xdialog|dialog|terminal) declare UI="${1}"
             shift;;
         *) printf "Unrecognized option: ${1}"
             shift;;
@@ -81,9 +76,9 @@ declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "I
 declare -a DESC=( "gathter details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
 
 declare -a TUI_MENU=() # PRompt
-declare -a TUI_HMSG="\nUsage: ${SBN} [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]\n\n" # Terminal Help Message
+declare -a TUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Terminal Help Message
 declare -a GUI_MENU=() # Menu Text
-declare -a GUI_HMSG="\nUsage: ${SBN} [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]\n\n" # Help Message
+declare -a GUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Help Message
 for ((x=0;x<${#TUI_OPS[@]};x++)); do
     TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
     TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
@@ -199,7 +194,7 @@ function update {
     ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
 
     if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
+        ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2> /dev/null
     else
         cat ${TF}|${PAGER}
     fi

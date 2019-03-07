@@ -11,11 +11,11 @@ password generator, storage, reference for the terminal and/or X.
   *    //  import a csv file.
 
 ### <p align="center">[bash](bashpass.sh)</p>
-<p align="center">Terminal only. (bashpass.sh -ui terminal)</p>
+<p align="center">Terminal only. (bashpass.sh terminal)</p>
 <p align="center"><a href="assets/bp.png"><img alt="bashpass" src="assets/bp.png"></a></p>
 
 ### <p align="center">[dialog](bashpass.sh)</p>
-<p align="center">Without X using dialog. (bashpass.sh -ui dialog)</p>
+<p align="center">Without X using dialog. (bashpass.sh dialog)</p>
 <p align="center"><a href="assets/dp.png"><img alt="dialogpass" src="assets/dp.png"></a></p>
 
 ### <p align="center">[Xdialog](bashpass.sh)</p>
@@ -24,7 +24,7 @@ password generator, storage, reference for the terminal and/or X.
 
 ## Usage
 
-Normal use is: ```bashpass.sh [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]```.
+Normal use is: ```bashpass.sh [some.db3] [Xdialog|dialog|terminal]```.
 
 First time use, on the other hand ...
 
@@ -48,7 +48,7 @@ For subsequent uses just fire up the script directly: ```bashpass.sh git.db3``` 
 
 ### Optional command line arguments
 
-If you'd like to test other UI options try: ```bashpass.sh [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]```
+If you'd like to test other UI options try: ```bashpass.sh [Xdialog|dialog|terminal]```
 
 ### NOTES
 
@@ -64,7 +64,7 @@ If you'd like to test other UI options try: ```bashpass.sh [[some.db3]|[-db some
 
 ### Security concerns
 
-This application assumes that you can secure the safety of your own computer at least for the duration of its operation.
+This application assumes you can secure the safety of your computer at least for the duration of its operation.
 
 A potentially misplaced hard drive if examined by a file recovery tool could reveal unencrypted version of password database files (.db3).
 
