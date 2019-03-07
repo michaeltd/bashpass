@@ -22,7 +22,11 @@ password generator, storage, reference for the terminal and/or X.
 <p align="center">On X using Xdialog.</p>
 <p align="center"><a href="assets/xp.png"><img alt="dialogpass" src="assets/xp.png"></a></p>
 
-## Usage ```bashpass.sh [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]```
+## Usage
+
+Normal use is: ```bashpass.sh [[some.db3]|[-db some.db3]] [-ui Xdialog|dialog|terminal]```.
+
+First time use, on the other hand ...
 
 ### First time only:
 
@@ -60,7 +64,7 @@ If you'd like to test other UI options try: ```bashpass.sh [[some.db3]|[-db some
 
 ### Security concerns
 
-This application takes for granted that you can secure the safety of your computer at least for the duration of its operation.
+This application assumes that you can secure the safety of your own computer at least for the duration of its operation.
 
 A potentially misplaced hard drive if examined by a file recovery tool could reveal unencrypted version of password database files (.db3).
 
