@@ -4,8 +4,10 @@ SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)"
 
 cd ${SDN}
 
-sqlite3 git.db3 < ac.sql
+DB="${1:-git.db3}"
 
-gpg2 --batch --yes --quiet --default-recipient-self --output git.db3.asc --encrypt git.db3
+sqlite3 "${DB}" < ac.sql
 
-./bashpass.sh
+gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+
+./bashpass.sh "${DB}"
