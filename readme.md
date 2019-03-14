@@ -36,7 +36,7 @@ First time use, on the other hand ...
 
    * The easy way: Run ```install.sh git.db3``` from [bashpass.sh](bashpass.sh)'s directory. It'll create git.db3 for you, encrypt it to your personal keyring and add a comfy bp-launch.sh link in your ```${HOME}/bin``` folder
 
-   * The hard way: You'll need to build git.db3 like so: ```sqlite3 git.db3 < ac.sql``` and encrypt it like so: ```gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3```, finally link bp-launch.sh somewhere in your path (eg: ```~/bin/bp-launch.sh```) and make sure ```~/bin``` is in your ```${PATH}```.
+   * The hard way: You'll need to build git.db3 like so: ```sqlite3 git.db3 < ac.sql``` and encrypt it like so: ```gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3```, finally link bp-launch.sh somewhere convenient eg: ```~/bin/bp-launch.sh``` and make sure ```~/bin``` is in your ```${PATH}```.
 
     Reason being SQLite3 .db3 file you'll work with, needs to be encrypted to your own keyring(/s).
 
