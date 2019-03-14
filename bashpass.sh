@@ -1,28 +1,37 @@
 #!/usr/bin/env bash
 #
-# bashpass.sh Xdialog/dialog/terminal assisted password management.
+# bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
 # Process optional arguments
 while [[ -n ${1} ]]; do
     case "${1}" in
-        *.db3) declare DB="${1}"
-            shift;;
-        Xdialog|dialog|terminal) declare UI="${1}"
-            shift;;
-        *) printf "Unrecognized option: ${1}"
-            shift;;
+        *.db3) declare DB="${1}"; shift;;
+        Xdialog|dialog|terminal) declare UI="${1}"; shift;;
+        *) printf "Unrecognized option: ${1}"; shift;;
     esac
 done
 
-declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd)" SBN="$(basename ${BASH_SOURCE[0]})"
-declare DB="${DB:-git.db3}" ACT="ac"
-declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
+# Xdialog/dialog
 export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
 declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
-declare TF="${SDN}/.deleteme.${RANDOM}.${$}" MUTEX="${SDN}/.${SBN}.MUTEX"
+
+# link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
+if [[ -L "${BASH_SOURCE[0]}" ]]; then
+    declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)" SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
+    declare SFN=${SDN}/${SBN}
+else
+    declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd -P)" SBN="$(basename ${BASH_SOURCE[0]})"
+    declare SFN="${SDN}/${SBN}"
+fi
 
 cd ${SDN}
+
+declare TF="${SDN}/.deleteme.${RANDOM}.${$}" MUTEX="${SFN}.MUTEX"
+
+# SQLite
+declare DB="${DB:-git.db3}" ACT="ac"
+declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
 
 function clean_up {
     gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
@@ -48,7 +57,7 @@ else
 fi
 
 # SQL or die.
-if [[ ! $(${DCM} "SELECT * FROM ${ACT};" 2> /dev/null) ]]; then
+if ! ${DCM} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
     printf "Need a working db to function.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
     exit 1
 fi

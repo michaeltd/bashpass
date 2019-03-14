@@ -9,5 +9,5 @@
 !license
 !readme.md
 !import.csv
-!first-use.sh
-!launcher.sh
+!install.sh
+!bp-launch.sh
