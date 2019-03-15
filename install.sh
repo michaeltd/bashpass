@@ -22,7 +22,8 @@ fi
 
 mkdir ${HOME}/bin
 
-printf "export PATH+=\":${HOME}/bin\"\n" >> ~/.bashrc
+# printf "export PATH+=\":${HOME}/bin\"\n" >> ~/.bashrc
+printf " please include a line like this \n 'export PATH+=\":${HOME}/bin\"',\n in your ~/.bashrc equivalent shell initialization file.\n"
 
 export PATH+=":${HOME}/bin"
 

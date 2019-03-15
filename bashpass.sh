@@ -7,7 +7,7 @@ while [[ -n ${1} ]]; do
     case "${1}" in
         *.db3) declare DB="${1}"; shift;;
         Xdialog|dialog|terminal) declare UI="${1}"; shift;;
-        *) printf "Unrecognized option: ${1}"; shift;;
+        *) printf "Unrecognized option: ${red}${1}${reset}"; shift;;
     esac
 done
 
@@ -42,13 +42,13 @@ function clean_up {
 
 # No mutex or die.
 if [[ -f "${MUTEX}" ]]; then
-    printf "You can only have one instance of ${SBN}.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
+    printf "${bold}You can only have one instance of ${SBN}.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n"
     exit 1
 fi
 
 # Decrypt db3, setup trap and mutex or die.
 if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
-    printf "Decryption failed.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
+    printf "${bold}Decryption failed.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n"
     exit 1
 else
     touch "${MUTEX}"
@@ -58,7 +58,7 @@ fi
 
 # SQL or die.
 if ! ${DCM} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-    printf "Need a working db to function.\nFollow the instructions from here:\nhttps://github.com/michaeltd/bashpass\n"
+    printf "${bold}Need a working db to function.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n"
     exit 1
 fi
 
@@ -88,7 +88,7 @@ declare -a TUI_MENU=() # PRompt
 declare -a TUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Terminal Help Message
 declare -a GUI_MENU=() # Menu Text
 declare -a GUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Help Message
-for ((x=0;x<${#TUI_OPS[@]};x++)); do
+for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
     TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
     TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
     GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
