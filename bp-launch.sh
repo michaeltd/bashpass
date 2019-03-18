@@ -2,7 +2,7 @@
 #
 # bp-launch.sh - launch bashpass.sh conditionally depending on environment and invocation.
 
-TERMINOLOGY=( "terminology" "--hold" "-e" ) URXVT=( "urxvt" "-hold" "-e" ) XTERM=( "xterm" "-hold" "-e" )
+TERMINOLOGY=( "terminology" "--hold" "-e" ) URXVT=( "urxvt" "-depth" "32" "-bg" "rgba:0000/0000/0000/aaaa" "-hold" "-e" ) XTERM=( "xterm" "-hold" "-e" )
 TERMS=( TERMINOLOGY[@] URXVT[@] XTERM[@] )
 
 # link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.

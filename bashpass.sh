@@ -2,20 +2,10 @@
 #
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
-# Process optional arguments
-while [[ -n ${1} ]]; do
-    case "${1}" in
-        *.db3) declare DB="${1}"; shift;;
-        Xdialog|dialog|terminal) declare UI="${1}"; shift;;
-        *) printf "Unrecognized option: ${red}${1}${reset}"; shift;;
-    esac
-done
-
 # Xdialog/dialog
 export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
 declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
-
 # link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
 if [[ -L "${BASH_SOURCE[0]}" ]]; then
     declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)" SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
@@ -24,10 +14,19 @@ else
     declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd -P)" SBN="$(basename ${BASH_SOURCE[0]})"
     declare SFN="${SDN}/${SBN}"
 fi
+# Temp files
+declare TF="${SDN}/.deleteme.${RANDOM}.${$}" MUTEX="${SFN}.MUTEX"
+
+# Process optional arguments
+while [[ -n ${1} ]]; do
+    case "${1}" in
+        *.db3) declare DB="${1}"; shift;;
+        Xdialog|dialog|terminal) declare UI="${1}"; shift;;
+        *) printf "Unrecognized option: ${red}${1}${reset}" >&2; shift;;
+    esac
+done
 
 cd ${SDN}
-
-declare TF="${SDN}/.deleteme.${RANDOM}.${$}" MUTEX="${SFN}.MUTEX"
 
 # SQLite
 declare DB="${DB:-git.db3}" ACT="ac"
@@ -42,13 +41,13 @@ function clean_up {
 
 # No mutex or die.
 if [[ -f "${MUTEX}" ]]; then
-    printf "${bold}You can only have one instance of ${SBN}.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n"
+    printf "${bold}You can only have one instance of ${SBN}.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
     exit 1
 fi
 
 # Decrypt db3, setup trap and mutex or die.
 if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
-    printf "${bold}Decryption failed.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n"
+    printf "${bold}Decryption failed.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
     exit 1
 else
     touch "${MUTEX}"
@@ -58,7 +57,7 @@ fi
 
 # SQL or die.
 if ! ${DCM} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-    printf "${bold}Need a working db to function.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n"
+    printf "${bold}Need a working db to function.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
     exit 1
 fi
 
@@ -222,7 +221,7 @@ function delete {
         echo "${ID}" > ${TF}
     fi
     ${DCM} "DELETE FROM ${ACT} WHERE rowid = '$(cat ${TF})';"
-    [[ -n "${DIALOG}" ]] && ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID #$ID deleted." $L $C || echo "Account ID #$ID deleted."
+    [[ -n "${DIALOG}" ]] && ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID: $ID deleted." $L $C || printf "Account ID: $ID deleted.\n"
 }
 
 function import {
@@ -283,7 +282,7 @@ for ((;;)) {
                 "${GUI_OPS[5]}"|"5") ${RCM} ;;
                 "${GUI_OPS[6]}"|"6") usage ;;
                 "${GUI_OPS[7]}"|"7") exit ;;
-                *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" ;;
+                *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" >&2;;
             esac ;;
         ${DIALOG_CANCEL}) exit ;;
         ${DIALOG_HELP}) usage ;;
