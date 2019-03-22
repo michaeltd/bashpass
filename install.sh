@@ -15,10 +15,18 @@ cd ${SDN}
 
 DB="${1:-git.db3}"
 
-# if [[ -x "$(command -v bp-launch.sh)" || -L "${HOME}/bin/bp-launch.sh" || -f "${DB}.asc" ]]; then
-#     printf " ${SBN} has done its part.\n bp-launch.sh is an executable in your path\n and/or ${DB}.asc is in place.\n Troubleshoot manually by following directions from here:\n http://github.com/michaeltd/bashpass\n" >&2
-#     exit 1
-# fi
+printf "  This script will:\n \
+  1. Make a \${HOME}/bin dir if there isn't one. \n \
+  2. Update your \$PATH env var with your ~/bin dir in ~/.bashrc \n \
+  3. Update your current \$PATH \n \
+  4. Link bp-launch.sh in ~/bin \n \
+  5. Make a ${DB} file ... \n \
+  6. encrypt it to ${DB}.asc \n \
+  7. Execute bp-launch.sh ${DB} \n"
+
+read -p "Continue? [Y/n]:" resp
+
+[[ ${resp:-y} == [Nn]* ]] && exit 1
 
 mkdir ${HOME}/bin
 
