@@ -15,6 +15,11 @@ cd ${SDN}
 
 DB="${1:-git.db3}"
 
+if [[ "${DB}" != "*.db3" ]]; then
+    DB+=".db3"
+fi
+
+
 printf "  This script will:\n \
   1. Make a \${HOME}/bin dir if there isn't one. \n \
   2. Update your \$PATH env var with your ~/bin dir in ~/.bashrc \n \
