@@ -14,8 +14,6 @@ else
     declare SFN="${SDN}/${SBN}"
 fi
 
-cd ${SDN}
-
 if [[ -n "${DISPLAY}" ]]; then
     for (( x = 0; x < ${#TERMS[@]}; x++ )); do
         if command -v ${!TERMS[$x]:0:1} &> /dev/null; then
