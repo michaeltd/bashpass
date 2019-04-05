@@ -50,6 +50,16 @@ For subsequent uses just fire up the script directly: ```bashpass.sh git.db3``` 
 
 If you'd like to test other UI options try: ```bashpass.sh [Xdialog|dialog|terminal]```
 
+You can provide an SQLite3 database for use with bashpass.sh / bp-launch.sh.
+
+That db needs to have a ```.db3``` extension and to be encrypted with your personal keyring with an ```.asc``` extension.
+
+The easiest way to do that is by issuing an ```./install.sh example.db3``` command from bashpass's directory.
+
+You'll end up with a example.db3.asc file witch will be usable like so ```bp-launch.sh example.db3```.
+
+Order of arguments is irrelevant.
+
 ### NOTES
 
  1. You can only have one instance of [bashpass.sh](bashpass.sh) running at any given time for obvious reasons.
