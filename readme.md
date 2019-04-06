@@ -66,7 +66,7 @@ The order of arguments is irrelevant. (ie: bashpass.sh test.db3 terminal == bash
 
     Internally enforced by a simple MUTEX implementation.
 
- 2. Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [bp-launch.sh](bp-launch.sh) if no such option available. (DE hotkey for example).
+ 2. Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [bp-launch.sh](bp-launch.sh) if not. (DE hotkey for example).
 
     For SQLite session availability mainly but also for troubleshooting purposes.
 
