@@ -79,7 +79,7 @@ The order of arguments is irrelevant. (ie: bashpass.sh test.db3 terminal == bash
 
 This application assumes you can secure the safety of your computer at least for the duration of its operation.
 
-*.db3 files used by this application get shredded upon trapped exit signals, otherwise a potentially misplaced hard drive if examined by a file recovery tool could reveal unencrypted version of password database files.
+*.db3 files used by this application get shredded upon trapped exit signals, otherwise a file recovery tool could reveal unencrypted versions of them.
 
 ## TODOS
 
