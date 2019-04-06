@@ -66,7 +66,8 @@ The order of arguments is irrelevant. (ie: bashpass.sh test.db3 terminal == bash
 
     Internally enforced by a simple MUTEX implementation.
 
- 2. Consider launching [bashpass.sh](bashpass.sh) with launch from terminal option enabled (where available) and through [bp-launch.sh](bp-launch.sh) if no such option available. (DE hotkey for example).
+ 2. Consider launching [bashpass.sh](bashpass.sh) with l
+ aunch from terminal option enabled (where available) and through [bp-launch.sh](bp-launch.sh) if no such option available. (DE hotkey for example).
 
     For SQLite session availability mainly but also for troubleshooting purposes.
 
@@ -78,11 +79,7 @@ The order of arguments is irrelevant. (ie: bashpass.sh test.db3 terminal == bash
 
 This application assumes you can secure the safety of your computer at least for the duration of its operation.
 
-A potentially misplaced hard drive if examined by a file recovery tool could reveal unencrypted version of password database files (.db3).
-
-### Workarounds
-
-by shredding along with removing unencrypted .db3 files upon trapped exit signals.
+*.db3 files used by this application get shredded upon trapped exit signals, otherwise a potentially misplaced hard drive if examined by a file recovery tool could reveal unencrypted version of password database files.
 
 ## TODOS
 
