@@ -8,58 +8,64 @@ declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HEL
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 # link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
 if [[ -L "${BASH_SOURCE[0]}" ]]; then
-    declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)" SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
-    declare SFN=${SDN}/${SBN}
+    declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)"
+    declare SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
+    declare SFN="${SDN}/${SBN}"
 else
-    declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd -P)" SBN="$(basename ${BASH_SOURCE[0]})"
+    declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd -P)"
+    declare SBN="$(basename ${BASH_SOURCE[0]})"
     declare SFN="${SDN}/${SBN}"
 fi
 # Temp files
-declare TF="${SDN}/.deleteme.${RANDOM}.${$}" MUTEX="${SFN}.MUTEX"
+declare TF="${SDN}/.${RANDOM}.${$}" MUTEX="${SDN}/.${SBN}.MUTEX"
 
 # Process optional arguments
 while [[ -n ${1} ]]; do
     case "${1}" in
-        *.db3) declare DB="${1}"; shift;;
+        *.db3) declare DB="${SDN}/${1}"; shift;;
         Xdialog|dialog|terminal) declare UI="${1}"; shift;;
         *) printf "Unrecognized option: ${red}${1}${reset}" >&2; shift;;
     esac
 done
 
-cd ${SDN}
-
 # SQLite
-declare DB="${DB:-git.db3}" ACT="ac"
+declare DB="${DB:-${SDN}/git.db3}" ACT="ac"
 declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
 
 function clean_up {
     gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-    shred --verbose --zero --remove --iterations=30 "${DB}"|| rm -f "${DB}"
+    shred --verbose --zero --remove --iterations=30 "${DB}"
+    shred --verbose --zero --remove --iterations=30 "${TF}"
     rm -f "${MUTEX}"
-    rm -f "${TF}"
 }
 
 # No mutex or die.
-if [[ -f "${MUTEX}" ]]; then
-    printf "${bold}You can only have one instance of ${SBN}.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-    exit 1
-fi
+function check_mutex {
+    if [[ -f "${MUTEX}" ]]; then
+        printf "${bold}You can only have one instance of ${SBN}.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        return 1
+    fi
+}
 
 # Decrypt db3, setup trap and mutex or die.
-if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
-    printf "${bold}Decryption failed.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-    exit 1
-else
-    touch "${MUTEX}"
-    # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
-    trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
-fi
+function check_decrypt {
+    if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
+        printf "${bold}Decryption failed.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        return 1
+    else
+        touch "${MUTEX}"
+        # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
+        trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
+    fi
+}
 
 # SQL or die.
-if ! ${DCM} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-    printf "${bold}Need a working db to function.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-    exit 1
-fi
+function check_sql {
+    if ! ${DCM} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
+        printf "${bold}Need a working db to function.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        return 1
+    fi
+}
 
 # Pick a default available UI ...
 if [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
@@ -255,37 +261,48 @@ function import {
 }
 
 function usage {
-    [[ -n "${DIALOG}" ]] && ${DIALOG} $([[ ${DIALOG} =~ "Xdialog" ]]&& echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C || printf "${TUI_HMSG[@]}\n"
+    [[ -n "${DIALOG}" ]] && ${DIALOG} $([[ "${DIALOG}" == "Xdialog" ]] && echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C || printf "${TUI_HMSG[@]}\n"
 }
 
-for ((;;)) {
-    if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
-        OFS=$IFS IFS=$'\|'
-        ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GUI_OPS[@]})) ${GUI_MENU} 2> ${TF}
-        ERRLVL=$?
-        IFS=$OFS
-    else # Just terminal menu.
-        printf "${TUI_MENU}"
-        read UI
-        ERRLVL=$?
-        echo ${UI} > ${TF}
-    fi
+main () {
 
-    case ${ERRLVL} in
-        ${DIALOG_OK})
-            case "$(cat ${TF})" in
-                "${GUI_OPS[0]}"|"0") create ;;
-                "${GUI_OPS[1]}"|"1") retrieve ;;
-                "${GUI_OPS[2]}"|"2") update ;;
-                "${GUI_OPS[3]}"|"3") delete ;;
-                "${GUI_OPS[4]}"|"4") import ;;
-                "${GUI_OPS[5]}"|"5") ${RCM} ;;
-                "${GUI_OPS[6]}"|"6") usage ;;
-                "${GUI_OPS[7]}"|"7") exit ;;
-                *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" >&2;;
-            esac ;;
-        ${DIALOG_CANCEL}) exit ;;
-        ${DIALOG_HELP}) usage ;;
-        ${DIALOG_ESC}) exit ;;
-    esac
+    check_mutex || exit $?
+    check_decrypt || exit $?
+    check_sql || exit $?
+
+    for ((;;)) {
+        if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
+            OFS=$IFS IFS=$'\|'
+            ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GUI_OPS[@]})) ${GUI_MENU} 2> ${TF}
+            ERRLVL=$?
+            IFS=$OFS
+        else # Just terminal menu.
+            printf "${TUI_MENU}"
+            read UI
+            ERRLVL=$?
+            echo ${UI} > ${TF}
+        fi
+
+        case ${ERRLVL} in
+            ${DIALOG_OK})
+                case "$(cat ${TF})" in
+                    "${GUI_OPS[0]}"|"0") create ;;
+                    "${GUI_OPS[1]}"|"1") retrieve ;;
+                    "${GUI_OPS[2]}"|"2") update ;;
+                    "${GUI_OPS[3]}"|"3") delete ;;
+                    "${GUI_OPS[4]}"|"4") import ;;
+                    "${GUI_OPS[5]}"|"5") ${RCM} ;;
+                    "${GUI_OPS[6]}"|"6") usage ;;
+                    "${GUI_OPS[7]}"|"7") exit ;;
+                    *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" >&2;;
+                esac ;;
+            ${DIALOG_CANCEL}) exit ;;
+            ${DIALOG_HELP}) usage ;;
+            ${DIALOG_ESC}) exit ;;
+        esac
+    }
 }
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main
+fi
