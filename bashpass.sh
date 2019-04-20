@@ -87,7 +87,7 @@ fi
 declare -a TUI_OPS=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
 declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
 declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
-declare -a DESC=( "gathter details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB}." "Show this message" "Quit this application." )
+declare -a DESC=( "gathter details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB/*\/}." "Show this message" "Quit this application." )
 
 declare -a TUI_MENU=() # PRompt
 declare -a TUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Terminal Help Message
@@ -190,21 +190,43 @@ function retrieve {
 }
 
 function update {
-    local ID
+    local ID ERRLVL PW
 
     if [[ -n "${DIALOG}" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "update accout:" --radiolist "Select an id to update: " $L $C 5 $(brl) 2> ${TF}
-        local ERRLVL=${?} ID="$(cat ${TF})"
+        ERRLVL=${?} ID="$(cat ${TF})"
         if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
             return
         fi
     else
         read -p "Select an id to update (empty to cancel): " ID
-        echo "${ID}" > ${TF}
+        ERRLVL=${?}
+        if (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]]; then
+            return
+        fi
     fi
 
-    ${DCM} "UPDATE ${ACT} SET pw = '$(gpw)' WHERE rowid = '$(cat ${TF})';"
-    ID=$(cat ${TF})
+    if [[ -n "${DIALOG}" ]]; then
+        ${DIALOG} --backtitle ${SBN} --title "password" --inputbox "Enter a password or a password length (1-64) or empty for auto (max length): " $L $C 2> ${TF}
+        ERRLVL=${?} PW="$(cat ${TF})"
+        if (( ${ERRLVL} != ${DIALOG_OK} )); then
+            return
+        fi
+    else
+        read -p "Enter a password or a password length (1-64) or empty for auto (max length): " PW
+        ERRLVL=${?}
+        if (( ${ERRLVL} != ${DIALOG_OK} )); then
+            return
+        fi
+    fi
+
+    if [[ "${PW}" =~ ^[0-9]+$ ]] && (( PW >= 1 && PW <= 64 )); then
+        PW="$(gpw ${PW})"
+    elif [[ -z ${PW} ]]; then
+        PW="$(gpw)"
+    fi
+
+    ${DCM} "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
     ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
 
     if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
