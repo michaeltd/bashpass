@@ -6,13 +6,7 @@ TERMINOLOGY=( "terminology" "--hold" "-e" ) URXVT=( "urxvt" "-depth" "32" "-bg" 
 TERMS=( TERMINOLOGY[@] URXVT[@] XTERM[@] )
 
 # link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
-if [[ -L "${BASH_SOURCE[0]}" ]]; then
-    declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)" SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
-    declare SFN=${SDN}/${SBN}
-else
-    declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd -P)" SBN="$(basename ${BASH_SOURCE[0]})"
-    declare SFN="${SDN}/${SBN}"
-fi
+declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]}))&& pwd -P)" SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"; declare SFN=${SDN}/${SBN}
 
 if [[ -n "${DISPLAY}" ]]; then
     for (( x = 0; x < ${#TERMS[@]}; x++ )); do
