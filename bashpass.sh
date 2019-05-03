@@ -55,7 +55,7 @@ function check_decrypt {
 
 # SQL or die.
 function check_sql {
-    if ! ${DCM} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
+    if ! ${DCM[@]} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
         printf "${bold}Need a working db to function.${reset}\nFollow the instructions from here:\n${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
         return 1
     fi
@@ -94,8 +94,8 @@ for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
     GUI_HMSG+="Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n"
 done
 TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
-TUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} .schema)\n"
-GUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} .schema)\n"
+TUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
+GUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
 
 function gpw {  # single/double quotes for strings, vertical bar for sqlite output field seperator
     #echo $(tr -dc '[:alnum:]~!@#$%^&*()_=+,<.>/?;:[{]}\|-' < /dev/urandom|head -c "${1:-64}")
@@ -105,21 +105,21 @@ function gpw {  # single/double quotes for strings, vertical bar for sqlite outp
 }
 
 function rids {
-    echo $(${DCM} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
+    echo $(${DCM[@]} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
 }
 
 function maxid {
-    echo $(${DCM} "SELECT MAX(rowid) FROM ${ACT};")
+    echo $(${DCM[@]} "SELECT MAX(rowid) FROM ${ACT};")
 }
 
 function rcount {
-    echo $(${DCM} "SELECT COUNT(rowid) FROM ${ACT};")
+    echo $(${DCM[@]} "SELECT COUNT(rowid) FROM ${ACT};")
 }
 
 function brl {
     for R in $(rids); do
-        local DM=$(${DCM} "SELECT dm FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
-        local EM=$(${DCM} "SELECT em FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
+        local DM=$(${DCM[@]} "SELECT dm FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
+        local EM=$(${DCM[@]} "SELECT em FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
         local RL+="${R} ${DM:-null}:${EM:-null} off "
     done
     echo ${RL[@]}
@@ -154,8 +154,8 @@ function create {
         done
     fi
 
-    ${DCM} "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
-    ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > ${TF}
+    ${DCM[@]} "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > ${TF}
 
     if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
@@ -177,7 +177,7 @@ function retrieve {
 
     DM=$(cat ${TF})
 
-    ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > ${TF}
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > ${TF}
 
     if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
@@ -223,8 +223,8 @@ function update {
         PW="$(gpw)"
     fi
 
-    ${DCM} "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
-    ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
+    ${DCM[@]} "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
 
     if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2> /dev/null
@@ -245,7 +245,7 @@ function delete {
         read -p "Select an id to delete (empty to cancel): " ID
         echo "${ID}" > ${TF}
     fi
-    ${DCM} "DELETE FROM ${ACT} WHERE rowid = '$(cat ${TF})';"
+    ${DCM[@]} "DELETE FROM ${ACT} WHERE rowid = '$(cat ${TF})';"
     [[ -n "${DIALOG}" ]] && ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID: $ID deleted." $L $C || printf "Account ID: $ID deleted.\n"
 }
 
@@ -260,7 +260,7 @@ function import {
         echo "${CSVF}" > ${TF}
     fi
 
-    ${CCM} ".import ${CSVF} ${ACT}" 2> ${TF}
+    ${CCM[@]} ".import ${CSVF} ${ACT}" 2> ${TF}
 
     if (( ${?} != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
@@ -270,7 +270,7 @@ function import {
         return
     fi
 
-    ${RCM} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > ${TF}
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > ${TF}
 
     if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
@@ -310,7 +310,7 @@ main () {
                     "${GUI_OPS[2]}"|"2") update ;;
                     "${GUI_OPS[3]}"|"3") delete ;;
                     "${GUI_OPS[4]}"|"4") import ;;
-                    "${GUI_OPS[5]}"|"5") ${RCM} ;;
+                    "${GUI_OPS[5]}"|"5") ${RCM[@]} ;;
                     "${GUI_OPS[6]}"|"6") usage ;;
                     "${GUI_OPS[7]}"|"7") exit ;;
                     *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" >&2;;
