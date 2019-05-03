@@ -49,8 +49,8 @@ function check_decrypt {
     else
         touch "${MUTEX}"
         # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
-            trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
-        fi
+        trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
+    fi
 }
 
 # SQL or die.
@@ -289,7 +289,7 @@ main () {
     check_decrypt || exit $?
     check_sql || exit $?
 
-    for ((;;)) {
+    while true; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS=$IFS IFS=$'\|'
             ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GUI_OPS[@]})) ${GUI_MENU} 2> ${TF}
@@ -319,7 +319,7 @@ main () {
             ${DIALOG_HELP}) usage ;;
             ${DIALOG_ESC}) exit ;;
         esac
-    }
+    done
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
