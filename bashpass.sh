@@ -8,7 +8,7 @@ declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HEL
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
-declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]}))&& pwd -P)" SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"; declare SFN="${SDN}/${SBN}"
+declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)" SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"; declare SFN="${SDN}/${SBN}"
 
 # Temp files
 declare TF="${SDN}/.${RANDOM}.${$}" MUTEX="${SDN}/.${SBN}.MUTEX"
