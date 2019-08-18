@@ -100,9 +100,11 @@ This application assumes you can secure the safety of your computer at least for
    CLOSED: [2019-08-18 Sun 17:57]
 
    1. ✔ [ ] GUI
+
       based on availability
       CLOSED: [2019-08-18 Sun 17:57]
 
    1. ✔ [ ] GUI/TUI
+
       based on X
       CLOSED: [2019-08-18 Sun 17:57]
