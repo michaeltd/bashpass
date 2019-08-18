@@ -6,11 +6,11 @@
 
 ** Use Case
 
-1) I can create passwords
-1)  \slash \slash  recall passwords
-1)  \slash \slash  update passwords
-1)  \slash \slash  delete accounts
-1)  \slash \slash  import a csv file
+1. I can create passwords
+1.  \slash \slash  recall passwords
+1.  \slash \slash  update passwords
+1.  \slash \slash  delete accounts
+1.  \slash \slash  import a csv file
 
 *** [[bashpass.sh][bashpass.sh]] [[assets/bp.png][terminal]]
 [[assets/bp.png]]
@@ -85,16 +85,19 @@ This application assumes you can secure the safety of your computer at least for
 ** Todos
 
 1. ✔ [ ] Encryption
-CLOSED: [2019-08-18 Sun 17:56]
-2. ✘ [ ] +Clipboard+ ...
-more prerequisites, dependencies, eg: ~Xclip~
-Consult your terminal's manual for copy-paste functionality.
-CLOSED: [2019-08-18 Sun 17:56]
-3. ✔ [ ] Modularize UI usage ...
-depending on the environment.
-CLOSED: [2019-08-18 Sun 17:57]
+   CLOSED: [2019-08-18 Sun 17:56]
 
-3.1) ✔ [ ] GUI's based on availability
-CLOSED: [2019-08-18 Sun 17:57]
-3.2) ✔ [ ] GUI/TUI based on X
-CLOSED: [2019-08-18 Sun 17:57]
+1. ✘ [ ] +Clipboard+ ...
+   more prerequisites, dependencies, eg: ~Xclip~
+   Consult your terminal's manual for copy-paste functionality.
+   CLOSED: [2019-08-18 Sun 17:56]
+
+1. ✔ [ ] Modularize UI usage ...
+   depending on the environment.
+   CLOSED: [2019-08-18 Sun 17:57]
+
+   1. ✔ [ ] GUI's based on availability
+   CLOSED: [2019-08-18 Sun 17:57]
+
+   1. ✔ [ ] GUI/TUI based on X
+   CLOSED: [2019-08-18 Sun 17:57]
