@@ -2,7 +2,7 @@
 #+Author: michaeltd
 #+Date: <2019-08-18 Sun>
 
-* bshpass: password generator, storage, reference for the terminal and/or X.
+password generator, storage, reference for the terminal and/or X.
 
 ** Use Case
 
@@ -37,10 +37,10 @@ If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.
 ***** The easy way:
 Run ~install.sh git.db3~ from [[bashpass.sh][bashpass.sh]]'s directory.
 
-It'll create git.db3 for you, encrypt it to your personal keyring and add a comfy bp-launch.sh link in your ~\tilde/bin~ folder
+It'll create ~git.db3~ for you, encrypt it to your personal keyring and add a comfy ~bp-launch.sh~ link in your ~\tilde/bin~ folder
 
 ***** The hard way:
-You'll need to build git.db3 like so: ~sqlite3 git.db3 < ac.sql~
+You'll need to build ~git.db3~ like so: ~sqlite3 git.db3 < ac.sql~
 
 and encrypt it like so: ~gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3~,
 
