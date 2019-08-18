@@ -1,10 +1,8 @@
-#+Title: bashpass readme
+#+Title: bashpass
 #+Author: michaeltd
 #+Date: <2019-08-18 Sun>
 
-* bashpass
-
-password generator, storage, reference for the terminal and/or X.
+* bshpass: password generator, storage, reference for the terminal and/or X.
 
 ** Use Case
 
