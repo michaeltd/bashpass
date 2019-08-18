@@ -6,11 +6,11 @@
 
 ** Use Case
 
-*** I can create passwords
-***    //  recall passwords
-***    //  update passwords
-***    //  delete accounts
-***    //  import a csv file
+1. I can create passwords
+2.    ////  recall passwords
+3.    ////  update passwords
+4.    ////  delete accounts
+5.    //  import a csv file
 
 
 *** [[bashpass.sh][bashpass.sh]] [[assets/bp.png][terminal]]
