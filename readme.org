@@ -1,3 +1,7 @@
+#+Title bashpass readme
+#+Author michaeltd
+#+Date []
+
 * bashpass
 
 password generator, storage, reference for the terminal and/or X.
@@ -11,16 +15,14 @@ password generator, storage, reference for the terminal and/or X.
 ***    //  import a csv file
 
 
-*** [[bashpass.sh][bashpass.sh]] terminal
-[[assets/bp.png][terminal]]
+*** [[bashpass.sh][bashpass.sh]] [[assets/bp.png][terminal]]
+
 [[assets/bp.png]]
 
-*** [[bashpass.sh][bashpass.sh]] dialog
-[[assets/dp.png][dialog]]
+*** [[bashpass.sh][bashpass.sh]] [[assets/dp.png][dialog]]
 [[assets/dp.png]]
 
-*** [[bashpass.sh][bashpass.sh]] Xdialog
-[[assets/xp.png][Xdialog]]
+*** [[bashpass.sh][bashpass.sh]] [[assets/xp.png][Xdialog]]
 [[assets/xp.png]]
 
 ** Usage
