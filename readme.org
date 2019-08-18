@@ -35,10 +35,18 @@ If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.
 **** Make and encrypt a .db3 file.
 
 ***** The easy way:
-Run ~install.sh git.db3~ from [[bashpass.sh][bashpass.sh]]'s directory. It'll create git.db3 for you, encrypt it to your personal keyring and add a comfy bp-launch.sh link in your ~\tilde/bin~ folder
+Run ~install.sh git.db3~ from [[bashpass.sh][bashpass.sh]]'s directory.
+
+It'll create git.db3 for you, encrypt it to your personal keyring and add a comfy bp-launch.sh link in your ~\tilde/bin~ folder
 
 ***** The hard way:
-You'll need to build git.db3 like so: ~sqlite3 git.db3 < ac.sql~ and encrypt it like so: ~gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3~, finally link ~bp-launch.sh~ somewhere convenient eg: ~${HOME}/bin/bp-launch.sh~ and make sure ~${HOME}/bin~ is in your ~${PATH}~.
+You'll need to build git.db3 like so: ~sqlite3 git.db3 < ac.sql~
+
+and encrypt it like so: ~gpg2 --default-recipient-self --output git.db3.asc --encrypt git.db3~,
+
+finally link ~bp-launch.sh~ somewhere convenient eg: ~\tilde/bin/bp-launch.sh~
+
+and make sure ~\tilde/bin~ is in your ~${PATH}~.
 
 Reason being SQLite3 ~.db3~ file you'll work with, needs to be encrypted to your own keyring.
 
@@ -46,7 +54,9 @@ All relevant files must reside in [[bashpass.sh][bashpass.sh]]'s directory.
 
 *** Subsequent uses:
 
-For subsequent uses just fire up the script directly: ~bashpass.sh git.db3~ from a terminal, or ~bp-launch.sh git.db3~ from X, launcher application, DE hotkey, menu, etc.
+For subsequent uses just fire up the script directly: ~bashpass.sh git.db3~ from a terminal,
+
+or ~bp-launch.sh git.db3~ from X, launcher application, DE hotkey, menu, etc.
 
 *** Optional command line arguments
 
