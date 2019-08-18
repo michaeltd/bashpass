@@ -1,6 +1,6 @@
-#+Title bashpass readme
-#+Author michaeltd
-#+Date <2019-08-18 Sun>
+#+Title: bashpass readme
+#+Author: michaeltd
+#+Date: <2019-08-18 Sun>
 
 * bashpass
 
@@ -65,7 +65,7 @@ You'll end up with an ~example.db3.asc~ file witch will be usable like so: ~bp-l
 
 The order of arguments is irrelevant. (ie: ~bashpass.sh test.db3 terminal~ == ~bashpass.sh terminal test.db3~)
 
-** NOTES
+** Notes
 
  1. You can only have one instance of [[bashpass.sh][bashpass.sh]] running at any given time for obvious reasons.
 
@@ -89,9 +89,12 @@ This application assumes you can secure the safety of your computer at least for
 
 *** ✔ [ ] Encryption
 CLOSED: [2019-08-18 Sun 17:56]
-*** ✘ [ ] +Clipboard+ (more prerequisites, dependencies, eg: ~Xclip~) Consult your terminal's manual for copy-paste functionality.
+*** ✘ [ ] +Clipboard+ ...
+more prerequisites, dependencies, eg: ~Xclip~
+Consult your terminal's manual for copy-paste functionality.
 CLOSED: [2019-08-18 Sun 17:56]
-*** ✔ [ ] Modularize UI usage depending on the environment.
+*** ✔ [ ] Modularize UI usage ...
+depending on the environment.
 CLOSED: [2019-08-18 Sun 17:57]
 
 **** ✔ [ ] GUI's based on availability
