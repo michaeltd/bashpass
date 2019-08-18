@@ -1,6 +1,6 @@
 #+Title bashpass readme
 #+Author michaeltd
-#+Date []
+#+Date <2019-08-18 Sun>
 
 * bashpass
 
@@ -16,7 +16,6 @@ password generator, storage, reference for the terminal and/or X.
 
 
 *** [[bashpass.sh][bashpass.sh]] [[assets/bp.png][terminal]]
-
 [[assets/bp.png]]
 
 *** [[bashpass.sh][bashpass.sh]] [[assets/dp.png][dialog]]
@@ -64,7 +63,7 @@ The easiest way to do that is by issuing an ~./install.sh example.db3~ command f
 
 You'll end up with an ~example.db3.asc~ file witch will be usable like so: ~bp-launch.sh example.db3~.
 
-The order of arguments is irrelevant. (ie: bashpass.sh test.db3 terminal == bashpass.sh terminal test.db3)
+The order of arguments is irrelevant. (ie: ~bashpass.sh test.db3 terminal~ == ~bashpass.sh terminal test.db3~)
 
 ** NOTES
 
