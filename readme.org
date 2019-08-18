@@ -85,19 +85,27 @@ This application assumes you can secure the safety of your computer at least for
 ** Todos
 
 1. ✔ [ ] Encryption
+
    CLOSED: [2019-08-18 Sun 17:56]
 
 1. ✘ [ ] +Clipboard+ ...
+
    more prerequisites, dependencies, eg: ~Xclip~
+
    Consult your terminal's manual for copy-paste functionality.
+
    CLOSED: [2019-08-18 Sun 17:56]
 
 1. ✔ [ ] Modularize UI usage ...
+
    depending on the environment.
+
    CLOSED: [2019-08-18 Sun 17:57]
 
    1. ✔ [ ] GUI's based on availability
-   CLOSED: [2019-08-18 Sun 17:57]
+
+      CLOSED: [2019-08-18 Sun 17:57]
 
    1. ✔ [ ] GUI/TUI based on X
-   CLOSED: [2019-08-18 Sun 17:57]
+
+      CLOSED: [2019-08-18 Sun 17:57]
