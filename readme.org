@@ -84,17 +84,17 @@ This application assumes you can secure the safety of your computer at least for
 
 ** Todos
 
-*** ✔ [ ] Encryption
+1. ✔ [ ] Encryption
 CLOSED: [2019-08-18 Sun 17:56]
-*** ✘ [ ] +Clipboard+ ...
+2. ✘ [ ] +Clipboard+ ...
 more prerequisites, dependencies, eg: ~Xclip~
 Consult your terminal's manual for copy-paste functionality.
 CLOSED: [2019-08-18 Sun 17:56]
-*** ✔ [ ] Modularize UI usage ...
+3. ✔ [ ] Modularize UI usage ...
 depending on the environment.
 CLOSED: [2019-08-18 Sun 17:57]
 
-**** ✔ [ ] GUI's based on availability
+3.1) ✔ [ ] GUI's based on availability
 CLOSED: [2019-08-18 Sun 17:57]
-**** ✔ [ ] GUI/TUI based on X
+3.2) ✔ [ ] GUI/TUI based on X
 CLOSED: [2019-08-18 Sun 17:57]
