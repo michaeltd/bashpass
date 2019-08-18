@@ -95,6 +95,7 @@ This application assumes you can secure the safety of your computer at least for
 ** Todos
 
 1. ✔ [ ] Encryption
+
    CLOSED: [2019-08-18 Sun 17:56]
 
 1. ✘ [ ] +Clipboard+
