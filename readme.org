@@ -94,28 +94,23 @@ This application assumes you can secure the safety of your computer at least for
 
 ** TODOS
 
-*** DONE Encryption
+*** ✔ Encryption
+CLOSED: [2019-08-22 Thu 01:43]
+Add pgp2 encryption
 
-  CLOSED: [2019-08-18 Sun 17:56]
+*** ✘ +Clipboard+
+CLOSED: [2019-08-22 Thu 01:43]
+More prerequisites, dependencies, etc.
+Consult your terminal's manual for copy-paste functionality.
 
-*** CANCEL +Clipboard+
+*** ✔ Modular UI
+CLOSED: [2019-08-22 Thu 01:43]
+depending on the environment.
 
-   more prerequisites, dependencies, eg: ~Xclip~
+**** ✔ GUI
+CLOSED: [2019-08-22 Thu 01:44]
+based on availability
 
-   Consult your terminal's manual for copy-paste functionality.
-   CLOSED: [2019-08-18 Sun 17:56]
-
-*** DONE Modular UI
-
-   depending on the environment.
-   CLOSED: [2019-08-18 Sun 17:57]
-
-**** DONE GUI
-
-      based on availability
-      CLOSED: [2019-08-18 Sun 17:57]
-
-**** DONE GUI/TUI
-
-      based on X
-      CLOSED: [2019-08-18 Sun 17:57]
+**** ✔ GUI/TUI
+CLOSED: [2019-08-22 Thu 01:44]
+based on X
