@@ -92,7 +92,7 @@ This application assumes you can secure the safety of your computer at least for
 
 ~*.db3~ files used by this application get shredded upon trapped exit signals, otherwise a file recovery tool could reveal unencrypted versions of them.
 
-** TODOS
+** TO-DOS
 
 *** ✔ Encryption
 CLOSED: [2019-08-22 Thu 01:43]
