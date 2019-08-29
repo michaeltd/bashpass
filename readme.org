@@ -1,8 +1,7 @@
-#+Title: bashpass
-#+Author: michaeltd
-#+Date: <2019-08-18 Sun>
-
-password generator, storage, reference for the terminal and/or X.
+#+title: bashpass
+#+author: michaeltd
+#+date: <2019-08-18 Sun>
+#+description: password generator, storage, reference for the terminal and/or X.
 
 ** Use Case
 
