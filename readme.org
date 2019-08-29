@@ -3,6 +3,8 @@
 #+date: <2019-08-18 Sun>
 #+description: password generator, storage, reference for the terminal and/or X.
 
+password generator, storage, reference for the terminal and/or X.
+
 ** Use Case
 
 1. I can create passwords
