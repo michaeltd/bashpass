@@ -26,11 +26,11 @@ password generator, storage, reference for the terminal and/or X.
 
 *** TL;DR
 
-**** ~git clone https://github.com/michaeltd/bashpass; cd bashpass~
+1. ~git clone https://github.com/michaeltd/bashpass; cd bashpass~
 
-**** ~./install.sh [mysqlite.db3]~
+2. ~./install.sh [mysqlite.db3]~
 
-**** ~bp-launch.sh [mysqlite.db3] [Xdialog|dialog|terminal]~
+3. ~bp-launch.sh [mysqlite.db3] [Xdialog|dialog|terminal]~
 
 *** In detail
 
