@@ -24,7 +24,7 @@ password generator, storage, reference for the terminal and/or X.
 
 ** Usage
 
-*** TL;DR
+*** tl;dr
 
 1. ~git clone https://github.com/michaeltd/bashpass; cd bashpass~
 
