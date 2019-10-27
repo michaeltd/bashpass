@@ -7,7 +7,7 @@ export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIM
 declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
-#link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
+#link free (S)cript: (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
 declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)" SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"; declare SFN="${SDN}/${SBN}"
 
 # Temp files
@@ -97,33 +97,8 @@ TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
 TUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
 GUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
 
-function gpw {  # single/double quotes for strings, vertical bar for sqlite output field seperator
-    #echo $(tr -dc '[:alnum:]~!@#$%^&*()_=+,<.>/?;:[{]}\|-' < /dev/urandom|head -c "${1:-64}")
-    #echo $(tr -dc [:graph:] < /dev/urandom|tr -d [=\|=][=\"=][=\'=]|head -c "${1:-64}")
-    echo $(tr -dc '[:alnum:]~!@#$%^&*()' < /dev/urandom|head -c "${1:-64}")
-
-}
-
-function rids {
-    echo $(${DCM[@]} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
-}
-
-function maxid {
-    echo $(${DCM[@]} "SELECT MAX(rowid) FROM ${ACT};")
-}
-
-function rcount {
-    echo $(${DCM[@]} "SELECT COUNT(rowid) FROM ${ACT};")
-}
-
-function brl {
-    for R in $(rids); do
-        local DM=$(${DCM[@]} "SELECT dm FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
-        local EM=$(${DCM[@]} "SELECT em FROM ${ACT} WHERE rowid = '${R}';"|sed 's/ /-/g')
-        local RL+="${R} ${DM:-null}:${EM:-null} off "
-    done
-    echo ${RL[@]}
-}
+# Common functions
+source "${SDN}/common.sh"
 
 function create {
     local MAXID=$(maxid) DM EM UN PW CM
