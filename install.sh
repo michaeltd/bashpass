@@ -3,7 +3,8 @@
 # bashpass/install.sh - Install bashpass.sh
 
 # link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
-if [[ -L "${BASH_SOURCE[0]}" ]]; then
+if [[ -L "${BASH_SOURCE[0]}" ]]
+then
     declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)"
     declare SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
     declare SFN="${SDN}/${SBN}"
@@ -15,8 +16,9 @@ fi
 
 DB="${1:-git.db3}"
 
-if [[ "${DB}" != *.db3 ]]; then
-    DB+=".db3"
+if [[ "${DB}" != *.db3 ]]
+then
+   DB+=".db3"
 fi
 
 DB="${SDN}/${DB}"

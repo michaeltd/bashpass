@@ -3,18 +3,23 @@
 # bp-launch.sh - launch bashpass.sh conditionally depending on environment and invocation.
 
 TERMINOLOGY=( "terminology" "--hold" "-e" ) URXVT=( "urxvt" "-hold" "-e" ) XTERM=( "xterm" "-hold" "-e" )
+
 TERMS=( TERMINOLOGY[@] URXVT[@] XTERM[@] )
 
 # link free (S)cript (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
 declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)" SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"; declare SFN=${SDN}/${SBN}
 
 if [[ -n "${DISPLAY}" ]]; then
+
     for (( x = 0; x < ${#TERMS[@]}; x++ )); do
+
         if command -v ${!TERMS[$x]:0:1} &> /dev/null; then
             break
         fi
     done
+
     exec ${!TERMS[$x]} "${SDN}/bashpass.sh" "${@}"
 else
+
     exec "${SDN}/bashpass.sh" "${@}"
 fi
