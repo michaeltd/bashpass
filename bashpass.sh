@@ -2,19 +2,9 @@
 #
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
-# Xdialog/dialog
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
-declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
-declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
-
-#link free (S)cript: (D)ir(N)ame, (B)ase(N)ame, (F)ull (N)ame.
+#link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)"
 declare SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
-declare SFN="${SDN}/${SBN}"
-
-# Temp files
-declare TF="${SDN}/.${RANDOM}.${$}"
-declare MUTEX="${SDN}/.${SBN}.MUTEX"
 
 # Process optional arguments
 while [[ -n ${1} ]]
@@ -39,66 +29,6 @@ do
             ;;
     esac
 done
-
-# SQLite
-declare DB="${DB:-${SDN}/git.db3}" ACT="ac"
-declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
-
-clean_up() {
-
-    gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-
-    shred --verbose --zero --remove --iterations=30 "${DB}"
-
-    shred --verbose --zero --remove --iterations=30 "${TF}"
-
-    rm -f "${MUTEX}"
-}
-
-# No mutex or die.
-check_mutex() {
-
-    if [[ -f "${MUTEX}" ]]
-    then
-
-        printf "${bold}You can only have one instance of ${SBN}.${reset}\n \
-               Follow the instructions from here:\n \
-               ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-        return 1
-    fi
-}
-
-# Decrypt db3, setup trap and mutex or die.
-check_decrypt() {
-
-    if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"
-    then
-
-        printf "${bold}Decryption failed.${reset}\n \
-               Follow the instructions from here:\n \
-               ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-        return 1
-    else
-
-        touch "${MUTEX}"
-
-        # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
-        trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
-    fi
-}
-
-# SQL or die.
-check_sql() {
-
-    if ! ${DCM[@]} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null
-    then
-
-        printf "${bold}Need a working db to function.${reset}\n \
-               Follow the instructions from here:\n \
-               ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-        return 1
-    fi
-}
 
 # Pick a default available UI ...
 if [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]
@@ -125,6 +55,9 @@ then
 
     unset DIALOG
 fi
+
+# Common variables
+source "${SDN}/variables.sh"
 
 # Build menus and help messages.
 declare -a TUI_OPS=( "${red}Create  ${reset}" \
