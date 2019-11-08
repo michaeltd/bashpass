@@ -29,6 +29,17 @@ password generator, storage, reference for the terminal and/or X.
    common variables
 3. functions.sh
    common functions
+4. git.db3
+   demo sqlite3 database
+5. import.csv
+   Data import example format
+6. ac.sql
+   SQLite database create example script
+7. bp-launch.sh
+   Bashpass launcher shortcut
+8. install.sh
+   First time run only commands
+
 ** Usage
 
 *** tl;dr
