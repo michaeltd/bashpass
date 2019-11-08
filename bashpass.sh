@@ -113,7 +113,7 @@ TUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(10
 GUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
 
 # Common functions
-source "${SDN}/common.sh"
+source "${SDN}/functions.sh"
 
 create() {
 

@@ -22,6 +22,13 @@ password generator, storage, reference for the terminal and/or X.
 *** [[bashpass.sh][bashpass.sh]] [[assets/xp.png][Xdialog]]
 [[assets/xp.png]]
 
+** Files
+1. bashpass.sh
+   main script
+2. variables.sh
+   common variables
+3. functions.sh
+   common functions
 ** Usage
 
 *** tl;dr

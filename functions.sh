@@ -1,6 +1,6 @@
-#~/bashpass/common.sh
+#~/bashpass/functions.sh
 #
-# bashpass/common.sh Common functions.
+# bashpass/functions.sh Common functions.
 
 clean_up() {
 

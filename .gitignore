@@ -11,5 +11,5 @@
 !import.csv
 !install.sh
 !bp-launch.sh
-!common.sh
+!functions.sh
 !variables.sh
