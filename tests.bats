@@ -1,9 +1,8 @@
 #!/bin/env bats
 
 @test "Testing dependencies" {
-   echo stocks
+   echo deps
 }
-
 
 @test "Check that the SQLite3 is available" {
     command -v sqlite3

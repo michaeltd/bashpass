@@ -23,29 +23,29 @@ password generator, storage, reference for the terminal and/or X.
 [[assets/xp.png]]
 
 ** Files
-1. Xdialog.sh
+1. [[Xdialog.sh]]
    Xdialog UI script
-2. ac.sql
+2. [[ac.sql]]
    SQLite database create example script
-3. bashpass.sh
+3. [[bashpass.sh]]
    main script
-4. bp-launch.sh
+4. [[bp-launch.sh]]
    Bashpass launcher shortcut
-5. dialog.sh
+5. [[dialog.sh]]
    dialog TUI script
-6. functions.sh
+6. [[functions.sh]]
    common functions
-7. import.csv
+7. [[import.csv]]
    Data import example format
-8. install.sh
+8. [[install.sh]]
    First time run only commands
-9. readme.org
+9. [[readme.org]]
    This file
-10. terminal.sh
+10. [[terminal.sh]]
     terminal TUI script
-11. tests.bats
+11. [[tests.bats]]
     tests
-12. variables.sh
+12. [[variables.sh]]
     common variables
 
 ** Usage
