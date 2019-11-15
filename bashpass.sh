@@ -11,7 +11,6 @@ while [[ -n ${1} ]]
 do
 
     case "${1}" in
-
         *.db3)
 
             declare DB="${SDN}/${1}"
