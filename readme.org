@@ -13,8 +13,8 @@ password generator, storage, reference for the terminal and/or X.
 4. \slash \slash  delete accounts
 5. \slash \slash  import a csv file
 
-*** [[file://bashpass.sh][bashpass.sh]] [[file://assets/bp.png][terminal]]
-[[file://assets/bp.png]]
+*** [[file://./bashpass.sh][bashpass.sh]] [[file://./assets/bp.png][terminal]]
+[[file://./assets/bp.png]]
 *** [[file://bashpass.sh][bashpass.sh]] [[file://assets/dp.png][dialog]]
 [[file://assets/dp.png]]
 *** [[file://bashpass.sh][bashpass.sh]] [[file://assets/xp.png][Xdialog]]
