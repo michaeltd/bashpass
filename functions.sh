@@ -19,9 +19,7 @@ check_mutex() {
     if [[ -f "${MUTEX}" ]]
     then
 
-        printf "${bold}You can only have one instance of ${SBN}.${reset}\n \
-               Follow the instructions from here:\n \
-               ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        printf "${bold} You can only have one instance of ${SBN}.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
         return 1
     fi
 }
@@ -32,9 +30,7 @@ check_decrypt() {
     if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"
     then
 
-        printf "${bold}Decryption failed.${reset}\n \
-               Follow the instructions from here:\n \
-               ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        printf "${bold} Decryption failed.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
         return 1
     else
 

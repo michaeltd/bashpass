@@ -14,3 +14,49 @@ declare MUTEX="${SDN}/.${SBN}.MUTEX"
 # SQLite
 declare DB="${DB:-${SDN}/git.db3}" ACT="ac"
 declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
+
+# Build menus and help messages.
+declare -a TUI_OPS=( "${red}Create  ${reset}" \
+                         "${green}Retrieve${reset}" \
+                         "${blue}Update  ${reset}" \
+                         "${yellow}Delete  ${reset}" \
+                         "${magenta}CSV     ${reset}" \
+                         "${cyan}SQLite3 ${reset}" \
+                         "${black}Help    ${reset}" \
+                         "${grey}Quit    ${reset}" )
+
+declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
+
+declare -a SDESC=( "New entry" \
+                       "Find account" \
+                       "Regen password" \
+                       "Remove entry" \
+                       "Import a file" \
+                       "sqlite3 session" \
+                       "Help screen" \
+                       "Exit" )
+
+declare -a DESC=( "gather details for a new account." \
+                      "search records by domain. (empty for all)" \
+                      "regenerate an existing password." \
+                      "remove an account." \
+                      "prompt for csv file to import(eg:test.csv)." \
+                      "start an sqlite session against ${DB/*\/}." \
+                      "Show this message" \
+                      "Quit this application." )
+
+declare -a TUI_MENU=() # PRompt
+declare -a TUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Terminal Help Message
+declare -a GUI_MENU=() # Menu Text
+declare -a GUI_HMSG="\nUsage: ${SBN} [some.db3] [Xdialog|dialog|terminal]\n\n" # Help Message
+
+for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
+    TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
+    TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
+    GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
+    GUI_HMSG+="Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n"
+done
+
+TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
+TUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
+GUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
