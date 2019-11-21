@@ -79,7 +79,8 @@ for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
 done
 
 TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
-declare -a TEMP="\naccounts table format is as follows:\n$(${DCM} '.schema ac')\n"
+declare -a TEMP="\naccounts table format is as follows:\n"
+TEMP+="$(${DCM} '.schema ac')"
 TUI_HMSG+="${TEMP[@]}"
 GUI_HMSG+="${TEMP[@]}"
 
@@ -115,17 +116,17 @@ check_decrypt() {
 # SQL or die.
 check_sql() {
     if ! ${DCM[@]} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-        printf "${bold}Need a working db to function.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-        return 1
-    fi
-}
+                                      printf "${bold}Need a working db to function.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+                                      return 1
+                                  fi
+                              }
 
-# Generate PassWord
-gpw() {
-    echo $(tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}")
-}
+                              # Generate PassWord
+                              gpw() {
+                                  echo $(tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}")
+                              }
 
-#RowID'S
+                              #RowID'S
 rids() {
     echo $(${DCM[@]} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
 }
