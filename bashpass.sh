@@ -66,9 +66,10 @@ declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "I
 declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB/*\/}." "Show this message" "Quit this application." )
 
 declare -a TUI_MENU=() # PRompt
-declare -a TUI_HMSG="\nUsage: ${SBN} [example{.db3,.sqlite}] (default: git.db3) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)\n\n"
+declare -a TEMP="\nUsage: ${SBN} [example{.db3,.sqlite}] (default: git.db3) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)\n\n"
+declare -a TUI_HMSG="${TEMP[@]}"
 declare -a GUI_MENU=() # Menu Text
-declare -a GUI_HMSG="\nUsage: ${SBN} [example{.db3,.sqlite}] (default: git.db3) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)\n\n"
+declare -a GUI_HMSG="${TEMP[@]}"
 
 for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
     TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
@@ -78,8 +79,9 @@ for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
 done
 
 TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
-TUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} ".schema ${ACT}")\n"
-GUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} ".schema ${ACT}")\n"
+declare -a TEMP="\naccounts table format is as follows:\n$(${DCM} '.schema ac')\n"
+TUI_HMSG+="${TEMP[@]}"
+GUI_HMSG+="${TEMP[@]}"
 
 clean_up() {
     #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
