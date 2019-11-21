@@ -82,7 +82,8 @@ TUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(10
 GUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
 
 clean_up() {
-    gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+    #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+    gpg2 --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
     shred --verbose --zero --remove --iterations=30 "${DB}"
     shred --verbose --zero --remove --iterations=30 "${TF}"
     rm -f "${MUTEX}"
@@ -98,7 +99,8 @@ check_mutex() {
 
 # Decrypt db3, setup trap and mutex or die.
 check_decrypt() {
-    if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
+    #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
+    if ! gpg2 --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
         printf "${bold} Decryption failed.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
         return 1
     else
