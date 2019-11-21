@@ -21,30 +21,20 @@ password generator, storage, reference for the terminal and/or X.
 [[file:assets/xp.png]]
 
 * Files
-1. [[file:Xdialog.sh]]
-   Xdialog UI script
-2. [[file:ac.sql]]
+1. [[file:ac.sql]]
    SQLite database create example script
-3. [[file:bashpass.sh]]
+2. [[file:bashpass.sh]]
    main script
-4. [[file:bp-launch.sh]]
+3. [[file:bp-launch.sh]]
    Bashpass launcher shortcut
-5. [[file:dialog.sh]]
-   dialog TUI script
-6. [[file:functions.sh]]
-   common functions
-7. [[file:import.csv]]
+4. [[file:import.csv]]
    Data import example format
-8. [[file:install.sh]]
+5. [[file:install.sh]]
    First time run only commands
-9. [[file:readme.org]]
+6. [[file:readme.org]]
    This file
-10. [[file:terminal.sh]]
-    terminal TUI script
-11. [[file:tests.bats]]
-    tests
-12. [[file:variables.sh]]
-    common variables
+7. [[file:tests.bats]]
+   tests
 
 * Usage
 
