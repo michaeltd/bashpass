@@ -2,6 +2,11 @@
 #
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
+# Xdialog/dialog
+export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
+declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
+declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
+
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)"
 declare SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
@@ -19,7 +24,7 @@ while [[ -n ${1} ]]; do
                 printf "%s\n" "${BPUSAGE}" >&2
                 exit 1
             fi ;;
-        Xdialog|dialog|terminal) declare UI="${1}" ;;
+        Xdialog|dialog|terminal) declare USRINTRFCE="${1}" ;;
         -d|--debug|debug) set -x ;;
         -h|--help|help) printf "%s\n" "${BPUSAGE}" >&2; exit 1 ;;
         *) printf "Unrecognized option: %s\n" "${red}${1}${reset}" >&2; exit 1 ;;
@@ -28,68 +33,38 @@ while [[ -n ${1} ]]; do
 done
 
 # Pick a default available UI ...
-if [[ -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare DIALOG=$(which Xdialog) L="30" C="60"
-elif [[ -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
-    declare DIALOG=$(which dialog) L="0" C="0"
+if [[ -x "$(command -v Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+    declare DIALOG=$(command -v Xdialog) L="30" C="60"
+elif [[ -x "$(command -v dialog)" ]]; then # Check for dialog
+    declare DIALOG=$(command -v dialog) L="0" C="0"
 fi
 
 # ... and try to accommodate optional preference.
-if [[ "${UI}" == "Xdialog" && -x "$(which Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare DIALOG=$(which Xdialog) L="30" C="60"
-elif [[ "${UI}" == "dialog" && -x "$(which dialog 2> /dev/null)" ]]; then # Check for dialog
-    declare DIALOG=$(which dialog) L="0" C="0"
-elif [[ "${UI}" == "terminal" ]]; then
+if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(command -v ${USRINTRFCE})" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+    declare DIALOG=$(command -v ${USRINTRFCE}) L="30" C="60"
+elif [[ "${USRINTRFCE}" == "dialog" && -x "$(command -v ${USRINTRFCE})" ]]; then # Check for dialog
+    declare DIALOG=$(command -v ${USRINTRFCE}) L="0" C="0"
+elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 fi
-
-# Xdialog/dialog
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
-declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
-declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
-
-# Temp files
-declare TF="${SDN}/.${RANDOM}.${$}"
-declare MUTEX="${SDN}/.${SBN}.MUTEX"
 
 # SQLite
 declare DB="${DB:-${SDN}/git.db3}" ACT="ac"
 declare -a DCM="sqlite3 ${DB}" RCM="sqlite3 -line ${DB}" CCM="sqlite3 -csv ${DB}"
+declare BNDB="${DB/*\/}"
 
-# Build menus and help messages.
-declare -a TUI_OPS=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
+# Temp files
+declare TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
+declare MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
 
-declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
+do_quit() {
+    # gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+    # gpg2 --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+    # shred --verbose --zero --remove --iterations=30 {"${DB}","${TF}","${MUTEX}"}
 
-declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
-
-declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${DB/*\/}." "Show this message" "Quit this application." )
-
-declare -a TUI_MENU=() # PRompt
-declare -a TEMP="\nUsage: ${SBN} [example{.db3,.sqlite}] (default: git.db3) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)\n\n"
-declare -a TUI_HMSG="${TEMP[@]}"
-declare -a GUI_MENU=() # Menu Text
-declare -a GUI_HMSG="${TEMP[@]}"
-
-for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
-    TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
-    TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
-    GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
-    GUI_HMSG+="Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n"
-done
-
-TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
-declare -a TEMP="\naccounts table format is as follows:\n"
-TEMP+="$(${DCM} '.schema ac')"
-TUI_HMSG+="${TEMP[@]}"
-GUI_HMSG+="${TEMP[@]}"
-
-clean_up() {
-    #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-    gpg2 --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-    shred --verbose --zero --remove --iterations=30 "${DB}"
-    shred --verbose --zero --remove --iterations=30 "${TF}"
-    rm -f "${MUTEX}"
+    # Upon successfull encryption ONLY shred files
+    gpg2 --batch --yes --default-recipient-self --output "${DB}.asc" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
+    exit "${1:-0}"
 }
 
 # No mutex or die.
@@ -103,30 +78,31 @@ check_mutex() {
 # Decrypt db3, setup trap and mutex or die.
 check_decrypt() {
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
-    if ! gpg2 --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
+    if ! gpg2 --batch --yes --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
         printf "${bold} Decryption failed.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
         return 1
     else
         touch "${MUTEX}"
+        touch "${TF}"
         # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
-        trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
+        # trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
     fi
 }
 
 # SQL or die.
 check_sql() {
     if ! ${DCM[@]} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-                                      printf "${bold}Need a working db to function.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-                                      return 1
-                                  fi
-                              }
+        printf "${bold}Need a working db to function.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        return 1
+    fi
+}
 
-                              # Generate PassWord
-                              gpw() {
-                                  echo $(tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}")
-                              }
+# Generate PassWord
+gpw() {
+    echo $(tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}")
+}
 
-                              #RowID'S
+#RowID'S
 rids() {
     echo $(${DCM[@]} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
 }
@@ -179,11 +155,9 @@ create() {
             fi
         done
     fi
-
     ${DCM[@]} "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > ${TF}
-
-    if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
     else
         cat ${TF}|${PAGER}
@@ -202,7 +176,7 @@ retrieve() {
     DM=$(cat ${TF})
     ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > ${TF}
 
-    if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
     else
         cat ${TF}|${PAGER}
@@ -233,7 +207,7 @@ update() {
     [[ -z ${PW} ]] && PW="$(gpw)"
     ${DCM[@]} "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
     ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
-    if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2> /dev/null
     else
         cat ${TF}|${PAGER}
@@ -273,7 +247,7 @@ import() {
         return
     fi
     ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > ${TF}
-    if [[ "${DIALOG}" == "$(which Xdialog)" ]]; then
+    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
     else
         cat ${TF}|${PAGER}
@@ -281,14 +255,44 @@ import() {
 }
 
 usage() {
-    [[ -n "${DIALOG}" ]] && ${DIALOG} $([[ "${DIALOG}" == "Xdialog" ]] && echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C || printf "${TUI_HMSG[@]}\n"
+    if [[ -n "${DIALOG}" ]]; then
+        #${DIALOG} $([[ "${DIALOG}" == "Xdialog" ]] && echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C
+        ${DIALOG} --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C
+    else
+        printf "${TUI_HMSG[@]}\n"
+    fi
 }
 
 main() {
 
     check_mutex || exit $?
-    check_decrypt || exit $?
-    check_sql || exit $?
+    check_decrypt || exit $? # Have password .db3, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
+    check_sql || do_quit $?
+
+    # Build menus and help messages.
+    declare -a TUI_OPS=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
+    declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
+    declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
+    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${BNDB}." "Show this message" "Quit this application." )
+
+    declare -a TUI_MENU=() # PRompt
+    declare -a TEMP="\n${BPUSAGE[@]}\n\n"
+    declare -a TUI_HMSG="${TEMP[@]}"
+    declare -a GUI_MENU=() # Menu Text
+    declare -a GUI_HMSG="${TEMP[@]}"
+
+    for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
+        TUI_MENU+="${x}:${TUI_OPS[$x]}"; (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+="\n" || TUI_MENU+="\t"
+        TUI_HMSG+="Use ${bold}${x}${reset}, for ${TUI_OPS[$x]}, which will ${bold}${DESC[$x]}${reset}\n"
+        GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
+        GUI_HMSG+="Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n"
+    done
+
+    TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
+    declare -a TEMP="\naccounts table format is as follows:\n"
+    TEMP+="$(${DCM} ".schema ${ACT}")\n\n"
+    TUI_HMSG+="${TEMP[@]}"
+    GUI_HMSG+="${TEMP[@]}"
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
@@ -298,9 +302,9 @@ main() {
             IFS=$OFS
         else # Just terminal menu.
             printf "${TUI_MENU}"
-            read UI
+            read USRINPT
             ERRLVL=$?
-            echo ${UI} > ${TF}
+            echo ${USRINPT} > ${TF}
         fi
 
         case ${ERRLVL} in
@@ -313,12 +317,12 @@ main() {
                     "${GUI_OPS[4]}"|"4") import ;;
                     "${GUI_OPS[5]}"|"5") ${RCM[@]} ;;
                     "${GUI_OPS[6]}"|"6") usage ;;
-                    "${GUI_OPS[7]}"|"7") exit ;;
-                    *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${UI}" "$((${#TUI_OPS[@]}-1))" >&2;;
+                    "${GUI_OPS[7]}"|"7") do_quit ;;
+                    *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${USRINPT}" "$((${#TUI_OPS[@]}-1))" >&2;;
                 esac ;;
-            ${DIALOG_CANCEL}) exit ;;
+            ${DIALOG_CANCEL}) do_quit ;;
             ${DIALOG_HELP}) usage ;;
-            ${DIALOG_ESC}) exit ;;
+            ${DIALOG_ESC}) do_quit ;;
         esac
     done
 }
