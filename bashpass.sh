@@ -78,8 +78,8 @@ for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
 done
 
 TUI_MENU+="${bold}Choose[0-$((${#TUI_OPS[@]}-1))]:${reset}"
-TUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
-GUI_HMSG+="\naccounts table format is as follows:\nCREATE TABLE ac(dm VARCHAR(100),em VARCHAR(100),un VARCHAR(100),pw VARCHAR(256),cm VARCHAR(100));\n"
+TUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} ".schema ${ACT}")\n"
+GUI_HMSG+="\naccounts table format is as follows:\n$(${DCM} ".schema ${ACT}")\n"
 
 clean_up() {
     #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
