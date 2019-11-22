@@ -98,9 +98,9 @@ For subsequent uses just fire up the script directly: ~bashpass.sh~ from a termi
 
 ** Security concerns
 
-This application assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
+This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
-~*.db3|*.sqlite~ files used by this application get shredded upon trapped exit signals, otherwise a file recovery tool could reveal unencrypted versions of them.
+~*.db3|*.sqlite~ files used by this application get shredded upon quiting, otherwise a file recovery tool could reveal unencrypted versions of them.
 
 Backup never hurt nobody ... ;..;
 
