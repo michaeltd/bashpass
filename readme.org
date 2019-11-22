@@ -42,7 +42,7 @@ password generator, storage, reference for the terminal and/or X.
 
 2. ~./install.sh [git.db3]~
 
-3. ~Usage: bashpass.sh [example{.db3,.sqlite}] (default: git.sqlite) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)~
+3. ~Usage: bashpass.sh [example{.db3,.sqlite}] (default: git.db3) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)~
 
 ** In detail
 

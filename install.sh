@@ -26,7 +26,7 @@ declare SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
 DB="${1:-git.db3}"
 
 if [[ "${DB}" != *.db3 && "${DB}" != *.sqlite ]]; then
-    DB="${SDN}/${DB}.sqlite"
+    DB="${SDN}/${DB}.db3"
 else
     DB="${SDN}/${DB}"
 fi
@@ -45,6 +45,4 @@ sqlite3 "${DB}" < ac.sql
 #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
 gpg2 --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
 
-${SDN}/bashpass.sh "${DB##*/}"
-
-printf "From now on you'll be able to call bashpass.sh with: bashpass.sh %s\n" "${DB##*/}" >&2
+${SDN}/bashpass.sh "${DB##*/}" && printf "From now on you'll be able to call bashpass.sh with: bashpass.sh %s\n" "${DB##*/}" >&2
