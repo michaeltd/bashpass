@@ -148,15 +148,15 @@ create() {
     local MAXID="$(maxid)" DM EM UN PW CM
     if [[ -n "${DIALOG}" ]]; then
         ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter domain:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && local DM=$(cat "${TF}") || return
+        (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return
         ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter email:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && local EM=$(cat "${TF}") || return
+        (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return
         ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter username:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && local UN=$(cat "${TF}") || return
+        (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return
         ${DIALOG} --backtitle "${SBN}" --title dialog --passwordbox "Enter password:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && local PW=$(cat "${TF}") || return
+        (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return
         ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && local CM=$(cat "${TF}") || return
+        (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return
     else
         while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
             if [[ -z "${DM}" ]]; then
