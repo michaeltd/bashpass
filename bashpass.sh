@@ -4,20 +4,18 @@
 
 if [[ ! -t 1 ]]; then
     # Don't run in anything other than a terminal (or tty)!!!
-    msg="You'll need to run $0 in a terminal!"
-
+    msg="You'll need to run ${0/*\/} in a terminal!"
     notify-send "${msg}" || \
         Xdialog --title "Error" --infobox "${msg}" 0 0 30000 || \
         xmessage -nearmouse -timeout 30 "${msg}" ||
-        printf "${msg}\n"
-
+        printf "%s\n" "${msg}"
     exit 1
 fi
 
 # Xdialog/dialog
 export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
-declare DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
-declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
+export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
+export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 # if [[ -L "${BASH_SOURCE[0]}" ]]; then
@@ -28,8 +26,8 @@ declare SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #     declare SBN="$(basename ${BASH_SOURCE[0]})"
 # fi
 # Via `realpath` as no need for link checking.
-declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)"
-declare SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
+declare SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
+declare SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 declare BPUSAGE="Usage: ${SBN} [example{.db3,.sqlite}] (default: git.db3) [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)"
 
@@ -38,8 +36,8 @@ while [[ -n ${1} ]]; do
     case "${1}" in
         *.db3|*.sqlite)
             declare DB="${SDN}/${1}"
-            ftout=$(file -b ${DB}.asc)
-            if ! [[ "${ftout[@]}" =~ ^PGP* ]]; then
+            ftout=( "$(file -b "${DB}.asc")" )
+            if ! [[ "${ftout[*]}" =~ ^PGP* ]]; then
                 printf "%s.asc, does not appear to be a valid PGP file.\n" "${red}${1}${reset}" >&2
                 printf "%s\n" "${BPUSAGE}" >&2
                 exit 1
@@ -60,10 +58,10 @@ elif [[ -x "$(command -v dialog)" ]]; then # Check for dialog
 fi
 
 # ... and try to accommodate optional preference.
-if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(command -v ${USRINTRFCE})" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare DIALOG=$(command -v ${USRINTRFCE}) L="30" C="60"
-elif [[ "${USRINTRFCE}" == "dialog" && -x "$(command -v ${USRINTRFCE})" ]]; then # Check for dialog
-    declare DIALOG=$(command -v ${USRINTRFCE}) L="0" C="0"
+if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(command -v "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+    declare DIALOG=$(command -v "${USRINTRFCE}") L="30" C="60"
+elif [[ "${USRINTRFCE}" == "dialog" && -x "$(command -v "${USRINTRFCE}")" ]]; then # Check for dialog
+    declare DIALOG=$(command -v "${USRINTRFCE}") L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 fi
@@ -110,176 +108,178 @@ check_decrypt() {
 
 # SQL or die.
 check_sql() {
-        if ! ${DCM[@]} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-            printf "${bold}Need a working db to function.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
-            return 1
-        fi
-
+    if ! ${DCM[@]} "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
+        printf "${bold}Need a working db to function.${reset}\n Follow the instructions from here:\n ${underline}https://github.com/michaeltd/bashpass${reset}\n" >&2
+        return 1
+    fi
 }
 
 # Generate PassWord
 gpw() {
-    echo $(tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}")
+    tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}"
 }
 
-#RowID'S
+# RowID'S
 rids() {
-    echo $(${DCM[@]} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;")
+    ${DCM[@]} "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;"
 }
 
 # -.-
 maxid() {
-    echo $(${DCM[@]} "SELECT MAX(rowid) FROM ${ACT};")
+    ${DCM[@]} "SELECT MAX(rowid) FROM ${ACT};"
 }
 
-#Row count
+# Row count
 rcount() {
-    echo $(${DCM[@]} "SELECT COUNT(rowid) FROM ${ACT};")
+    ${DCM[@]} "SELECT COUNT(rowid) FROM ${ACT};"
 }
 
-#Build Row Lines (for (X)dialog check/radio lists)
+# Build Row Lines (for (X)dialog check/radio lists)
 brl() {
     for i in $(rids); do
         local dm=$(${DCM[@]} "SELECT dm FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
         local em=$(${DCM[@]} "SELECT em FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        local rl+="${i} ${dm:-null}:${em:-null} off "
+        local rl+="${i} ${dm:-null}_${em:-null} off "
     done
-    echo ${rl[@]}
+    echo "${rl[@]}"
 }
 
 create() {
-    local MAXID=$(maxid) DM EM UN PW CM
+    local MAXID="$(maxid)" DM EM UN PW CM
     if [[ -n "${DIALOG}" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter domain:" $L $C 2> ${TF}
-        (( $? == $DIALOG_OK )) && local DM=$(cat ${TF}) || return
-        ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter email:" $L $C  2> ${TF}
-        (( $? == $DIALOG_OK )) && local EM=$(cat ${TF}) || return
-        ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter username:" $L $C 2> ${TF}
-        (( $? == $DIALOG_OK )) && local UN=$(cat ${TF}) || return
-        ${DIALOG} --backtitle ${SBN} --title dialog --passwordbox "Enter password:" $L $C 2> ${TF}
-        (( $? == $DIALOG_OK )) && local PW=$(cat ${TF}) || return
-        ${DIALOG} --backtitle ${SBN} --title dialog --inputbox "Enter comments:" $L $C 2> ${TF}
-        (( $? == $DIALOG_OK )) && local CM=$(cat ${TF}) || return
+        ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter domain:" "${L}" "${C}" 2> "${TF}"
+        (( $? == DIALOG_OK )) && local DM=$(cat "${TF}") || return
+        ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter email:" "${L}" "${C}" 2> "${TF}"
+        (( $? == DIALOG_OK )) && local EM=$(cat "${TF}") || return
+        ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter username:" "${L}" "${C}" 2> "${TF}"
+        (( $? == DIALOG_OK )) && local UN=$(cat "${TF}") || return
+        ${DIALOG} --backtitle "${SBN}" --title dialog --passwordbox "Enter password:" "${L}" "${C}" 2> "${TF}"
+        (( $? == DIALOG_OK )) && local PW=$(cat "${TF}") || return
+        ${DIALOG} --backtitle "${SBN}" --title dialog --inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
+        (( $? == DIALOG_OK )) && local CM=$(cat "${TF}") || return
     else
         while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
             if [[ -z "${DM}" ]]; then
-                read -p "Enter Domain: " DM
+                read -rp "Enter Domain: " DM
             elif [[ -z "${EM}" ]]; then
-                read -p "Enter Email: " EM
+                read -rp "Enter Email: " EM
             elif [[ -z "${UN}" ]]; then
-                read -p "Enter Username: " UN
+                read -rp "Enter Username: " UN
             elif [[ -z "${PW}" ]]; then
-                read -p "Enter Password: " PW
+                read -rp "Enter Password: " PW
             elif [[ -z "${CM}" ]]; then
-                read -p "Enter Comment: " CM
+                read -rp "Enter Comment: " CM
             fi
         done
     fi
     ${DCM[@]} "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > ${TF}
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
+        ${DIALOG} --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
     else
-        cat ${TF}|${PAGER}
+        cat "${TF}"|"${PAGER}"
     fi
 }
 
 retrieve() {
     local DM
     if [[ -n "${DIALOG}" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "domain" --inputbox "Enter domain to look for (empty for All): " $L $C 2> ${TF}
-        (( ${?} != ${DIALOG_OK} )) && return
+        ${DIALOG} --backtitle "${SBN}" --title "domain" --inputbox "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
+        (( $? != DIALOG_OK )) && return
     else
-        read -p "Enter domain to look for (empty for All): " DM
-        echo "${DM}" > ${TF}
+        read -rp "Enter domain to look for (empty for All): " DM
+        echo "${DM}" > "${TF}"
     fi
-    DM=$(cat ${TF})
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > ${TF}
+    DM=$(cat "${TF}")
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
+        ${DIALOG} --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
     else
-        cat ${TF}|${PAGER}
+        cat "${TF}"|"${PAGER}"
     fi
 }
 
 update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "update accout:" --radiolist "Select an id to update: " $L $C 5 $(brl) 2> ${TF}
-        ERRLVL=${?} ID="$(cat ${TF})"
-        (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]] && return
+        ${DIALOG} --backtitle "${SBN}" --title "update accout:" --radiolist "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        ERRLVL=${?} ID="$(cat "${TF}")"
+        (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
-        read -p "Select an id to update (empty to cancel): " ID
+        read -rp "Select an id to update (empty to cancel): " ID
         ERRLVL=${?}
-        (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]] && return
+        (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     fi
     if [[ -n "${DIALOG}" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "password" --inputbox "Enter a password or a password length (1-64) or empty for auto (max length): " $L $C 2> ${TF}
-        ERRLVL=${?} PW="$(cat ${TF})"
-        (( ${ERRLVL} != ${DIALOG_OK} )) && return
+        ${DIALOG} --backtitle "${SBN}" --title "password" --inputbox "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${TF}"
+        ERRLVL=${?} PW="$(cat "${TF}")"
+        (( ERRLVL != DIALOG_OK )) && return
     else
-        read -p "Enter a password or a password length (1-64) or empty for auto (max length): " PW
+        read -rp "Enter a password or a password length (8-64) or empty for auto (max length): " PW
         ERRLVL=${?}
-        (( ${ERRLVL} != ${DIALOG_OK} )) && return
+        (( ERRLVL != DIALOG_OK )) && return
     fi
-    [[ "${PW}" =~ ^[0-9]+$ ]] && (( PW >= 1 && PW <= 64 )) && PW="$(gpw ${PW})"
-    [[ -z ${PW} ]] && PW="$(gpw)"
+    [[ "${PW}" =~ ^[0-9]+$ ]] && (( PW >= 8 && PW <= 64 )) && PW="$(gpw "${PW}")"
+    [[ -z "${PW}" ]] || (( ${#PW} < 8 )) && PW="$(gpw)"
     ${DCM[@]} "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > ${TF}
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2> /dev/null
+        ${DIALOG} --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
-        cat ${TF}|${PAGER}
+        cat "${TF}"|"${PAGER}"
     fi
 }
 
 delete() {
     local ID
     if [[ -n "${DIALOG}" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "delete account:" --radiolist "Select an id to delete: " $L $C 5 $(brl) 2> ${TF}
-        local ERRLVL=${?} ID="$(cat ${TF})"
-        (( ${ERRLVL} != ${DIALOG_OK} )) || [[ -z ${ID} ]] && return
+        ${DIALOG} --backtitle "${SBN}" --title "delete account:" --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        local ERRLVL=${?} ID="$(cat "${TF}")"
+        (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
-        read -p "Select an id to delete (empty to cancel): " ID
-        echo "${ID}" > ${TF}
+        read -rp "Select an id to delete (empty to cancel): " ID
+        echo "${ID}" > "${TF}"
+        [[ -z "${ID}" ]] && return
     fi
-    ${DCM[@]} "DELETE FROM ${ACT} WHERE rowid = '$(cat ${TF})';"
-    [[ -n "${DIALOG}" ]] && ${DIALOG} --backtitle ${SBN} --title dialog --msgbox "Account ID: $ID deleted." $L $C || printf "Account ID: $ID deleted.\n"
+    ${DCM[@]} "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
+    [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || printf "Account ID: #%s deleted.\n" "${ID}"
 }
 
 import() {
-    local MAXID=$(maxid) CSVF
+    local MAXID="$(maxid)" CSVF
     if [[ -n "${DIALOG}" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "Enter a csv file:" --fselect "${SDN}/" $L $C 2> ${TF}
-        (( ${?} != ${DIALOG_OK} )) && return
-        CSVF=$(cat ${TF})
+        ${DIALOG} --backtitle "${SBN}" --title "Enter a csv file:" --fselect "${SDN}/" "${L}" "${C}" 2> "${TF}"
+        (( $? != DIALOG_OK )) && return
+        CSVF=$(cat "${TF}")
+        [[ -z "${CSVF}" ]] && return
     else
-        read -p "Enter a csv file: " CSVF;
-        echo "${CSVF}" > ${TF}
+        read -rp "Enter a csv file (empty to cancel): " CSVF
+        echo "${CSVF}" > "${TF}"
+        [[ -z "${CSVF}" ]] && return
     fi
-    ${CCM[@]} ".import ${CSVF} ${ACT}" 2> ${TF}
-    if (( ${?} != 0 )); then
+    ${CCM[@]} ".import ${CSVF} ${ACT}" 2> "${TF}"
+    if (( $? != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
-            ${DIALOG} --backtitle ${SBN} --title Error --msgbox "Error reported: $(cat ${TF})" $L $C
+            ${DIALOG} --backtitle "${SBN}" --title Error --msgbox "Error reported: $(cat "${TF}")" "${L}" "${C}"
         fi
-        echo "Error: $(cat ${TF})"
+        echo "Error: $(cat "${TF}")"
         return
     fi
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > ${TF}
+    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        ${DIALOG} --backtitle ${SBN} --title "results" --editbox "${TF}" $L $C 2>/dev/null
+        ${DIALOG} --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
-        cat ${TF}|${PAGER}
+        cat "${TF}"|"${PAGER}"
     fi
 }
 
 usage() {
     if [[ -n "${DIALOG}" ]]; then
         #${DIALOG} $([[ "${DIALOG}" == "Xdialog" ]] && echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C
-        ${DIALOG} --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C
+        ${DIALOG} --backtitle "${SBN}" --title Help --msgbox "${GUI_HMSG[@]}" "${L}" "${C}"
     else
-        printf "${TUI_HMSG[@]}\n"
+        echo -e "${TUI_HMSG[@]}"
     fi
 }
 
@@ -316,20 +316,20 @@ main() {
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
-            OFS=$IFS IFS=$'\|'
-            ${DIALOG} --backtitle ${SBN} --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" $L $C $((${#GUI_OPS[@]})) ${GUI_MENU} 2> ${TF}
+            OFS="${IFS}" IFS=$'\|'
+            ${DIALOG} --backtitle "${SBN}" --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" "${L}" "${C}" $((${#GUI_OPS[@]})) ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
-            IFS=$OFS
+            IFS="${OFS}"
         else # Just terminal menu.
             printf "${TUI_MENU}"
-            read USRINPT
+            read -r USRINPT
             ERRLVL=$?
-            echo ${USRINPT} > ${TF}
+            echo "${USRINPT}" > "${TF}"
         fi
 
-        case ${ERRLVL} in
-            ${DIALOG_OK})
-                case "$(cat ${TF})" in
+        case "${ERRLVL}" in
+            "${DIALOG_OK}")
+                case "$(cat "${TF}")" in
                     "${GUI_OPS[0]}"|"0") create ;;
                     "${GUI_OPS[1]}"|"1") retrieve ;;
                     "${GUI_OPS[2]}"|"2") update ;;
@@ -340,10 +340,10 @@ main() {
                     "${GUI_OPS[7]}"|"7") do_quit ;;
                     *) printf "${red}Invalid responce: %s${reset}. Choose again from 0 to %d\n" "${USRINPT}" "$((${#TUI_OPS[@]}-1))" >&2;;
                 esac ;;
-            ${DIALOG_CANCEL}) do_quit ;;
-            ${DIALOG_HELP}) usage ;;
-            ${DIALOG_ESC}) do_quit ;;
-            esac
+            "${DIALOG_CANCEL}") do_quit ;;
+            "${DIALOG_HELP}") usage ;;
+            "${DIALOG_ESC}") do_quit ;;
+        esac
     done
 }
 

@@ -115,7 +115,7 @@ CLOSED: [2019-08-22 Thu 01:43]
 More prerequisites, dependencies, etc.
 Consult your terminal's manual for copy-paste functionality.
 
-** ✔ Modular UI
+** ✔ Modular UI [2/2] [100%]
 CLOSED: [2019-08-22 Thu 01:43]
 depending on the environment.
 
