@@ -290,15 +290,15 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    declare -a TUI_OPS=( "${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${yellow}Delete  ${reset}" "${magenta}CSV     ${reset}" "${cyan}SQLite3 ${reset}" "${black}Help    ${reset}" "${grey}Quit    ${reset}" )
+    declare -a TUI_OPS=( "${bg_black}${red}Create  ${reset}" "${bg_black}${green}Retrieve${reset}" "${bg_black}${blue}Update  ${reset}" "${bg_black}${yellow}Delete  ${reset}" "${bg_black}${magenta}CSV     ${reset}" "${bg_black}${cyan}SQLite3 ${reset}" "${bg_white}${black}Help    ${reset}" "${bg_black}${white}Quit    ${reset}" )
     declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit" )
     declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit" )
-    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${BNDB}." "Show this message" "Quit this application." )
+    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${BNDB}." "Show this message" "Quit this script." )
 
-    declare -a TUI_MENU=() # PRompt
+    declare -a TUI_MENU=()
     declare -a TEMP="\n${BPUSAGE[@]}\n\n"
     declare -a TUI_HMSG="${TEMP[@]}"
-    declare -a GUI_MENU=() # Menu Text
+    declare -a GUI_MENU=()
     declare -a GUI_HMSG="${TEMP[@]}"
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
@@ -318,12 +318,12 @@ main() {
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
             ${DIALOG} --backtitle "${SBN}" --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" "${L}" "${C}" $((${#GUI_OPS[@]})) ${GUI_MENU} 2> "${TF}"
-            ERRLVL=$?
+            ERRLVL="${?}"
             IFS="${OFS}"
         else # Just terminal menu.
             printf "${TUI_MENU}"
             read -r USRINPT
-            ERRLVL=$?
+            ERRLVL="${?}"
             echo "${USRINPT}" > "${TF}"
         fi
 

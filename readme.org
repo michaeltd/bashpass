@@ -31,8 +31,6 @@ password generator, storage, reference for the terminal and/or X.
    First time run only commands
 5. [[file:readme.org]]
    This file
-6. [[file:tests.bats]]
-   tests
 
 * Usage
 
