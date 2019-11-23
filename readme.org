@@ -35,8 +35,11 @@ password generator, storage, reference for the terminal and/or X.
 * Usage
 
 ** Use at your own risk!!!
+
 This author makes no claims, guarantees, promisses of any kind!
+
 This project is just an UI/CRUD/SQL/GPG playground!
+
 With that out of the way, If you're still here, continue on ...
 
 ** tl;dr
