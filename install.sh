@@ -12,9 +12,9 @@ fi
 [[ ! $(command -v gpg2) ]] && echo -ne "You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2 && exit 1
 
 declare SDN
-SDN="$(cd "$(dirname "$(realpath ${BASH_SOURCE[0]})")" && pwd -P)"
-declare SBN
-SBN="$(basename "$(realpath ${BASH_SOURCE[0]})")"
+SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
+# declare SBN
+# SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 DB="${1:-git.sqlite}"
 

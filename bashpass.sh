@@ -3,7 +3,7 @@
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
 if [[ ! -t 1 ]]; then
-    msg="Error: You'll need to run ${0/*\/} in a terminal!"
+    msg="Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
     notify-send "${msg}" || \
         Xdialog --title "Error" --infobox "${msg}" 0 0 30000 || \
         xmessage -nearmouse -timeout 30 "${msg}" ||
@@ -38,13 +38,6 @@ export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP
 export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
-# if [[ -L "${BASH_SOURCE[0]}" ]]; then
-#     declare SDN="$(cd $(dirname $(readlink ${BASH_SOURCE[0]}))&& pwd -P)"
-#     declare SBN="$(basename $(readlink ${BASH_SOURCE[0]}))"
-# else
-#     declare SDN="$(cd $(dirname ${BASH_SOURCE[0]})&& pwd -P)"
-#     declare SBN="$(basename ${BASH_SOURCE[0]})"
-# fi
 # Via `realpath` as no need for link checking.
 declare SDN
 SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
@@ -117,7 +110,9 @@ do_quit() {
     # shred --verbose --zero --remove --iterations=30 {"${DB}","${TF}","${MUTEX}"}
 
     # Upon successfull encryption ONLY shred files
-    gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
+    # gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
+    gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --zero --remove {"${DB}","${TF}","${MUTEX}"}
+    #reset
     exit "${1:-0}"
 }
 
@@ -138,7 +133,7 @@ check_decrypt() {
     else
         ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
         if ! [[ "${ftout[*]}" =~ ^SQLite\ 3.x\ database* ]]; then
-            echo -ne "$(basename ${DB}), does not appear to be a valid SQLite 3.x database file.\n" >&2
+            echo -ne "$(basename "${DB}"), does not appear to be a valid SQLite 3.x database file.\n" >&2
             echo -ne "${BPUSAGE}\n" >&2
             exit 1
         fi
@@ -169,7 +164,9 @@ rids() {
 
 # -.-
 maxid() {
-    "${DCM[@]}" "SELECT MAX(rowid) FROM ${ACT};"
+    local MAXID
+    MAXID="$("${DCM[@]}" "SELECT MAX(rowid) FROM ${ACT};")"
+    echo "${MAXID:-0}" # check null values
 }
 
 # Row count
@@ -224,8 +221,8 @@ create() {
             fi
         done
     fi
-    ${DCM[@]} "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
+    "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
+    "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
     else
@@ -244,7 +241,7 @@ retrieve() {
         echo "${DM}" > "${TF}"
     fi
     DM=$(cat "${TF}")
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
+    "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
@@ -277,8 +274,8 @@ update() {
     fi
     [[ "${PW}" =~ ^[0-9]+$ ]] && (( PW >= 8 && PW <= 64 )) && PW="$(gpw "${PW}")"
     [[ -z "${PW}" ]] || (( ${#PW} < 8 )) && PW="$(gpw)"
-    ${DCM[@]} "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
+    "${DCM[@]}" "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
+    "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
@@ -287,10 +284,10 @@ update() {
 }
 
 delete() {
-    local ID
+    local ERRLVL ID
     if [[ -n "${DIALOG}" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "delete account:" --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
-        local ERRLVL="${?}" ID="$(cat "${TF}")"
+        ERRLVL="${?}" ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
         echo -ne "Select an id to delete (empty to cancel): "
@@ -298,12 +295,13 @@ delete() {
         echo "${ID}" > "${TF}"
         [[ -z "${ID}" ]] && return
     fi
-    ${DCM[@]} "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
+    "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
     [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n" ""
 }
 
 import() {
-    local MAXID="$(maxid)" CSVF
+    local MAXID CSVF ERRLVL
+    MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "Enter a csv file:" --fselect "${SDN}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
@@ -315,15 +313,16 @@ import() {
         echo "${CSVF}" > "${TF}"
         [[ -z "${CSVF}" ]] && return
     fi
-    ${CCM[@]} ".import ${CSVF} ${ACT}" 2> "${TF}"
-    if (( $? != 0 )); then
+    "${CCM[@]}" ".import ${CSVF} ${ACT}" 2> "${TF}"
+    ERRLVL="${?}"
+    if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
             "${DIALOG}" --backtitle "${SBN}" --title Error --msgbox "Error reported: $(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return
     fi
-    ${RCM[@]} "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
+    "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
@@ -334,9 +333,9 @@ import() {
 usage() {
     if [[ -n "${DIALOG}" ]]; then
         #${DIALOG} $([[ "${DIALOG}" == "Xdialog" ]] && echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C
-        "${DIALOG}" --backtitle "${SBN}" --title Help --msgbox "${GUI_HMSG[@]}" "${L}" "${C}"
+        "${DIALOG}" --backtitle "${SBN}" --title Help --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
     else
-        echo -e "${TUI_HMSG[@]}"
+        echo -e "${TUI_HMSG[*]}"
     fi
 }
 
@@ -353,23 +352,20 @@ main() {
     declare -a DESC=("gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${BNDB}." "Show this message" "Quit this script.")
 
     declare -a TUI_MENU=()
-    declare -a TEMP="\n${BPUSAGE[*]}\n\n"
-    declare -a TUI_HMSG="${TEMP[*]}"
-    declare -a GUI_MENU=()
-    declare -a GUI_HMSG="${TEMP[*]}"
+    declare -a TUI_HMSG=("\n${BPUSAGE[*]}}\n\n")
+    declare GUI_MENU
+    declare -a GUI_HMSG=("\n${BPUSAGE[*]}}\n\n")
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
         TUI_MENU+=("${x}:${TUI_OPS[$x]}"); (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
-        TUI_HMSG+="Use ${x}, for ${TUI_OPS[$x]}, which will ${DESC[$x]}\n"
+        TUI_HMSG+=("Use ${x}, for ${TUI_OPS[$x]}, which will ${DESC[$x]}\n")
         GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
-        GUI_HMSG+="Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n"
+        GUI_HMSG+=("Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n")
     done
 
     TUI_MENU+=("Choose[0-$((${#TUI_OPS[@]}-1))]:")
-    declare -a TEMP="\naccounts table format is as follows:\n"
-    TEMP+="$(${DCM[*]} ".schema ${ACT}")\n\n"
-    TUI_HMSG+="${TEMP[*]}"
-    GUI_HMSG+="${TEMP[*]}"
+    TUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
+    GUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
@@ -378,7 +374,7 @@ main() {
             ERRLVL="${?}"
             IFS="${OFS}"
         else # Just terminal menu.
-            echo -ne " ${TUI_MENU[@]}"
+            echo -ne " ${TUI_MENU[*]}"
             read -r USRINPT
             ERRLVL="${?}"
             echo "${USRINPT}" > "${TF}"
@@ -392,7 +388,7 @@ main() {
                     "${GUI_OPS[2]}"|"2") update ;;
                     "${GUI_OPS[3]}"|"3") delete ;;
                     "${GUI_OPS[4]}"|"4") import ;;
-                    "${GUI_OPS[5]}"|"5") ${RCM[@]} ;;
+                    "${GUI_OPS[5]}"|"5") "${RCM[@]}" ;;
                     "${GUI_OPS[6]}"|"6") usage ;;
                     "${GUI_OPS[7]}"|"7") do_quit ;;
                     *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
