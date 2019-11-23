@@ -82,11 +82,16 @@ For subsequent uses just fire up the script directly: ~bashpass.sh~ from a termi
 
 ** Optional command line arguments
 
-- If you'd like to test other UI options try: ~bashpass.sh [Xdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass.sh~ will default to the highest available option in that order.
-- You can provide an SQLite3 database for use with ~bashpass.sh~. That db needs to have a ~.sqlite~ extension and to be encrypted with your personal keyring with an ~.gpg~ extension.
-- The ~debug~ option will ~set -x~ to ~bashpass.sh~, enabling it to echo commands in the terminal. Be warned: Really noisy!
+- If you'd like to test other UI options try: ~bashpass.sh [Xdialog|dialog|terminal]~,
+needless to say they have to be installed.
+If not ~bashpass.sh~ will default to the highest available option in that order.
+- You can provide an SQLite3 database for use with ~bashpass.sh~.
+That db needs to have a ~.sqlite~ extension and to be encrypted with your personal keyring with an ~.gpg~ extension.
+- The ~debug~ option will ~set -x~ to ~bashpass.sh~, enabling it to echo commands in the terminal.
+Be warned: Really noisy!
 - Help will print out Usage and exit.
-- The order of arguments is irrelevant. (ie: ~bashpass.sh test.sqlite terminal~ == ~bashpass.sh terminal test.sqlite~)
+- The order of arguments is irrelevant.
+ie: ~bashpass.sh test.sqlite terminal~ == ~bashpass.sh terminal test.sqlite~)
 
 * Notes
 
@@ -102,7 +107,7 @@ For subsequent uses just fire up the script directly: ~bashpass.sh~ from a termi
 
  4. SQLite3 db used has to have a ~*.sqlite~ extension. If no database parameter given, the script will default to ~git.sqlite~.
 
- 5. Again... Not tested for real use at any load or capacity!
+ 5. Again... Not tested for production use at any load or capacity!
 
 ** Security concerns
 
