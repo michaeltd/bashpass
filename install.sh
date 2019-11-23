@@ -23,17 +23,17 @@ fi
 declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)"
 declare SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
 
-DB="${1:-git.db3}"
+DB="${1:-git.sqlite}"
 
-if [[ "${DB}" != *.db3 && "${DB}" != *.sqlite ]]; then
-    DB="${SDN}/${DB}.db3"
+if [[ "${DB}" != *.sqlite ]]; then
+    DB="${SDN}/${DB}.sqlite"
 else
     DB="${SDN}/${DB}"
 fi
 
 printf " This script will:\n \
  1. Make a ${DB##*/} file ... \n \
- 2. encrypt it to ${DB##*/}.asc \n \
+ 2. encrypt it to ${DB##*/}.gpg \n \
  3. Execute bashpass.sh ${DB##*/} \n"
 
 read -p "Continue? [Y/n]:" resp
@@ -43,6 +43,6 @@ read -p "Continue? [Y/n]:" resp
 sqlite3 "${DB}" < ac.sql
 
 #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-gpg2 --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
+gpg2 --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}"
 
 ${SDN}/bashpass.sh "${DB##*/}" && printf "From now on you'll be able to call bashpass.sh with: bashpass.sh %s\n" "${DB##*/}" >&2
