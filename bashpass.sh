@@ -53,9 +53,9 @@ while [[ -n ${1} ]]; do
         *.sqlite)
             declare DB
             DB="${SDN}/${1}"
-            ftout=( "$(file -b "${DB}.gpg")" )
+            ftout=( "$(file -b "${DB}.pgp")" )
             if ! [[ "${ftout[*]}" =~ ^PGP* ]]; then
-                echo -ne "${1}.gpg, does not appear to be a valid PGP file.\n" >&2
+                echo -ne "${1}.pgp, does not appear to be a valid PGP file.\n" >&2
                 echo -ne "${BPUSAGE}\n" >&2
                 exit 1
             fi ;;
@@ -111,7 +111,7 @@ do_quit() {
 
     # Upon successfull encryption ONLY shred files
     # gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
-    gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --zero --remove {"${DB}","${TF}","${MUTEX}"}
+    gpg2 --batch --yes --default-recipient-self --output "${DB}.pgp" --encrypt "${DB}" && shred --zero --remove {"${DB}","${TF}","${MUTEX}"}
     #reset
     exit "${1:-0}"
 }
@@ -127,7 +127,7 @@ check_mutex() {
 # Decrypt .sqlite, setup trap and mutex or die.
 check_decrypt() {
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
-    if ! gpg2 --batch --yes --default-recipient-self --output "${DB}" --decrypt "${DB}.gpg"; then
+    if ! gpg2 --batch --yes --default-recipient-self --output "${DB}" --decrypt "${DB}.pgp"; then
         echo -ne " Decryption failed.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
         return 1
     else

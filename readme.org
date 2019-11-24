@@ -38,7 +38,7 @@ password generator, storage, reference for the terminal and/or X.
 
 This author makes no claims, guarantees, promisses of any kind!
 
-This project is just an UI/CRUD/SQL/GPG playground!
+This project is just an UI/CRUD/SQL/PGP playground!
 
 With that out of the way, If you're still here, continue on ...
 
@@ -70,7 +70,7 @@ It'll create ~git.sqlite~ for you, encrypt it to your personal keyring
 
 You'll need to build ~git.sqlite~ like so: ~sqlite3 git.sqlite < ac.sql~
 
-and encrypt it like so: ~gpg2 --default-recipient-self --output git.sqlite.gpg --encrypt git.sqlite~,
+and encrypt it like so: ~gpg2 --default-recipient-self --output git.sqlite.pgp --encrypt git.sqlite~,
 
 Reason being SQLite3 ~.sqlite~ file you'll work with, needs to be encrypted to your own keyring.
 
