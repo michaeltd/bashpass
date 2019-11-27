@@ -3,7 +3,7 @@
 #+date: <2019-08-18 Sun>
 #+description: password generator, storage, reference for the terminal and/or X.
 #+options: toc:t num:t
-password generator, storage, reference for the terminal and/or X.
+password generator, storage, reference for the terminal and X.
 
 * Use Case
 
