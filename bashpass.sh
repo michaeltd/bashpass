@@ -4,36 +4,32 @@
 
 if [[ ! -t 1 ]]; then
     msg="Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
-    notify-send "${msg}" || \
-        Xdialog --title "Error" --infobox "${msg}" 0 0 30000 || \
-        xmessage -nearmouse -timeout 30 "${msg}" ||
-        echo -ne "${msg}\n" >&2
-    exit 1
+    notify-send "${msg}" 2> /dev/null && exit 1
+    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
+    echo -ne "${msg}\n" >&2 && exit 1
 elif (( "${BASH_VERSINFO[0]}" < 4 )); then
     msg="Error: You'll need bash major version 4."
-    notify-send "${msg}" || \
-        Xdialog --title "Error" --infobox "${msg}" 0 0 30000 || \
-        xmessage -nearmouse -timeout 30 "${msg}" ||
-        echo -ne "${msg}\n" >&2
-    exit 1
+    notify-send "${msg}" 2> /dev/null && exit 1
+    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
+    echo -ne "${msg}\n" >&2 && exit 1
 elif [[ ! $(command -v sqlite3) ]]; then
     msg="Error: You need SQLite3 installed."
-    notify-send "${msg}" || \
-        Xdialog --title "Error" --infobox "${msg}" 0 0 30000 || \
-        xmessage -nearmouse -timeout 30 "${msg}" ||
-        echo -ne "${msg}\n" >&2
-    exit 1
+    notify-send "${msg}" 2> /dev/null && exit 1
+    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
+    echo -ne "${msg}\n" >&2 && exit 1
 elif [[ ! $(command -v gpg2) ]]; then
     msg="Error: You need GNU Privacy Guard v2 (gnupg) installed."
-    notify-send "${msg}" || \
-        Xdialog --title "Error" --infobox "${msg}" 0 0 30000 || \
-        xmessage -nearmouse -timeout 30 "${msg}" ||
-        echo -ne "${msg}\n" >&2
-    exit 1
+    notify-send "${msg}" 2> /dev/null && exit 1
+    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
+    echo -ne "${msg}\n" >&2 && exit 1
 fi
 
 # Xdialog/dialog
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=5000 XDIALOG_NO_GMSGS=1
+export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
 export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
@@ -41,27 +37,18 @@ export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #shellcheck disable=SC2155
 declare SDN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)" SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-declare BPUSAGE="Usage: ${SBN} [sample.pgp (default)] [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)"
+declare BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]"
 
-declare PGPF DB
+declare PGPF DB BNPGPF BNDB USRINTRFCE
 
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
-        *.pgp)
-            PGPF="${1}"
-            DB="${PGPF%%\.pgp}"
-            #shellcheck disable=SC2207
-            ftout=( $(file -b "${PGPF}") )
-            if ! [[ "${ftout[*]}" =~ ^PGP ]]; then
-                echo -ne "Error: ${1}, does not appear to be a valid PGP file.\n" >&2
-                echo -ne "${BPUSAGE}\n" >&2
-                exit 1
-            fi ;;
-        Xdialog|dialog|terminal) declare USRINTRFCE="${1}" ;;
+        *.pgp) PGPF="${1}";;
+        Xdialog|dialog|terminal) USRINTRFCE="${1}" ;;
         -d|--debug|debug) set -x ;;
         -h|--help|help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
-        *) echo -ne "Unrecognized option: ${1}\n" >&2; exit 1 ;;
+        *) echo -ne "Unknown option: ${1}\n" >&2; exit 1 ;;
     esac
     shift
 done
@@ -86,10 +73,16 @@ elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 fi
 
-PGPF="${PGPF:-${SDN}/sample.pgp}"
-DB="${DB:-${PGPF%%\.pgp}}"
+if [[ -n "${PGPF}" ]]; then
+    PGPF="${SDN}/${PGPF}"
+    DB="${PGPF%%\.pgp}"
+    BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+else
+    PGPF="${SDN}/sample.pgp"
+    DB="${PGPF%%\.pgp}"
+    BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+fi
 
-declare BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 declare ACT="ac"
 
 # SQLite
@@ -115,43 +108,58 @@ do_quit() {
     # Upon successfull encryption ONLY shred files
     # gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
     #shellcheck disable=SC2068
-    "${PGPC[@]}" "${SDN}/${BNPGPF}" "--encrypt" "${SDN}/${BNDB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
+    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     #reset
     exit "${1:-0}"
 }
 
-# No mutex or die.
-check_mutex() {
-    if [[ -f "${MUTEX}" ]]; then
-        echo -ne "Error: You can only have one instance of ${SBN}.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
-        return 1
-    fi
+display_feedback() {
+
+    msg="${@}"
+
+    notify-send "${msg}" 2> /dev/null && return 1
+    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && return 1
+    xmessage -nearmouse -timeout 30 "${msg}"  2> /dev/null && return 1
+    echo -ne "${msg}\n" >&2 && return 1
 }
 
 # Decrypt .sqlite, setup trap and mutex or die.
 check_decrypt() {
+    #shellcheck disable=SC2207
+    ftout=( "$(file -b "${PGPF}")" )
+    if ! [[ "${ftout[*]}" =~ ^PGP ]]; then
+        display_feedback "Error: ${BNPGPF}, does not appear to be a valid PGP file."
+        return $?
+    fi
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     #shellcheck disable=SC2068
-    if ! "${PGPC[@]}" "${SDN}/${BNDB}" "--decrypt" "${SDN}/${BNPGPF}"; then
-        echo -ne "Error: Decryption failed.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
-        return 1
+    if ! "${PGPC[@]}" "${DB}" "--decrypt" "${PGPF}"; then
+        display_feedback "Error: Decryption failed. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+        return $?
     else
         ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
         if ! [[ "${ftout[*]}" =~ ^SQLite ]]; then
-            echo -ne "Error: ${BNDB}, does not appear to be a valid SQLite 3.x database file.\n" >&2
-            echo -ne "${BPUSAGE}\n" >&2
-            exit 1
+            display_feedback "Error: ${BNDB}, does not appear to be a valid SQLite 3.x database file."
+            return $?
         fi
         touch "${MUTEX}"
         touch "${TF}"
     fi
 }
 
+# No mutex or die.
+check_mutex() {
+    if [[ -f "${MUTEX}" ]]; then
+        display_feedback "Error: You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+        return $?
+    fi
+}
+
 # SQL or die.
 check_sql() {
     if ! "${DCM[@]}" "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-        echo -ne "Error: Need a working db to function.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
-        return 1
+        display_feedback "Error: Need a working db to function. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+        return $?
     fi
 }
 
@@ -179,9 +187,7 @@ rcount() {
 
 # Build Row Lines (for (X)dialog check/radio lists)
 brl() {
-
     local dm em rl
-
     for i in $(rids); do
         dm=$("${DCM[@]}" "SELECT dm FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
         em=$("${DCM[@]}" "SELECT em FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
@@ -311,9 +317,9 @@ delete() {
         read -r ID
         echo "${ID}" > "${TF}"
         [[ -z "${ID}" ]] && return
-    fi
-    "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
-    [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n"
+       fi
+       "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
+       [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n"
 }
 
 import() {
@@ -406,18 +412,18 @@ main() {
                     "${GUI_OPS[0]}"|"0") create ;;
                     "${GUI_OPS[1]}"|"1") retrieve ;;
                     "${GUI_OPS[2]}"|"2") update ;;
-                    "${GUI_OPS[3]}"|"3") delete ;;
-                    "${GUI_OPS[4]}"|"4") import ;;
-                    "${GUI_OPS[5]}"|"5") "${RCM[@]}" ;;
-                    "${GUI_OPS[6]}"|"6") usage ;;
-                    "${GUI_OPS[7]}"|"7") do_quit ;;
-                    *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
-                esac ;;
-            "${DIALOG_CANCEL}") do_quit ;;
-            "${DIALOG_HELP}") usage ;;
-            "${DIALOG_ESC}") do_quit ;;
-        esac
-    done
+                       "${GUI_OPS[3]}"|"3") delete ;;
+                       "${GUI_OPS[4]}"|"4") import ;;
+                       "${GUI_OPS[5]}"|"5") "${RCM[@]}" ;;
+                       "${GUI_OPS[6]}"|"6") usage ;;
+                       "${GUI_OPS[7]}"|"7") do_quit ;;
+                       *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
+                   esac ;;
+               "${DIALOG_CANCEL}") do_quit ;;
+               "${DIALOG_HELP}") usage ;;
+               "${DIALOG_ESC}") do_quit ;;
+           esac
+       done
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
