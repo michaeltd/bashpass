@@ -242,15 +242,15 @@ retrieve() {
     fi
     DM=$(cat "${TF}")
 
-    # Record Count
-    RC="$("${RCM[@]}" "SELECT count(rowid) AS rc FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
-
     # Record Set
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        if (( RC == 1 )); then
-            if [[ $(command -v xclip 2> /dev/null) ]]; then
+        if [[ $(command -v xclip 2> /dev/null) ]]; then
+            # Record Count
+            RC="$("${RCM[@]}" "SELECT count(rowid) AS rc FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
+            if (( RC == 1 )); then
+                #shellcheck disable=SC2207
                 PW=( $("${RCM[@]}" "SELECT pw FROM ${ACT} WHERE dm LIKE '%${DM}%';") )
                 echo "${PW[((${#PW[*]}-1))]}"|"$(command -v xclip 2> /dev/null)" "-r"
             fi
