@@ -82,16 +82,15 @@ For subsequent uses just fire up the script directly: ~bashpass.sh~ from a termi
 
 ** Optional command line arguments
 
-- If you'd like to test other UI options try: ~bashpass.sh [Xdialog|dialog|terminal]~,
-needless to say they have to be installed.
-If not ~bashpass.sh~ will default to the highest available option in that order.
-- You can provide an SQLite3 database for use with ~bashpass.sh~.
-That db needs to have a ~.sqlite~ extension and to be encrypted with your personal keyring with an ~.gpg~ extension.
-- The ~debug~ option will ~set -x~ to ~bashpass.sh~, enabling it to echo commands in the terminal.
-Be warned: Really noisy!
+- If you'd like to test other UI options try: ~bashpass.sh [Xdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass.sh~ will default to the highest available option in that order.
+
+- You can provide an SQLite3 database for use with ~bashpass.sh~. That db needs to have a ~.sqlite~ extension and to be encrypted with your personal keyring with an ~.gpg~ extension.
+
+- The ~debug~ option will ~set -x~ to ~bashpass.sh~, enabling it to echo commands in the terminal. Be warned: Really noisy!
+
 - Help will print out Usage and exit.
-- The order of arguments is irrelevant.
-ie: ~bashpass.sh test.sqlite terminal~ == ~bashpass.sh terminal test.sqlite~)
+
+- The order of arguments is irrelevant. ie: ~bashpass.sh test.sqlite terminal~ == ~bashpass.sh terminal test.sqlite~)
 
 * Notes
 
@@ -107,7 +106,9 @@ ie: ~bashpass.sh test.sqlite terminal~ == ~bashpass.sh terminal test.sqlite~)
 
  4. SQLite3 db used has to have a ~*.sqlite~ extension. If no database parameter given, the script will default to ~git.sqlite~.
 
- 5. Again... Not tested for production use at any load or capacity!
+ 5. After <2019-11-27 Wed> if in Xdialog mode and on single record Create,Retrieve,Update operations you'll be able to paste affected password via middleclick.
+
+ 7. Again... Not tested for production use at any load or capacity!
 
 ** Security concerns
 
@@ -123,10 +124,9 @@ Backup never hurt nobody ... ;..;
 CLOSED: [2019-08-22 Thu 01:43]
 Add pgp2 encryption
 
-** ✘ +Clipboard+
-CLOSED: [2019-08-22 Thu 01:43]
-More prerequisites, dependencies, etc.
-Consult your terminal's manual for copy-paste functionality.
+** ✔ Clipboard
+CLOSED: [2019-11-27 Wed 02:21]
+Depending on xclip availability on Xdialog mode only and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target with it's trailing newline ('\n') removed (pastable with middle mouse button)
 
 ** ✔ Modular UI [2/2] [100%]
 CLOSED: [2019-08-22 Thu 01:43]

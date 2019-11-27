@@ -14,7 +14,7 @@ elif [[ ! $(command -v gpg2) ]]; then
 fi
 
 declare SDN
-SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
+SDN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # declare SBN
 # SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
@@ -38,9 +38,8 @@ export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP
 export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
-# Via `realpath` as no need for link checking.
 declare SDN
-SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
+SDN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 declare SBN
 SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
@@ -55,7 +54,7 @@ while [[ -n ${1} ]]; do
             DB="${SDN}/${1}"
             ftout=( "$(file -b "${DB}.pgp")" )
             if ! [[ "${ftout[*]}" =~ ^PGP* ]]; then
-                echo -ne "${1}.pgp, does not appear to be a valid PGP file.\n" >&2
+                echo -ne "Error: ${1}.pgp, does not appear to be a valid PGP file.\n" >&2
                 echo -ne "${BPUSAGE}\n" >&2
                 exit 1
             fi ;;
@@ -69,10 +68,10 @@ done
 
 # Pick a default available UI ...
 if [[ -x "$(command -v Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare DIALOG
+    declare DIALOG L C
     DIALOG=$(command -v Xdialog) L="30" C="60"
 elif [[ -x "$(command -v dialog)" ]]; then # Check for dialog
-    declare DIALOG
+    declare DIALOG L C
     DIALOG=$(command -v dialog) L="0" C="0"
 fi
 
@@ -119,7 +118,7 @@ do_quit() {
 # No mutex or die.
 check_mutex() {
     if [[ -f "${MUTEX}" ]]; then
-        echo -ne " You can only have one instance of ${SBN}.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
+        echo -ne "Error: You can only have one instance of ${SBN}.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
         return 1
     fi
 }
@@ -128,12 +127,12 @@ check_mutex() {
 check_decrypt() {
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     if ! gpg2 --batch --yes --default-recipient-self --output "${DB}" --decrypt "${DB}.pgp"; then
-        echo -ne " Decryption failed.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
+        echo -ne "Error: Decryption failed.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
         return 1
     else
         ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
         if ! [[ "${ftout[*]}" =~ ^SQLite\ 3.x\ database* ]]; then
-            echo -ne "$(basename "${DB}"), does not appear to be a valid SQLite 3.x database file.\n" >&2
+            echo -ne "Error: $(basename "${DB}"), does not appear to be a valid SQLite 3.x database file.\n" >&2
             echo -ne "${BPUSAGE}\n" >&2
             exit 1
         fi
@@ -147,7 +146,7 @@ check_decrypt() {
 # SQL or die.
 check_sql() {
     if ! "${DCM[@]}" "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-        echo -ne " Need a working db to function.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
+        echo -ne "Error: Need a working db to function.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
         return 1
     fi
 }
@@ -191,32 +190,32 @@ create() {
     local MAXID DM EM UN PW CM
     MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter domain:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter a domain:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter email:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter an email:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter username:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter a username:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --passwordbox "Enter password:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title dialog --passwordbox "Enter a password:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return
         "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return
     else
         while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
             if [[ -z "${DM}" ]]; then
-                echo -ne "Enter Domain: "
+                echo -ne "Enter a domain: "
                 read -r DM
             elif [[ -z "${EM}" ]]; then
-                echo -ne "Enter Email: "
+                echo -ne "Enter an email: "
                 read -r EM
             elif [[ -z "${UN}" ]]; then
-                echo -ne "Enter Username: "
+                echo -ne "Enter a username: "
                 read -r UN
             elif [[ -z "${PW}" ]]; then
-                echo -ne "Enter Password: "
+                echo -ne "Enter a password: "
                 read -r PW
             elif [[ -z "${CM}" ]]; then
-                echo -ne "Enter Comment: "
+                echo -ne "Enter comment: "
                 read -r CM
             fi
         done
@@ -224,6 +223,7 @@ create() {
     "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
+        [[ $(command -v xclip 2> /dev/null) ]] && echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
     else
         "${PAGER}" "${TF}"
@@ -231,7 +231,7 @@ create() {
 }
 
 retrieve() {
-    local DM
+    local DM RC PW
     if [[ -n "${DIALOG}" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "domain" --inputbox "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
@@ -241,9 +241,20 @@ retrieve() {
         echo "${DM}" > "${TF}"
     fi
     DM=$(cat "${TF}")
+
+    # Record Count
+    RC="$("${RCM[@]}" "SELECT count(rowid) AS rc FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
+
+    # Record Set
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
+        if (( RC == 1 )); then
+            if [[ $(command -v xclip 2> /dev/null) ]]; then
+                PW=( $("${RCM[@]}" "SELECT pw FROM ${ACT} WHERE dm LIKE '%${DM}%';") )
+                echo "${PW[((${#PW[*]}-1))]}"|"$(command -v xclip 2> /dev/null)" "-r"
+            fi
+        fi
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
     else
         "${PAGER}" "${TF}"
@@ -253,6 +264,7 @@ retrieve() {
 update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
+        #shellcheck disable=SC2046
         "${DIALOG}" --backtitle "${SBN}" --title "update accout:" --radiolist "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL="${?}" ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
@@ -277,6 +289,7 @@ update() {
     "${DCM[@]}" "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
+        [[ $(command -v xclip 2> /dev/null) ]] && echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
@@ -286,6 +299,7 @@ update() {
 delete() {
     local ERRLVL ID
     if [[ -n "${DIALOG}" ]]; then
+        #shellcheck disable=SC2046
         "${DIALOG}" --backtitle "${SBN}" --title "delete account:" --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL="${?}" ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
@@ -370,6 +384,7 @@ main() {
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
+            #shellcheck disable=SC2086
             "${DIALOG}" --backtitle "${SBN}" --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
             ERRLVL="${?}"
             IFS="${OFS}"
