@@ -138,8 +138,6 @@ check_decrypt() {
         fi
         touch "${MUTEX}"
         touch "${TF}"
-        # trap needs to be here as we need at least a decrypted db and a mutex file to cleanup
-        # trap clean_up $SIG_NONE $SIG_HUP $SIG_INT $SIG_QUIT $SIG_TERM
     fi
 }
 
@@ -248,11 +246,10 @@ retrieve() {
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         if [[ $(command -v xclip 2> /dev/null) ]]; then
             # Record Count
-            RC="$("${RCM[@]}" "SELECT count(rowid) AS rc FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
+            RC="$("${DCM[@]}" "SELECT count(rowid) FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
             if (( RC == 1 )); then
-                #shellcheck disable=SC2207
-                PW=( $("${RCM[@]}" "SELECT pw FROM ${ACT} WHERE dm LIKE '%${DM}%';") )
-                echo "${PW[((${#PW[*]}-1))]}"|"$(command -v xclip 2> /dev/null)" "-r"
+                PW="$("${DCM[@]}" "SELECT pw FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
+                echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
             fi
         fi
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
