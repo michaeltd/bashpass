@@ -3,7 +3,7 @@
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
 # Xdialog/dialog
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=0 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
+export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
 export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
@@ -30,7 +30,7 @@ done
 # Pick a default available UI ...
 if [[ -x "$(command -v Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(command -v Xdialog)" L="30" C="60"
+    declare DIALOG="$(command -v Xdialog)" L="20" C="40"
 elif [[ -x "$(command -v dialog)" ]]; then # Check for dialog
     #shellcheck disable=SC2155
     declare DIALOG="$(command -v dialog)" L="0" C="0"
@@ -39,7 +39,7 @@ fi
 # ... and try to accommodate optional preference.
 if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(command -v "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(command -v "${USRINTRFCE}")" L="30" C="60"
+    declare DIALOG="$(command -v "${USRINTRFCE}")" L="20" C="40"
 elif [[ "${USRINTRFCE}" == "dialog" && -x "$(command -v "${USRINTRFCE}")" ]]; then # Check for dialog
     #shellcheck disable=SC2155
     declare DIALOG="$(command -v "${USRINTRFCE}")" L="0" C="0"
