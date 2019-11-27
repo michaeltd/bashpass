@@ -35,12 +35,15 @@ password generator, storage, reference for the terminal and/or X.
 * Dependencies
 
 1. GNU Privacy Guard v2
-   You need gnupg installed, ~gpg2~ executable readily available in ~"${PATH}".~
+
+   You need gnupg installed, ~gpg2~ executable readily available in ~${PATH}.~
 
 2. SQLite v3
-   SQLite3 installed and ~sqlite3~ available in ~"${PATH}".~
+
+   SQLite3 installed and ~sqlite3~ available in ~${PATH}.~
 
 3. BASH v4
+
    A resent bash installation of major version no less than 4.
 
 4. Optionally...
