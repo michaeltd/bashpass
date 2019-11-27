@@ -5,31 +5,31 @@
 if [[ ! -t 1 ]]; then
     msg="Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
     notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
     xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
     echo -ne "${msg}\n" >&2 && exit 1
 elif (( "${BASH_VERSINFO[0]}" < 4 )); then
     msg="Error: You'll need bash major version 4."
     notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
     xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
     echo -ne "${msg}\n" >&2 && exit 1
 elif [[ ! $(command -v sqlite3) ]]; then
     msg="Error: You need SQLite3 installed."
     notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
     xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
     echo -ne "${msg}\n" >&2 && exit 1
 elif [[ ! $(command -v gpg2) ]]; then
     msg="Error: You need GNU Privacy Guard v2 (gnupg) installed."
     notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && exit 1
+    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
     xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
     echo -ne "${msg}\n" >&2 && exit 1
 fi
 
 # Xdialog/dialog
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
+export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=0 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
 export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
 export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
@@ -115,10 +115,10 @@ do_quit() {
 
 display_feedback() {
 
-    msg="${@}"
+    msg="${*}"
 
     notify-send "${msg}" 2> /dev/null && return 1
-    Xdialog --title "Error" --infobox "${msg}" 0 0 30000 2> /dev/null && return 1
+    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && return 1
     xmessage -nearmouse -timeout 30 "${msg}"  2> /dev/null && return 1
     echo -ne "${msg}\n" >&2 && return 1
 }
@@ -129,18 +129,18 @@ check_decrypt() {
     ftout=( "$(file -b "${PGPF}")" )
     if ! [[ "${ftout[*]}" =~ ^PGP ]]; then
         display_feedback "Error: ${BNPGPF}, does not appear to be a valid PGP file."
-        return $?
+        return "${?}"
     fi
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     #shellcheck disable=SC2068
     if ! "${PGPC[@]}" "${DB}" "--decrypt" "${PGPF}"; then
         display_feedback "Error: Decryption failed. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
-        return $?
+        return "${?}"
     else
         ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
         if ! [[ "${ftout[*]}" =~ ^SQLite ]]; then
             display_feedback "Error: ${BNDB}, does not appear to be a valid SQLite 3.x database file."
-            return $?
+            return "${?}"
         fi
         touch "${MUTEX}"
         touch "${TF}"
@@ -357,8 +357,16 @@ import() {
 
 usage() {
     if [[ -n "${DIALOG}" ]]; then
-        #${DIALOG} $([[ "${DIALOG}" == "Xdialog" ]] && echo "--fill") --backtitle ${SBN} --title Help --msgbox "${GUI_HMSG[@]}" $L $C
-        "${DIALOG}" --backtitle "${SBN}" --title Help --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
+        #"${DIALOG}" "$([[ "${DIALOG}" == "Xdialog" ]] && echo "--left")" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[@]}" "${L}" "${C}"
+        #"${DIALOG}" --backtitle "${SBN}" --title "Help" --left --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
+
+        # if [[ "${DIALOG}" == "Xdialog" ]];then
+        #     "${DIALOG}" --backtitle "${SBN}" --title "Help" --left --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
+        # else
+        #     "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
+        # fi
+
+        "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
     else
         echo -e "${TUI_HMSG[*]}"
     fi
@@ -367,9 +375,9 @@ usage() {
 
 main() {
 
-    check_mutex || exit $?
-    check_decrypt || exit $? # Have password .sqlite, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
-    check_sql || do_quit $?
+    check_mutex || exit "${?}"
+    check_decrypt || exit "${?}" # Have password .sqlite, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
+    check_sql || do_quit "${?}"
 
     # Build menus and help messages.
     declare -a TUI_OPS=("${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${cyan}Delete  ${reset}" "${yellow}CSV     ${reset}" "${magenta}SQLite3 ${reset}" "${white}Help    ${reset}" "${black}Quit    ${reset}")
@@ -397,7 +405,7 @@ main() {
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
             #shellcheck disable=SC2086
-            "${DIALOG}" --backtitle "${SBN}" --title dialog --help-button --item-help --cancel-label "Quit" --menu "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
+            "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--help-button" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
             ERRLVL="${?}"
             IFS="${OFS}"
         else # Just terminal menu.
