@@ -38,23 +38,23 @@ export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP
 export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
-declare SDN
-SDN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-declare SBN
-SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+#shellcheck disable=SC2155
+declare SDN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)" SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-declare BPUSAGE
-BPUSAGE="Usage: ${SBN} [git.sqlite (default)] [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)"
+declare BPUSAGE="Usage: ${SBN} [sample.pgp (default)] [Xdialog|dialog|terminal] (default: any available in that order) [debug] [help] (prints usage and quits)"
+
+declare PGPF DB
 
 # Process optional arguments
-while [[ -n ${1} ]]; do
+while [[ -n "${1}" ]]; do
     case "${1}" in
-        *.sqlite)
-            declare DB
-            DB="${SDN}/${1}"
-            ftout=( "$(file -b "${DB}.pgp")" )
-            if ! [[ "${ftout[*]}" =~ ^PGP* ]]; then
-                echo -ne "Error: ${1}.pgp, does not appear to be a valid PGP file.\n" >&2
+        *.pgp)
+            PGPF="${1}"
+            DB="${PGPF%%\.pgp}"
+            #shellcheck disable=SC2207
+            ftout=( $(file -b "${PGPF}") )
+            if ! [[ "${ftout[*]}" =~ ^PGP ]]; then
+                echo -ne "Error: ${1}, does not appear to be a valid PGP file.\n" >&2
                 echo -ne "${BPUSAGE}\n" >&2
                 exit 1
             fi ;;
@@ -68,41 +68,45 @@ done
 
 # Pick a default available UI ...
 if [[ -x "$(command -v Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare DIALOG L C
-    DIALOG=$(command -v Xdialog) L="30" C="60"
+    #shellcheck disable=SC2155
+    declare DIALOG="$(command -v Xdialog)" L="30" C="60"
 elif [[ -x "$(command -v dialog)" ]]; then # Check for dialog
-    declare DIALOG L C
-    DIALOG=$(command -v dialog) L="0" C="0"
+    #shellcheck disable=SC2155
+    declare DIALOG="$(command -v dialog)" L="0" C="0"
 fi
 
 # ... and try to accommodate optional preference.
 if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(command -v "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare DIALOG L C
-    DIALOG=$(command -v "${USRINTRFCE}") L="30" C="60"
+    #shellcheck disable=SC2155
+    declare DIALOG="$(command -v "${USRINTRFCE}")" L="30" C="60"
 elif [[ "${USRINTRFCE}" == "dialog" && -x "$(command -v "${USRINTRFCE}")" ]]; then # Check for dialog
-    declare DIALOG L C
-    DIALOG=$(command -v "${USRINTRFCE}") L="0" C="0"
+    #shellcheck disable=SC2155
+    declare DIALOG="$(command -v "${USRINTRFCE}")" L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 fi
 
+PGPF="${PGPF:-${SDN}/sample.pgp}"
+DB="${DB:-${PGPF%%\.pgp}}"
+
+declare BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+declare ACT="ac"
+
 # SQLite
-declare DB ACT
-DB="${DB:-${SDN}/git.sqlite}" ACT="ac"
-declare -a DCM RCM CCM
-DCM=("sqlite3" "${DB}") RCM=("sqlite3" "-line" "${DB}") CCM=("sqlite3" "-csv" "${DB}")
-declare BNDB
-BNDB="${DB/*\/}"
+declare -a DCM=( "$(command -v sqlite3)" "${DB}" ) RCM=( "$(command -v sqlite3)" "-line" "${DB}" ) CCM=( "$(command -v sqlite3)" "-csv" "${DB}" )
 
 # Temp files
 declare TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
 declare MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
 
-#clean_up() {
+# clean_up() {
 #    # Upon successfull encryption ONLY shred files
 #    #gpg2 --batch --yes --default-recipient-self --output "${DB}.asc" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
 #    exit "${1:-0}"
-#}
+# }
+
+declare -a PGPC=( "$(command -v gpg2)" "--batch" "--yes" "--default-recipient-self" "--output" )
+declare -a SHRC=( "$(command -v shred)" "--zero" "--remove" )
 
 do_quit() {
     # gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
@@ -110,7 +114,8 @@ do_quit() {
 
     # Upon successfull encryption ONLY shred files
     # gpg2 --batch --yes --default-recipient-self --output "${DB}.gpg" --encrypt "${DB}" && shred --verbose --zero --remove {"${DB}","${TF}","${MUTEX}"}
-    gpg2 --batch --yes --default-recipient-self --output "${DB}.pgp" --encrypt "${DB}" && shred --zero --remove {"${DB}","${TF}","${MUTEX}"}
+    #shellcheck disable=SC2068
+    "${PGPC[@]}" "${SDN}/${BNPGPF}" "--encrypt" "${SDN}/${BNDB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     #reset
     exit "${1:-0}"
 }
@@ -126,13 +131,14 @@ check_mutex() {
 # Decrypt .sqlite, setup trap and mutex or die.
 check_decrypt() {
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
-    if ! gpg2 --batch --yes --default-recipient-self --output "${DB}" --decrypt "${DB}.pgp"; then
+    #shellcheck disable=SC2068
+    if ! "${PGPC[@]}" "${SDN}/${BNDB}" "--decrypt" "${SDN}/${BNPGPF}"; then
         echo -ne "Error: Decryption failed.\n Follow the instructions from here:\n https://github.com/michaeltd/bashpass/ \n" >&2
         return 1
     else
         ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
-        if ! [[ "${ftout[*]}" =~ ^SQLite\ 3.x\ database* ]]; then
-            echo -ne "Error: $(basename "${DB}"), does not appear to be a valid SQLite 3.x database file.\n" >&2
+        if ! [[ "${ftout[*]}" =~ ^SQLite ]]; then
+            echo -ne "Error: ${BNDB}, does not appear to be a valid SQLite 3.x database file.\n" >&2
             echo -ne "${BPUSAGE}\n" >&2
             exit 1
         fi
@@ -161,8 +167,8 @@ rids() {
 
 # -.-
 maxid() {
-    local MAXID
-    MAXID="$("${DCM[@]}" "SELECT MAX(rowid) FROM ${ACT};")"
+    #shellcheck disable=SC2155
+    local MAXID="$("${DCM[@]}" "SELECT MAX(rowid) FROM ${ACT};")"
     echo "${MAXID:-0}" # check null values
 }
 
@@ -185,8 +191,8 @@ brl() {
 }
 
 create() {
-    local MAXID DM EM UN PW CM
-    MAXID="$(maxid)"
+    #shellcheck disable=SC2155
+    local MAXID="$(maxid)" DM EM UN PW CM
     if [[ -n "${DIALOG}" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter a domain:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return
@@ -307,7 +313,7 @@ delete() {
         [[ -z "${ID}" ]] && return
     fi
     "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
-    [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n" ""
+    [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n"
 }
 
 import() {
@@ -338,8 +344,10 @@ import() {
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
+
     fi
 }
+
 
 usage() {
     if [[ -n "${DIALOG}" ]]; then
@@ -348,6 +356,7 @@ usage() {
     else
         echo -e "${TUI_HMSG[*]}"
     fi
+
 }
 
 main() {
@@ -363,9 +372,9 @@ main() {
     declare -a DESC=("gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${BNDB}." "Show this message" "Quit this script.")
 
     declare -a TUI_MENU=()
-    declare -a TUI_HMSG=("\n${BPUSAGE[*]}}\n\n")
+    declare -a TUI_HMSG=("\n${BPUSAGE[*]}\n\n")
     declare GUI_MENU
-    declare -a GUI_HMSG=("\n${BPUSAGE[*]}}\n\n")
+    declare -a GUI_HMSG=("\n${BPUSAGE[*]}\n\n")
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
         TUI_MENU+=("${x}:${TUI_OPS[$x]}"); (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
@@ -391,7 +400,6 @@ main() {
             ERRLVL="${?}"
             echo "${USRINPT}" > "${TF}"
         fi
-
         case "${ERRLVL}" in
             "${DIALOG_OK}")
                 case "$(cat "${TF}")" in
