@@ -32,6 +32,25 @@ password generator, storage, reference for the terminal and/or X.
 5. [[file:readme.org]]
    This file
 
+* Dependencies
+
+1. GNU Privacy Guard v2
+   You need gnupg installed, ~gpg2~ executable readily available in ~"${PATH}".~
+
+2. SQLite v3
+   SQLite3 installed and ~sqlite3~ available in ~"${PATH}".~
+
+3. BASH v4
+   A resent bash installation of major version no less than 4.
+
+4. Optionally...
+
+   1. Xdialog for an X client.
+
+   2. dialog for a tty TUI.
+
+   3. finally, xclip for some middle click password pasting functionality.
+
 * Usage
 
 ** Use at your own risk!!!
