@@ -2,32 +2,6 @@
 #
 # bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
 
-if [[ ! -t 1 ]]; then
-    msg="Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
-    notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
-    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
-    echo -ne "${msg}\n" >&2 && exit 1
-elif (( "${BASH_VERSINFO[0]}" < 4 )); then
-    msg="Error: You'll need bash major version 4."
-    notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
-    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
-    echo -ne "${msg}\n" >&2 && exit 1
-elif [[ ! $(command -v sqlite3) ]]; then
-    msg="Error: You need SQLite3 installed."
-    notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
-    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
-    echo -ne "${msg}\n" >&2 && exit 1
-elif [[ ! $(command -v gpg2) ]]; then
-    msg="Error: You need GNU Privacy Guard v2 (gnupg) installed."
-    notify-send "${msg}" 2> /dev/null && exit 1
-    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && exit 1
-    xmessage -nearmouse -timeout 30 "${msg}" 2> /dev/null && exit 1
-    echo -ne "${msg}\n" >&2 && exit 1
-fi
-
 # Xdialog/dialog
 export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=0 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
 export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
@@ -117,10 +91,43 @@ display_feedback() {
 
     msg="${*}"
 
-    notify-send "${msg}" 2> /dev/null && return 1
-    Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null && return 1
-    xmessage -nearmouse -timeout 30 "${msg}"  2> /dev/null && return 1
-    echo -ne "${msg}\n" >&2 && return 1
+    if [[ -n "$(command -v notify-send 2> /dev/null)" ]]; then
+        notify-send "${msg}" 2> /dev/null
+        return 1
+    elif [[ -n "$(command -v Xdialog 2> /dev/null)" ]]; then
+        Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null
+        return 1
+    elif [[ -n "$(command -v xmessage 2> /dev/null)" ]]; then
+        xmessage -nearmouse -timeout 30 "${msg}"  2> /dev/null
+        return 1
+    else
+        echo -ne "${msg}\n" >&2
+        return 1
+    fi
+}
+
+check_prereqs(){
+    if [[ ! -t 1 ]]; then
+        display_feedback "Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
+        return "${?}"
+    elif (( "${BASH_VERSINFO[0]}" < 4 )); then
+        display_feedback "Error: You'll need bash major version 4."
+        return"${?}"
+    elif [[ ! $(command -v sqlite3) ]]; then
+        display_feedback "Error: You need SQLite3 installed."
+        return "${?}"
+    elif [[ ! $(command -v gpg2) ]]; then
+        display_feedback "Error: You need GNU Privacy Guard v2 (gnupg) installed."
+        return "${?}"
+    fi
+}
+
+# No mutex or die.
+check_mutex() {
+    if [[ -f "${MUTEX}" ]]; then
+        display_feedback "Error: You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+        return $?
+    fi
 }
 
 # Decrypt .sqlite, setup trap and mutex or die.
@@ -144,14 +151,6 @@ check_decrypt() {
         fi
         touch "${MUTEX}"
         touch "${TF}"
-    fi
-}
-
-# No mutex or die.
-check_mutex() {
-    if [[ -f "${MUTEX}" ]]; then
-        display_feedback "Error: You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
-        return $?
     fi
 }
 
@@ -256,7 +255,7 @@ retrieve() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        if [[ $(command -v xclip 2> /dev/null) ]]; then
+        if [[ -n "$(command -v xclip 2> /dev/null)" ]]; then
             # Record Count
             RC="$("${DCM[@]}" "SELECT count(rowid) FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
             if (( RC == 1 )); then
@@ -375,6 +374,7 @@ usage() {
 
 main() {
 
+    check_prereqs || exit "${?}"
     check_mutex || exit "${?}"
     check_decrypt || exit "${?}" # Have password .sqlite, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
     check_sql || do_quit "${?}"
