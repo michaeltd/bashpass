@@ -109,16 +109,16 @@ display_feedback() {
 check_prereqs(){
     if [[ ! -t 1 ]]; then
         display_feedback "Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
-        return "${?}"
+        return $?
     elif (( "${BASH_VERSINFO[0]}" < 4 )); then
         display_feedback "Error: You'll need bash major version 4."
-        return"${?}"
+        return $?
     elif [[ ! $(command -v sqlite3) ]]; then
         display_feedback "Error: You need SQLite3 installed."
-        return "${?}"
+        return $?
     elif [[ ! $(command -v gpg2) ]]; then
         display_feedback "Error: You need GNU Privacy Guard v2 (gnupg) installed."
-        return "${?}"
+        return $?
     fi
 }
 
@@ -136,18 +136,18 @@ check_decrypt() {
     ftout=( "$(file -b "${PGPF}")" )
     if ! [[ "${ftout[*]}" =~ ^PGP ]]; then
         display_feedback "Error: ${BNPGPF}, does not appear to be a valid PGP file."
-        return "${?}"
+        return $?
     fi
     #if ! gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}" --decrypt "${DB}.asc"; then
     #shellcheck disable=SC2068
     if ! "${PGPC[@]}" "${DB}" "--decrypt" "${PGPF}"; then
         display_feedback "Error: Decryption failed. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
-        return "${?}"
+        return $?
     else
         ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
         if ! [[ "${ftout[*]}" =~ ^SQLite ]]; then
             display_feedback "Error: ${BNDB}, does not appear to be a valid SQLite 3.x database file."
-            return "${?}"
+            return $?
         fi
         touch "${MUTEX}"
         touch "${TF}"
@@ -233,7 +233,7 @@ create() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
         [[ $(command -v xclip 2> /dev/null) ]] && echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
-        "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -242,7 +242,7 @@ create() {
 retrieve() {
     local DM RC PW
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "domain" --inputbox "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
     else
         echo -ne "Enter domain to look for (empty for All): "
@@ -263,7 +263,7 @@ retrieve() {
                 echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
             fi
         fi
-        "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2>/dev/null
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -273,23 +273,23 @@ update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
         #shellcheck disable=SC2046
-        "${DIALOG}" --backtitle "${SBN}" --title "update accout:" --radiolist "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
-        ERRLVL="${?}" ID="$(cat "${TF}")"
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
         echo -ne "Select an id to update (empty to cancel): "
         read -r ID
-        ERRLVL="${?}"
+        ERRLVL=$?
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     fi
     if [[ -n "${DIALOG}" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "password" --inputbox "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${TF}"
-        ERRLVL="${?}" PW="$(cat "${TF}")"
+        ERRLVL=$? PW="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) && return
     else
         echo -ne "Enter a password or a password length (8-64) or empty for auto (max length): "
         read -r PW
-        ERRLVL="${?}"
+        ERRLVL=$?
         (( ERRLVL != DIALOG_OK )) && return
     fi
     [[ "${PW}" =~ ^[0-9]+$ ]] && (( PW >= 8 && PW <= 64 )) && PW="$(gpw "${PW}")"
@@ -309,7 +309,7 @@ delete() {
     if [[ -n "${DIALOG}" ]]; then
         #shellcheck disable=SC2046
         "${DIALOG}" --backtitle "${SBN}" --title "delete account:" --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
-        ERRLVL="${?}" ID="$(cat "${TF}")"
+        ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
         echo -ne "Select an id to delete (empty to cancel): "
@@ -336,7 +336,7 @@ import() {
         [[ -z "${CSVF}" ]] && return
     fi
     "${CCM[@]}" ".import ${CSVF} ${ACT}" 2> "${TF}"
-    ERRLVL="${?}"
+    ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
             "${DIALOG}" --backtitle "${SBN}" --title Error --msgbox "Error reported: $(cat "${TF}")" "${L}" "${C}"
@@ -374,10 +374,10 @@ usage() {
 
 main() {
 
-    check_prereqs || exit "${?}"
-    check_mutex || exit "${?}"
-    check_decrypt || exit "${?}" # Have password .sqlite, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
-    check_sql || do_quit "${?}"
+    check_prereqs || exit $?
+    check_mutex || exit $?
+    check_decrypt || exit $? # Have password .sqlite, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
+    check_sql || do_quit $?
 
     # Build menus and help messages.
     declare -a TUI_OPS=("${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${cyan}Delete  ${reset}" "${yellow}CSV     ${reset}" "${magenta}SQLite3 ${reset}" "${white}Help    ${reset}" "${black}Quit    ${reset}")
@@ -406,12 +406,12 @@ main() {
             OFS="${IFS}" IFS=$'\|'
             #shellcheck disable=SC2086
             "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--help-button" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
-            ERRLVL="${?}"
+            ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.
             echo -ne " ${TUI_MENU[*]}"
             read -r USRINPT
-            ERRLVL="${?}"
+            ERRLVL=$?
             echo "${USRINPT}" > "${TF}"
         fi
         case "${ERRLVL}" in
@@ -420,18 +420,18 @@ main() {
                     "${GUI_OPS[0]}"|"0") create ;;
                     "${GUI_OPS[1]}"|"1") retrieve ;;
                     "${GUI_OPS[2]}"|"2") update ;;
-                       "${GUI_OPS[3]}"|"3") delete ;;
-                       "${GUI_OPS[4]}"|"4") import ;;
-                       "${GUI_OPS[5]}"|"5") "${RCM[@]}" ;;
-                       "${GUI_OPS[6]}"|"6") usage ;;
-                       "${GUI_OPS[7]}"|"7") do_quit ;;
-                       *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
-                   esac ;;
-               "${DIALOG_CANCEL}") do_quit ;;
-               "${DIALOG_HELP}") usage ;;
-               "${DIALOG_ESC}") do_quit ;;
-           esac
-       done
+                    "${GUI_OPS[3]}"|"3") delete ;;
+                    "${GUI_OPS[4]}"|"4") import ;;
+                    "${GUI_OPS[5]}"|"5") "${RCM[@]}" ;;
+                    "${GUI_OPS[6]}"|"6") usage ;;
+                    "${GUI_OPS[7]}"|"7") do_quit ;;
+                    *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
+                esac ;;
+            "${DIALOG_CANCEL}") do_quit ;;
+            "${DIALOG_HELP}") usage ;;
+            "${DIALOG_ESC}") do_quit ;;
+        esac
+    done
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
