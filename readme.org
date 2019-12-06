@@ -60,9 +60,9 @@ password generator, storage, reference for the terminal and X.
 
 This author makes no claims, guarantees, promisses of any kind!
 
-This project is just an UI/CRUD/SQL/PGP playground!
+This project is nothing more than a UI/CRUD/SQL/PGP playground!
 
-With that out of the way, If you're still here, continue on ...
+So with that out of the way and If you're still around, let's move along ...
 
 ** tl;dr
 
