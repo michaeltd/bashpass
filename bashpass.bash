@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# bashpass/bashpass.sh Xdialog/dialog/terminal assisted password management.
+# bashpass/bashpass.bash Xdialog/dialog/terminal assisted password management.
 
 # Xdialog/dialog
 export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1

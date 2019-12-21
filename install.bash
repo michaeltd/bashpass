@@ -47,4 +47,4 @@ read -r resp
 [[ ${resp:-y} == [Nn]* ]] && exit 1
 
 #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-sqlite3 "${FPDB}" < ac.sql && gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && "${SDN}/bashpass.sh" "${PGPF}" && echo -ne "From now on you'll be able to call bashpass.sh with: bashpass.sh ${PGPF}\n" >&2
+sqlite3 "${FPDB}" < ac.sql && gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && "${SDN}/bashpass.bash" "${PGPF}" && echo -ne "From now on you'll be able to call bashpass with: bashpass.bash ${PGPF}\n" >&2
