@@ -4,12 +4,8 @@
 !assets/xp.png
 !.gitignore
 !ac.sql
-!bashpass.sh
 !bashpass.bash
-!bp-launch.sh
 !import.csv
-!install.sh
 !install.bash
 !license
 !readme.org
-!tests.bats
