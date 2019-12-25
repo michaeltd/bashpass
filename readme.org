@@ -1,8 +1,8 @@
-#+title: bashpass
-#+author: michaeltd
-#+date: <2019-08-18 Sun>
-#+description: password generator, storage, reference for the terminal and/or X.
-#+options: toc:t num:t
+#+TITLE: bashpass
+#+AUTHOR: michaeltd
+#+DATE: <2019-08-18 Sun>
+#+DESCRIPTION: password generator, storage, reference for the terminal and/or X.
+#+OPTIONS: toc:t num:t
 
 [[file:assets/password.jpg]]
 
