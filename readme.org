@@ -5,7 +5,8 @@
 #+options: toc:t num:t
 
 [[file:assets/astrovector.png]]
-[[https://www.shutterstock.com/image-vector/laptop-pc-red-unlocked-password-notification-1038754957][Astrovector/shutterstock.com]]
+
+[[https://www.shutterstock.com/image-vector/laptop-pc-red-unlocked-password-notification-1038754957][astrovector]]
 
 password generator, storage, reference for the terminal and X.
 
