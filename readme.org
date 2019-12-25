@@ -3,6 +3,9 @@
 #+date: <2019-08-18 Sun>
 #+description: password generator, storage, reference for the terminal and/or X.
 #+options: toc:t num:t
+
+[[file:assets/abstract_binary_by_aleksei_derin_2400x1600-100802486-large.jpg]]
+
 password generator, storage, reference for the terminal and X.
 
 * Use Case
