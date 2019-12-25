@@ -4,9 +4,7 @@
 #+description: password generator, storage, reference for the terminal and/or X.
 #+options: toc:t num:t
 
-[[file:assets/astrovector.png]]
-
-[[https://www.shutterstock.com/image-vector/laptop-pc-red-unlocked-password-notification-1038754957][astrovector]]
+[[file:assets/password.jpg]]
 
 password generator, storage, reference for the terminal and X.
 
