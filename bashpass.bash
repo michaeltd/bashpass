@@ -28,21 +28,21 @@ while [[ -n "${1}" ]]; do
 done
 
 # Pick a default available UI ...
-if [[ -x "$(command -v Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(command -v Xdialog)" L="20" C="40"
-elif [[ -x "$(command -v dialog)" ]]; then # Check for dialog
+    declare DIALOG="$(type -P Xdialog)" L="20" C="40"
+elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(command -v dialog)" L="0" C="0"
+    declare DIALOG="$(type -P dialog)" L="0" C="0"
 fi
 
 # ... and try to accommodate optional preference.
-if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(command -v "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(command -v "${USRINTRFCE}")" L="20" C="40"
-elif [[ "${USRINTRFCE}" == "dialog" && -x "$(command -v "${USRINTRFCE}")" ]]; then # Check for dialog
+    declare DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
+elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then # Check for dialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(command -v "${USRINTRFCE}")" L="0" C="0"
+    declare DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 fi
@@ -60,7 +60,7 @@ fi
 declare ACT="ac"
 
 # SQLite
-declare -a DCM=( "$(command -v sqlite3)" "${DB}" ) RCM=( "$(command -v sqlite3)" "-line" "${DB}" ) CCM=( "$(command -v sqlite3)" "-csv" "${DB}" )
+declare -a DCM=( "$(type -P sqlite3)" "${DB}" ) RCM=( "$(type -P sqlite3)" "-line" "${DB}" ) CCM=( "$(type -P sqlite3)" "-csv" "${DB}" )
 
 # Temp files
 declare TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
@@ -72,8 +72,8 @@ declare MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
 #    exit "${1:-0}"
 # }
 
-declare -a PGPC=( "$(command -v gpg2)" "--batch" "--yes" "--default-recipient-self" "--output" )
-declare -a SHRC=( "$(command -v shred)" "--zero" "--remove" )
+declare -a PGPC=( "$(type -P gpg2)" "--batch" "--yes" "--default-recipient-self" "--output" )
+declare -a SHRC=( "$(type -P shred)" "--zero" "--remove" )
 
 do_quit() {
     # gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
@@ -91,13 +91,13 @@ display_feedback() {
 
     msg="${*}"
 
-    if [[ -n "$(command -v notify-send 2> /dev/null)" ]]; then
+    if [[ -n "$(type -P notify-send 2> /dev/null)" ]]; then
         notify-send "${msg}" 2> /dev/null
         return 1
-    elif [[ -n "$(command -v Xdialog 2> /dev/null)" ]]; then
+    elif [[ -n "$(type -P Xdialog 2> /dev/null)" ]]; then
         Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null
         return 1
-    elif [[ -n "$(command -v xmessage 2> /dev/null)" ]]; then
+    elif [[ -n "$(type -P xmessage 2> /dev/null)" ]]; then
         xmessage -nearmouse -timeout 30 "${msg}"  2> /dev/null
         return 1
     else
@@ -113,10 +113,10 @@ check_prereqs(){
     elif (( "${BASH_VERSINFO[0]}" < 4 )); then
         display_feedback "Error: You'll need bash major version 4."
         return $?
-    elif [[ ! $(command -v sqlite3) ]]; then
+    elif [[ ! $(type -P sqlite3) ]]; then
         display_feedback "Error: You need SQLite3 installed."
         return $?
-    elif [[ ! $(command -v gpg2) ]]; then
+    elif [[ ! $(type -P gpg2) ]]; then
         display_feedback "Error: You need GNU Privacy Guard v2 (gnupg) installed."
         return $?
     fi
@@ -164,7 +164,8 @@ check_sql() {
 
 # Generate PassWord
 gpw() {
-    tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}"
+    # tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}"
+    tr -dc "[:graph:]" < /dev/urandom|tr -d "[=\"=][=\'=][=\|=]"|head -c "${1:-64}"
 }
 
 # RowID'S
@@ -231,8 +232,8 @@ create() {
     fi
     "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
-    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        [[ $(command -v xclip 2> /dev/null) ]] && echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
+    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
+        [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
         "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
@@ -254,13 +255,13 @@ retrieve() {
     # Record Set
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
-    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        if [[ -n "$(command -v xclip 2> /dev/null)" ]]; then
+    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
+        if [[ -n "$(type -P xclip 2> /dev/null)" ]]; then
             # Record Count
             RC="$("${DCM[@]}" "SELECT count(rowid) FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
             if (( RC == 1 )); then
                 PW="$("${DCM[@]}" "SELECT pw FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
-                echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
+                echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
             fi
         fi
         "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
@@ -296,8 +297,8 @@ update() {
     [[ -z "${PW}" ]] || (( ${#PW} < 8 )) && PW="$(gpw)"
     "${DCM[@]}" "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
-    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
-        [[ $(command -v xclip 2> /dev/null) ]] && echo "${PW}"|"$(command -v xclip 2> /dev/null)" "-r"
+    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
+        [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
@@ -345,7 +346,7 @@ import() {
         return
     fi
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
-    if [[ "${DIALOG}" == "$(command -v Xdialog)" ]]; then
+    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
