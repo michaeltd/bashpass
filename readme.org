@@ -3,7 +3,6 @@
 #+DATE: <2019-08-18 Sun>
 #+DESCRIPTION: password generator, storage, reference for the terminal and/or X.
 #+OPTIONS: toc:t num:t
-
 #+html: <p align="center"><img source="assets/password.jpg"/></p>
 
 password generator, storage, reference for the terminal and X.
