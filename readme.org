@@ -4,7 +4,7 @@
 #+DESCRIPTION: password generator, storage, reference for the terminal and/or X.
 #+OPTIONS: toc:t num:t
 
-[[file:assets/password.jpg]]
+#+html: <p align="center"><img source="assets/password.jpg"/></p>
 
 password generator, storage, reference for the terminal and X.
 
@@ -17,11 +17,16 @@ password generator, storage, reference for the terminal and X.
 5. \slash \slash  import a csv file
 
 ** [[file:bashpass.bash][bashpass.bash]] [[file:assets/bp.png][terminal]]
-[[file:assets/bp.png]]
+
+#+html: <p align="center"><img source="assets/bp.png"/></p>
+
 ** [[file:bashpass.bash][bashpass.bash]] [[file:assets/dp.png][dialog]]
-[[file:assets/dp.png]]
+
+#+html: <p align="center"><img source="assets/dp.png"/></p>
+
 ** [[file:bashpass.bash][bashpass.bash]] [[file:assets/xp.png][Xdialog]]
-[[file:assets/xp.png]]
+
+#+html: <p align="center"><img source="assets/xp.png"/></p>
 
 * Files
 1. [[file:ac.sql]]
