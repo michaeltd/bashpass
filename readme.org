@@ -27,6 +27,7 @@ password generator, storage, reference for the terminal and X.
 
 #+html: <p align="center"><img src="assets/xp.png"/></p>
 
+
 * Files
 1. [[file:ac.sql]]
    SQLite database create example script
@@ -38,6 +39,7 @@ password generator, storage, reference for the terminal and X.
    First time run only commands
 5. [[file:readme.org]]
    This file
+
 
 * Dependencies
 
@@ -60,6 +62,7 @@ password generator, storage, reference for the terminal and X.
    2. dialog for a tty TUI.
 
    3. finally, xclip for some middle click password pasting functionality.
+
 
 * Usage
 
@@ -121,6 +124,7 @@ For subsequent uses just fire up the script directly: ~bashpass.bash [sample.pgp
 
 - The order of arguments is irrelevant. ie: ~bashpass.bash sample.pgp terminal~ == ~bashpass.bash terminal sample.pgp~)
 
+
 * Notes
 
  1. You can only have one instance of [[file:bashpass.bash][bashpass.bash]] running at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
@@ -142,6 +146,7 @@ This script assumes you can secure the safety of your computer hardware/software
 ~sample~ SQLite files used by this application get shredded upon quiting, otherwise a file recovery tool could recover unencrypted versions of them.
 
 Backup never hurt nobody ... ;..;
+
 
 * TO-DOS [3/3] [100%]
 
