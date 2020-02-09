@@ -1,8 +1,8 @@
-#+TITLE: bashpass
-#+AUTHOR: michaeltd
-#+DATE: <2019-08-18 Sun>
-#+DESCRIPTION: password generator, storage, reference for the terminal and/or X.
-#+OPTIONS: toc:t num:t
+#+title: bashpass
+#+author: michaeltd
+#+date: <2019-08-18 Sun>
+#+description: password generator, storage, reference for the terminal and/or X.
+#+options: toc:t num:t
 #+html: <p align="center"><img src="assets/password.jpg"/></p>
 
 password generator, storage, reference for the terminal and X.
@@ -10,10 +10,10 @@ password generator, storage, reference for the terminal and X.
 * Use Case
 
 1. I can create passwords
-2. \slash \slash  recall passwords
-3. \slash \slash  update passwords
-4. \slash \slash  delete accounts
-5. \slash \slash  import a csv file
+2. \slash \slash recall passwords
+3. \slash \slash update passwords
+4. \slash \slash delete accounts
+5. \slash \slash import a csv file
 
 ** [[file:bashpass.bash][bashpass.bash]] [[file:assets/bp.png][terminal]]
 
