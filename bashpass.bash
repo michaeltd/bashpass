@@ -164,7 +164,6 @@ check_sql() {
 
 # Generate PassWord
 gpw() {
-    # tr -dc '[:alnum:]~!@#$%^_+:?' < /dev/urandom|head -c "${1:-64}"
     tr -dc "[:graph:]" < /dev/urandom|tr -d "[=\"=][=\'=][=\|=]"|head -c "${1:-64}"
 }
 
