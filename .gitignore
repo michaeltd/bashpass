@@ -6,7 +6,9 @@
 !.gitignore
 !ac.sql
 !bashpass.bash
+!bashpass
 !import.csv
 !install.bash
+!install
 !license
 !readme.org
