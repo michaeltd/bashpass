@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bashpass/install.sh - Install bashpass.sh
+# bashpass/install - Install bashpass
 
 if [[ ! -t 1 ]]; then
     echo -ne "You'll need to run ${0/*\/} in a terminal\n" >&2
@@ -39,7 +39,7 @@ FPPGPF="${SDN}/${PGPF}"
 echo -ne " This script will:\n \
  1. Make a ${DB} SQLite3 file ... \n \
  2. encrypt it to ${PGPF} \n \
- 3. Execute bashpass.sh ${PGPF} \n"
+ 3. Execute bashpass ${PGPF} \n"
 
 echo -ne "Continue? [Y/n]: "
 read -r resp
@@ -47,4 +47,4 @@ read -r resp
 [[ ${resp:-y} == [Nn]* ]] && exit 1
 
 #gpg2 --batch --yes --quiet --default-recipient-self --output "${DB}.asc" --encrypt "${DB}"
-sqlite3 "${FPDB}" < ac.sql && gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && "${SDN}/bashpass.bash" "${PGPF}" && echo -ne "From now on you'll be able to call bashpass with: bashpass.bash ${PGPF}\n" >&2
+sqlite3 "${FPDB}" < ac.sql && gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && "${SDN}/bashpass" "${PGPF}" && echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2

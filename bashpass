@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # bashpass Xdialog/dialog/terminal assisted password management.
 
