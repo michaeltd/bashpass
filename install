@@ -1,46 +1,51 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # bashpass/install - Install bashpass
 
-if [[ ! -t 1 ]]; then
-    echo -ne "You'll need to run ${0/*\/} in a terminal\n" >&2
-    exit 1
-elif [[ ! $(command -v sqlite3) ]]; then
-    echo -ne "You need SQLite3 installed.\n" >&2
-    exit 1
-elif [[ ! $(command -v gpg2) ]]; then
-    echo -ne "You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2
-    exit 1
-fi
+Err(){ printf "ERROR: %s\n" "$1" 1>&2; exit 1; }
+Dep(){ command -v "$1" 1> /dev/null 2>&1 || Err "Executable '$1' not found."; }
 
-declare SDN PGPF DB
-SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
+Dep gpg2 || Err "Command 'gpg2' not found."
+Dep sqlite3 || Err "Command 'sqlite3' not found."
+[ -t 1 ] || Err 'An interactive session is required.'
 
-if [[ -z "${1}" ]]; then
-    PGPF="sample.pgp"
-    DB="${PGPF%%\.pgp}"
-elif [[ "${1}" =~ \.pgp$ ]]; then
-    PGPF="${1}"
-    DB="${PGPF%%\.pgp}"
+SDN=${0%/*}
+
+if [ -z ${1} ]; then
+    PGPF='sample.pgp'
+    DB=${PGPF%%.pgp}
+elif [[ ${1} == *.pgp ]]; then
+    PGPF=${1}
+    DB=${PGPF%%.pgp}
 else
     PGPF="${1}.pgp"
-    DB="${PGPF%%\.pgp}"
+    DB=${PGPF%%.pgp}
 fi
 
 FPDB="${SDN}/${DB}"
 FPPGPF="${SDN}/${PGPF}"
 
-echo -ne " This script will:\n \
- 1. Make a ${DB} SQLite3 file ... \n \
- 2. encrypt it to ${PGPF} \n \
- 3. Execute bashpass ${PGPF} \n"
+printf "\
+This script will:
+ 1. Make '${DB}' SQLite3 file ...
+ 2. Encrypt it to: ${PGPF}
+ 3. Execute: bashpass ${PGPF}
+"
 
-echo -ne "Continue? [Y/n]: "
-read -r resp
+printf 'Continue? [Y/n]: '
+read Answer
 
-[[ ${resp:-y} == [Nn]* ]] && exit 1
+case ${Answer:-y} in
+    [Yy]|[Yy][Ee][Ss]) printf 'Beginning installation...\n' ;;
+        [Nn]|[Nn][Oo]) exit 1 ;;
+                    *) Err 'Invalid response -- quitting.' ;;
+esac
 
-sqlite3 "${FPDB}" < ac.sql && \
-    gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
-    "${SDN}/bashpass" "${PGPF}" && \
-    echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
+sqlite3 "${FPDB}" < ac.sql || Err "Command 'sqlite3' exited unexpectedly."
+
+gpg2 --default-recipient-self -o "${FPPGPF}" -e "${FPDB}" ||
+    Err "Command 'gpg2' exited unexpectedly."
+
+"${SDN}/bashpass" "${PGPF}" || Err "Command 'bashpass' exited unexpectedly."
+
+printf 'From now on, you can use: bashpass %s\n' "${PGPF}"
