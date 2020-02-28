@@ -53,7 +53,7 @@ password generator, storage, and reference for the terminal and/or X.
 
 3. BASH v4
 
-   A resent bash installation with a major version no less than 4.
+   A recent Bash installation with a major version no less than 4.
 
 4. Optionally...
 
