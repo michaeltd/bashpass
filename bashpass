@@ -356,30 +356,21 @@ import() {
     fi
 }
 
-
 usage() {
     if [[ -n "${DIALOG}" ]]; then
-        #"${DIALOG}" "$([[ "${DIALOG}" == "Xdialog" ]] && echo "--left")" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[@]}" "${L}" "${C}"
-        #"${DIALOG}" --backtitle "${SBN}" --title "Help" --left --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
-
-        # if [[ "${DIALOG}" == "Xdialog" ]];then
-        #     "${DIALOG}" --backtitle "${SBN}" --title "Help" --left --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
-        # else
-        #     "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
-        # fi
-
-        "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
+        "${DIALOG}" --backtitle "${SBN}" --title "Help" "$([[ "${DIALOG}" == "Xdialog" ]] && echo "--left")" --msgbox "${GUI_HMSG[@]}" "${L}" "${C}"
     else
         echo -e "${TUI_HMSG[*]}"
     fi
-
 }
 
 main() {
 
     check_prereqs || exit $?
     check_mutex || exit $?
-    check_decrypt || exit $? # Have password .sqlite, $TF and $MUTEX so from now on, instead of exiting, we're do_quit for propper housekeeping.
+    check_decrypt || exit $?
+    # Have password .sqlite, $TF and $MUTEX so from now on,
+    # instead of exiting, we're do_quit for propper housekeeping.
     check_sql || do_quit $?
 
     # Build menus and help messages.
