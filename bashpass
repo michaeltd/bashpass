@@ -384,7 +384,8 @@ main() {
     declare -a GUI_HMSG=("\n${BPUSAGE[*]}\n\n")
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
-        declare -a TUI_MENU+=("${x}:${TUI_OPS[$x]}"); (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
+	declare -a TUI_MENU+=("${x}:${TUI_OPS[$x]}")
+	(( ( x + 1 ) % 4 == 0 )) && declare -a TUI_MENU+=("\n") || declare -a TUI_MENU+=("\t")
         declare -a TUI_HMSG+=("Use ${x}, for ${TUI_OPS[$x]}, which will ${DESC[$x]}\n")
         declare -a GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
         declare -a GUI_HMSG+=("Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n")
