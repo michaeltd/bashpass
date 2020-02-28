@@ -352,13 +352,12 @@ import() {
         "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
-
     fi
 }
 
 usage() {
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "Help" "$([[ "${DIALOG}" == "Xdialog" ]] && echo "--left")" --msgbox "${GUI_HMSG[@]}" "${L}" "${C}"
+        "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
     else
         echo -e "${TUI_HMSG[*]}"
     fi
@@ -385,21 +384,21 @@ main() {
     declare -a GUI_HMSG=("\n${BPUSAGE[*]}\n\n")
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
-        TUI_MENU+=("${x}:${TUI_OPS[$x]}"); (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
-        TUI_HMSG+=("Use ${x}, for ${TUI_OPS[$x]}, which will ${DESC[$x]}\n")
-        GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
-        GUI_HMSG+=("Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n")
+        declare -a TUI_MENU+=("${x}:${TUI_OPS[$x]}"); (( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
+        declare -a TUI_HMSG+=("Use ${x}, for ${TUI_OPS[$x]}, which will ${DESC[$x]}\n")
+        declare -a GUI_MENU+="${GUI_OPS[$x]}|${SDESC[$x]}|${DESC[$x]}|"
+        declare -a GUI_HMSG+=("Use ${GUI_OPS[$x]}, to ${DESC[$x]}\n")
     done
 
-    TUI_MENU+=("Choose[0-$((${#TUI_OPS[@]}-1))]:")
-    TUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
-    GUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
+    declare -a TUI_MENU+=("Choose[0-$((${#TUI_OPS[@]}-1))]:")
+    declare -a TUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
+    declare -a GUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
             #shellcheck disable=SC2086
-            "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--help-button" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
+            "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.
