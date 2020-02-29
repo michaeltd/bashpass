@@ -3,18 +3,18 @@
 # bashpass Xdialog/dialog/terminal assisted password management.
 
 # Xdialog/dialog
-export XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
-       XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
-export DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
-       DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
-export SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
+declare -rx XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
+	XDIALOG_INFOBOX_TIMEOUT=30000 XDIALOG_NO_GMSGS=1
+declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
+	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255
+declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 #shellcheck disable=SC2155
-declare SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)" \
-	SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
+readonly SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)" \
+	 SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
 
-declare BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]"
+readonly BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]"
 
 declare PGPF DB BNPGPF BNDB USRINTRFCE
 
@@ -42,35 +42,35 @@ fi
 # ... and try to accommodate optional preference.
 if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
+    declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
 elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then # Check for dialog
     #shellcheck disable=SC2155
-    declare DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
+    declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 fi
 
 if [[ -n "${PGPF}" ]]; then
-    PGPF="${SDN}/${PGPF}"
-    DB="${PGPF%%\.pgp}"
-    BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+    readonly PGPF="${SDN}/${PGPF}"
+    readonly DB="${PGPF%%\.pgp}"
+    readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 else
-    PGPF="${SDN}/sample.pgp"
-    DB="${PGPF%%\.pgp}"
-    BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+    readonly PGPF="${SDN}/sample.pgp"
+    readonly DB="${PGPF%%\.pgp}"
+    readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 fi
 
-declare ACT="ac"
+readonly ACT="ac"
 
 # SQLite
-declare -a DCM=( "$(type -P sqlite3)" "${DB}" ) RCM=( "$(type -P sqlite3)" "-line" "${DB}" ) CCM=( "$(type -P sqlite3)" "-csv" "${DB}" )
+declare -ra DCM=( "$(type -P sqlite3)" "${DB}" ) RCM=( "$(type -P sqlite3)" "-line" "${DB}" ) CCM=( "$(type -P sqlite3)" "-csv" "${DB}" )
 
 # Temp files
-declare TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
-declare MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
+readonly TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
+readonly MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
 
-declare -a PGPC=( "$(type -P gpg2)" "--batch" "--yes" "--default-recipient-self" "--output" )
-declare -a SHRC=( "$(type -P shred)" "--zero" "--remove" )
+declare -ra PGPC=( "$(type -P gpg2)" "--batch" "--yes" "--default-recipient-self" "--output" )
+declare -ra SHRC=( "$(type -P shred)" "--zero" "--remove" )
 
 do_quit() {
     # Upon successfull encryption ONLY shred files
@@ -344,7 +344,7 @@ main() {
     check_prereqs || exit $?
     check_mutex || exit $?
     check_decrypt || exit $?
-    # Have password .sqlite, $TF and $MUTEX so from now on,
+    # Have password $DB, $TF and $MUTEX so from now on,
     # instead of exiting, we're do_quit for propper housekeeping.
     check_sql || do_quit $?
 
@@ -375,7 +375,9 @@ main() {
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
             #shellcheck disable=SC2086
-            "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" $((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
+            "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--item-help" \
+			"--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" \
+			$((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.
