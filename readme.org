@@ -1,11 +1,11 @@
 #+title: bashpass
 #+author: michaeltd
 #+date: <2019-08-18 Sun>
-#+description: password generator, storage, reference for the terminal and/or X.
+#+description: password generator, storage, and reference for the terminal and/or X.
 #+options: toc:t num:t
 #+html: <p align="center"><img src="assets/password.jpg"/></p>
 
-password generator, storage, reference for the terminal and X.
+password generator, storage, and reference for the terminal and/or X.
 
 * Use Case
 
@@ -59,7 +59,7 @@ password generator, storage, reference for the terminal and X.
 
   3. BASH v4
 
-     A resent bash installation with a major version no less than 4.
+     A recent Bash installation with a major version no less than 4.
 
   4. Optionally...
 
@@ -74,7 +74,7 @@ password generator, storage, reference for the terminal and X.
 
 ** Use at your own risk!!!
 
-   This author makes no claims, guarantees, promisses of any kind!
+   This author makes no claims, guarantees, or promises of any kind!
 
    This project is nothing more than a UI/CRUD/SQL/PGP playground!
 
@@ -141,7 +141,7 @@ password generator, storage, reference for the terminal and X.
 
   4. GNU Privacy Guard file that'll be provided has to have a ~*.pgp~ extension. If no ~.pgp~ file parameter given, the script will default to ~sample.pgp~.
 
-  5. After <2019-11-27 Wed> depending on xclip availability, if on Xdialog mode and on single record Create,Retrieve,Update operations, you'll be able to paste affected password via middleclick.
+  5. After <2019-11-27 Wed> depending on xclip availability, if on Xdialog mode and on single record Create,Retrieve,Update operations, you'll be able to paste affected password via middle-click.
 
   6. Again... Not tested for production use at any load or capacity!
 
@@ -149,7 +149,7 @@ password generator, storage, reference for the terminal and X.
 
    This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
-   ~sample~ SQLite files used by this application get shredded upon quiting, otherwise a file recovery tool could recover unencrypted versions of them.
+   ~sample~ SQLite files used by this application get shredded upon quitting, otherwise a file recovery tool could recover unencrypted versions of them.
 
    Backup never hurt nobody ... ;..;
 
@@ -162,7 +162,7 @@ password generator, storage, reference for the terminal and X.
 
 ** ✔ Clipboard
    CLOSED: [2019-11-27 Wed 02:21]
-   Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pastable with middle mouse button), with it's trailing newline ('\n') removed.
+   Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pasteable with middle mouse button), with it's trailing newline ('\n') removed.
 
 ** ✔ Modular UI [2/2] [100%]
    CLOSED: [2019-08-22 Thu 01:43]
