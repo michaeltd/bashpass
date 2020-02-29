@@ -91,37 +91,28 @@ do_quit() {
 }
 
 display_feedback() {
-
     msg="${*}"
-
     if [[ -n "$(type -P notify-send 2> /dev/null)" ]]; then
         notify-send "${msg}" 2> /dev/null
-        return 1
     elif [[ -n "$(type -P Xdialog 2> /dev/null)" ]]; then
         Xdialog --title "Error" --msgbox "${msg}" 0 0 2> /dev/null
-        return 1
     elif [[ -n "$(type -P xmessage 2> /dev/null)" ]]; then
         xmessage -nearmouse -timeout 30 "${msg}"  2> /dev/null
-        return 1
     else
         echo -ne "${msg}\n" >&2
-        return 1
     fi
+    return 1
 }
 
 check_prereqs(){
     if [[ ! -t 1 ]]; then
         display_feedback "Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
-        return $?
     elif (( "${BASH_VERSINFO[0]}" < 4 )); then
         display_feedback "Error: You'll need bash major version 4."
-        return $?
     elif [[ ! $(type -P sqlite3) ]]; then
         display_feedback "Error: You need SQLite3 installed."
-        return $?
     elif [[ ! $(type -P gpg2) ]]; then
         display_feedback "Error: You need GNU Privacy Guard v2 (gnupg) installed."
-        return $?
     fi
 }
 
@@ -129,7 +120,6 @@ check_prereqs(){
 check_mutex() {
     if [[ -f "${MUTEX}" ]]; then
         display_feedback "Error: You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
-        return $?
     fi
 }
 
