@@ -25,21 +25,13 @@ while [[ -n "${1}" ]]; do
         Xdialog|dialog|terminal) readonly USRINTRFCE="${1}" ;;
         d|-d|debug|--debug) set -x ;;
         h|-h|help|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
-        *) echo -ne "Unknown option: ${1}\n" >&2;echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
+        *) echo -ne "Unknown option: ${1}\n" >&2
+	   echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
     esac
     shift
 done
 
-# Pick a default available UI ...
-if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    #shellcheck disable=SC2155
-    declare DIALOG="$(type -P Xdialog)" L="20" C="40"
-elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-    #shellcheck disable=SC2155
-    declare DIALOG="$(type -P dialog)" L="0" C="0"
-fi
-
-# ... and try to accommodate optional preference.
+# Try to accommodate optional preference...
 if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     #shellcheck disable=SC2155
     declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
@@ -48,6 +40,17 @@ elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then 
     declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
+else # -z USERINTRFCE etc
+    # ... or pick a default available UI
+    if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+	#shellcheck disable=SC2155
+	declare -r DIALOG="$(type -P Xdialog)" L="20" C="40"
+    elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
+	#shellcheck disable=SC2155
+	declare -r DIALOG="$(type -P dialog)" L="0" C="0"
+    else
+	unset DIALOG
+    fi
 fi
 
 if [[ -n "${PGPF}" ]]; then
@@ -183,15 +186,20 @@ create() {
     #shellcheck disable=SC2155
     local MAXID="$(maxid)" DM EM UN PW CM
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter a domain:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "domain" \
+		    --inputbox "Enter a domain:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter an email:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "email" \
+		    --inputbox "Enter an email:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter a username:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "username" \
+		    --inputbox "Enter a username:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --passwordbox "Enter a password:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "password" \
+		    --passwordbox "Enter a password:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title dialog --inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "comment" \
+		    --inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
         (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return
     else
         while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
@@ -226,7 +234,8 @@ create() {
 retrieve() {
     local DM RC PW
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "domain" \
+		    "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
     else
         echo -ne "Enter domain to look for (empty for All): "
@@ -247,7 +256,8 @@ retrieve() {
                 echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
             fi
         fi
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" \
+		    "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -257,7 +267,8 @@ update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
         #shellcheck disable=SC2046
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${SBN}" "--title" "update accout:" \
+		    "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
@@ -267,7 +278,9 @@ update() {
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     fi
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "password" --inputbox "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "password" \
+		    --inputbox "Enter a password or a password length (8-64) or empty for auto (max length): " \
+		    "${L}" "${C}" 2> "${TF}"
         ERRLVL=$? PW="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) && return
     else
@@ -282,7 +295,8 @@ update() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
         [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
-        "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" --backtitle "${SBN}" --title "results" \
+		    --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -292,7 +306,8 @@ delete() {
     local ERRLVL ID
     if [[ -n "${DIALOG}" ]]; then
         #shellcheck disable=SC2046
-        "${DIALOG}" --backtitle "${SBN}" --title "delete account:" --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "delete account:" \
+		    --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
@@ -300,16 +315,23 @@ delete() {
         read -r ID
         echo "${ID}" > "${TF}"
         [[ -z "${ID}" ]] && return
-       fi
-       "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
-       [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n"
+    fi
+    "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
+    if [[ -n "${DIALOG}" ]]; then
+	"${DIALOG}" --backtitle "${SBN}" --title "dialog" \
+		    --msgbox "Account ID: #${ID} deleted." "${L}" "${C}"
+    else
+	echo -ne "Account ID: #${ID} deleted.\n"
+    fi
+    
 }
 
 importcsv() {
     local MAXID CSVF ERRLVL
     MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "Enter a csv file:" --fselect "${SDN}/" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" --backtitle "${SBN}" --title "Enter a csv file:" \
+		    --fselect "${SDN}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
         CSVF=$(cat "${TF}")
         [[ -z "${CSVF}" ]] && return
@@ -323,14 +345,16 @@ importcsv() {
     ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" --backtitle "${SBN}" --title Error --msgbox "Error reported: $(cat "${TF}")" "${L}" "${C}"
+            "${DIALOG}" --backtitle "${SBN}" --title "Error" \
+			--msgbox "Error reported: $(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return
     fi
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "results" --editbox "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" --backtitle "${SBN}" --title "results" \
+		    --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -358,10 +382,34 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    declare -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${black}Quit      ${reset}" )
-    declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
-    declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "sqlite3 session" "Help screen" "Exit" )
-    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "Preview a csv file." "start an sqlite session against ${BNDB}." "Show this message" "Quit this script." )
+    declare -a TUI_OPS=( "${red}Create    ${reset}" \
+			     "${green}Retrieve  ${reset}" \
+			     "${blue}Update    ${reset}" \
+			     "${cyan}Delete    ${reset}" \
+			     "${yellow}Import CSV${reset}" \
+			     "${yellow}Export CSV${reset}" \
+			     "${magenta}SQLite3   ${reset}" \
+			     "${white}Help      ${reset}" \
+			     "${black}Quit      ${reset}" )
+
+    declare -a GUI_OPS=( "Create" "Retrieve" "Update" \
+				  "Delete" "Import CSV" "Export CSV" \
+				  "SQLite3" "Help" "Quit" )
+
+    declare -a SDESC=( "New entry" "Find account" "Regen password" \
+				   "Remove entry" "Import a file" \
+				   "Export a file" "sqlite3 session" \
+				   "Help screen" "Exit" )
+
+    declare -a DESC=( "gather details for a new account." \
+			  "search records by domain. (empty for all)" \
+			  "regenerate an existing password." \
+			  "remove an account." \
+			  "prompt for csv file to import." \
+			  "Preview a csv file." \
+			  "start an sqlite session against ${BNDB}." \
+			  "Show this message" \
+			  "Terminate this script." )
 
     declare -a TUI_MENU=()
     declare -a TUI_HMSG=("\n${BPUSAGE[*]}\n\n")
@@ -370,15 +418,17 @@ main() {
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
 	declare -a TUI_MENU+=("${x}:${TUI_OPS[x]}")
-	(( ( x + 1 ) % 4 == 0 )) && declare -a TUI_MENU+=("\n") || declare -a TUI_MENU+=("\t")
-        declare -a TUI_HMSG+=("Use ${x}, for ${TUI_OPS[x]}, which will ${DESC[x]}\n")
+	(( ( x + 1 ) % 4 == 0 )) && \
+	    declare -a TUI_MENU+=("\n") || \
+		declare -a TUI_MENU+=("\t")
+        declare -a TUI_HMSG+=( "Use ${x}, for ${TUI_OPS[x]}, which will ${DESC[x]}\n" )
         declare -a GUI_MENU+="${GUI_OPS[x]}|${SDESC[x]}|${DESC[x]}|"
-        declare -a GUI_HMSG+=("Use ${GUI_OPS[x]}, to ${DESC[x]}\n")
+        declare -a GUI_HMSG+=( "Use ${GUI_OPS[x]}, to ${DESC[x]}\n" )
     done
 
-    declare -a TUI_MENU+=("\nChoose[0-$((${#TUI_OPS[*]}-1))]:")
-    declare -a TUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
-    declare -a GUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
+    declare -a TUI_MENU+=( "\nChoose[0-$((${#TUI_OPS[*]}-1))]:" )
+    declare -a TUI_HMSG+=( "\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n" )
+    declare -a GUI_HMSG+=( "\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n" )
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
