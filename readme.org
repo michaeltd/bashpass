@@ -9,11 +9,12 @@ password generator, storage, reference for the terminal and X.
 
 * Use Case
 
-1. I can create passwords
-2. \slash \slash recall passwords
-3. \slash \slash update passwords
-4. \slash \slash delete accounts
-5. \slash \slash import a csv file
+  1. I can create passwords
+  2. \slash \slash recall passwords
+  3. \slash \slash update passwords
+  4. \slash \slash delete accounts
+  5. \slash \slash import a csv file
+  6. \slash \slash export a csv file
 
 ** [[file:bashpass][bashpass]] [[file:assets/bp.png][terminal]]
 
@@ -29,58 +30,63 @@ password generator, storage, reference for the terminal and X.
 
 
 * Files
-1. [[file:ac.sql]]
-   SQLite database create example script
-2. [[file:bashpass]]
-   main script
-3. [[file:import.csv]]
-   Data import example format
-4. [[file:install]]
-   First time run only commands
-5. [[file:readme.org]]
-   This file
+  1. [[file:ac.sql]]
+
+     SQLite database create example script
+  2. [[file:bashpass]]
+
+     main script
+  3. [[file:import.csv]]
+
+     Data import example format
+  4. [[file:install]]
+
+     First time run only commands
+  5. [[file:readme.org]]
+
+     This file
 
 
 * Dependencies
 
-1. GNU Privacy Guard v2
+  1. GNU Privacy Guard v2
 
-   You need gnupg installed, ~gpg2~ executable readily available in ~${PATH}.~
+     You need gnupg installed, ~gpg2~ executable readily available in ~${PATH}.~
 
-2. SQLite v3
+  2. SQLite v3
 
-   SQLite3 installed and ~sqlite3~ available in ~${PATH}.~
+     SQLite3 installed and ~sqlite3~ available in ~${PATH}.~
 
-3. BASH v4
+  3. BASH v4
 
-   A resent bash installation with a major version no less than 4.
+     A resent bash installation with a major version no less than 4.
 
-4. Optionally...
+  4. Optionally...
 
-   1. Xdialog for an X client.
+     1. Xdialog for an X client.
 
-   2. dialog for a tty TUI.
+     2. dialog for a tty TUI.
 
-   3. finally, xclip for some middle click password pasting functionality.
+     3. finally, xclip for some middle click password pasting functionality.
 
 
 * Usage
 
 ** Use at your own risk!!!
 
-This author makes no claims, guarantees, promisses of any kind!
+   This author makes no claims, guarantees, promisses of any kind!
 
-This project is nothing more than a UI/CRUD/SQL/PGP playground!
+   This project is nothing more than a UI/CRUD/SQL/PGP playground!
 
-So with that out of the way and If you're still around, let's move along ...
+   So with that out of the way and If you're still around, let's move along ...
 
 ** tl;dr
 
-1. ~git clone https://github.com/michaeltd/bashpass && cd bashpass~
+   1. ~git clone https://github.com/michaeltd/bashpass && cd bashpass~
 
-2. ~./install [sample.pgp]~
+   2. ~./install [sample.pgp]~
 
-3. ~Usage: bashpass [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]~
+   3. ~Usage: bashpass [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]~
 
 ** In detail
 
@@ -88,84 +94,84 @@ So with that out of the way and If you're still around, let's move along ...
 
 **** [[https://www.gnupg.org/gph/en/manual/c14.html][Default gpg2 keyring]]
 
-If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][default gpg2 keyring]].
+     If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][default gpg2 keyring]].
 
 **** Make and encrypt a ~sample.pgp~ SQLite3 file.
 
 ***** The easy way:
 
-Run ~install [sample.pgp]~ from [[file:bashpass][bashpass]]'s directory.
+      Run ~install [sample.pgp]~ from [[file:bashpass][bashpass]]'s directory.
 
-It'll create ~sample~ SQLite3 and encrypt it as ~sample.pgp~ to your personal keyring
+      It'll create ~sample~ SQLite3 and encrypt it as ~sample.pgp~ to your personal keyring
 
 ***** The hard way:
 
-You'll need to build ~sample~ like so: ~sqlite3 sample < ac.sql~
+      You'll need to build ~sample~ like so: ~sqlite3 sample < ac.sql~
 
-and encrypt it like so: ~gpg2 --default-recipient-self --output sample.pgp --encrypt sample~,
+      and encrypt it like so: ~gpg2 --default-recipient-self --output sample.pgp --encrypt sample~,
 
-Reason being SQLite3 ~sample~ file you'll work with, needs to be encrypted to your own keyring.
+      Reason being SQLite3 ~sample~ file you'll work with, needs to be encrypted to your own keyring.
 
-All relevant files must reside in [[file:bashpass][bashpass]]'s directory.
+      All relevant files must reside in [[file:bashpass][bashpass]]'s directory.
 
 *** Subsequent uses:
 
-For subsequent uses just fire up the script directly: ~bashpass [sample.pgp]~ from a terminal,
+    For subsequent uses just fire up the script directly: ~bashpass [sample.pgp]~ from a terminal,
 
 ** Optional command line arguments
 
-- If you'd like to test other UI options try: ~bashpass [Xdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
+   - If you'd like to test other UI options try: ~bashpass [Xdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
 
-- You can provide an SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.pgp~ extension.
+   - You can provide an SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.pgp~ extension.
 
-- The ~debug~ option will ~set -x~ to ~bashpass~, enabling it to echo commands in the terminal. To say the least: It's noisy!
+   - The ~debug~ option will ~set -x~ to ~bashpass~, enabling it to echo commands in the terminal. To say the least: It's noisy!
 
-- Help will print out Usage and exit.
+   - Help will print out Usage and exit.
 
-- The order of arguments is irrelevant. ie: ~bashpass sample.pgp terminal~ == ~bashpass terminal sample.pgp~)
+   - The order of arguments is irrelevant. ie: ~bashpass sample.pgp terminal~ == ~bashpass terminal sample.pgp~)
 
 
 * Notes
 
- 1. You can only have one instance of [[file:bashpass][bashpass]] running at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
+  1. You can only have one instance of [[file:bashpass][bashpass]] running at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
 
- 2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.pgp]~) as it will not run otherwise. For SQLite session availability, gnupg input and debugging purposes.
+  2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.pgp]~) as it will not run otherwise. For SQLite session availability, gnupg input and debugging purposes.
 
- 3. Passwords generated by [[file:bashpass][bashpass]] are 64 character long ~[:graph:]~ type random strings (with some exceptions: ",',|) from ~/dev/urandom~.
+  3. Passwords generated by [[file:bashpass][bashpass]] are 64 character long ~[:graph:]~ type random strings (with some exceptions: ",',|) from ~/dev/urandom~.
 
- 4. GNU Privacy Guard file that'll be provided has to have a ~*.pgp~ extension. If no ~.pgp~ file parameter given, the script will default to ~sample.pgp~.
+  4. GNU Privacy Guard file that'll be provided has to have a ~*.pgp~ extension. If no ~.pgp~ file parameter given, the script will default to ~sample.pgp~.
 
- 5. After <2019-11-27 Wed> depending on xclip availability, if on Xdialog mode and on single record Create,Retrieve,Update operations, you'll be able to paste affected password via middleclick.
+  5. After <2019-11-27 Wed> depending on xclip availability, if on Xdialog mode and on single record Create,Retrieve,Update operations, you'll be able to paste affected password via middleclick.
 
- 6. Again... Not tested for production use at any load or capacity!
+  6. Again... Not tested for production use at any load or capacity!
 
 ** Security concerns
 
-This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
+   This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
-~sample~ SQLite files used by this application get shredded upon quiting, otherwise a file recovery tool could recover unencrypted versions of them.
+   ~sample~ SQLite files used by this application get shredded upon quiting, otherwise a file recovery tool could recover unencrypted versions of them.
 
-Backup never hurt nobody ... ;..;
+   Backup never hurt nobody ... ;..;
 
 
 * TO-DOS [3/3] [100%]
 
 ** ✔ Encryption
-CLOSED: [2019-08-22 Thu 01:43]
-Add pgp2 encryption
+   CLOSED: [2019-08-22 Thu 01:43]
+   Add pgp2 encryption
 
 ** ✔ Clipboard
-CLOSED: [2019-11-27 Wed 02:21]
-Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pastable with middle mouse button), with it's trailing newline ('\n') removed.
+   CLOSED: [2019-11-27 Wed 02:21]
+   Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pastable with middle mouse button), with it's trailing newline ('\n') removed.
 
 ** ✔ Modular UI [2/2] [100%]
-CLOSED: [2019-08-22 Thu 01:43]
-Depending on the environment.
+   CLOSED: [2019-08-22 Thu 01:43]
+   Depending on the environment.
 
 *** ✔ GUI
-CLOSED: [2019-08-22 Thu 01:44]
-Based on availability
+    CLOSED: [2019-08-22 Thu 01:44]
+    Based on availability
 
 *** ✔ GUI/TUI
-CLOSED: [2019-08-22 Thu 01:44]
-Based on X
+    CLOSED: [2019-08-22 Thu 01:44]
+    Based on X
