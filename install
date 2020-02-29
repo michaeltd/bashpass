@@ -11,6 +11,9 @@ elif [[ ! $(command -v sqlite3) ]]; then
 elif [[ ! $(command -v gpg2) ]]; then
     echo -ne "You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2
     exit 1
+elif (( "${BASH_VERSINFO[0]}" < 4 )); then
+    echo -ne "You'll need bash major version 4.\n" >&2
+	exit 1
 fi
 
 declare SDN PGPF DB
