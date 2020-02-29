@@ -22,7 +22,7 @@ declare PGPF DB BNPGPF BNDB USRINTRFCE
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.pgp) PGPF="${1}";;
-        Xdialog|dialog|terminal) USRINTRFCE="${1}" ;;
+        Xdialog|dialog|terminal) readonly USRINTRFCE="${1}" ;;
         d|-d|debug|--debug) set -x ;;
         h|-h|help|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
         *) echo -ne "Unknown option: ${1}\n" >&2;echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
@@ -63,7 +63,10 @@ fi
 readonly ACT="ac"
 
 # SQLite
-declare -ra DCM=( "$(type -P sqlite3)" "${DB}" ) RCM=( "$(type -P sqlite3)" "-line" "${DB}" ) CCM=( "$(type -P sqlite3)" "-csv" "${DB}" )
+declare -ra DCM=( "$(type -P sqlite3)" "${DB}" ) \
+	RCM=( "$(type -P sqlite3)" "-line" "${DB}" ) \
+	ICM=( "$(type -P sqlite3)" "-csv" "${DB}" ) \
+	ECM=( "$(type -P sqlite3)" "-cmd" ".excel" "${DB}" )
 
 # Temp files
 readonly TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
@@ -80,7 +83,7 @@ do_quit() {
 }
 
 display_feedback() {
-    local msg="${*}"
+    local -r msg="${*}"
     if [[ -n "$(type -P notify-send 2> /dev/null)" ]]; then
         notify-send "${msg}" 2> /dev/null
     elif [[ -n "$(type -P Xdialog 2> /dev/null)" ]]; then
@@ -125,7 +128,8 @@ check_decrypt() {
         display_feedback "Error: Decryption failed. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
         return $?
     else
-        ftout=( "$(file -b "${DB}")" ) # We do have an decrypted $DB file so we might as well check it's validity.
+	# We do have an decrypted $DB file so we might as well check it's validity.
+        ftout=( "$(file -b "${DB}")" ) 
         if ! [[ "${ftout[*]}" =~ ^SQLite ]]; then
             display_feedback "Error: ${BNDB}, does not appear to be a valid SQLite 3.x database file."
             return $?
@@ -301,7 +305,7 @@ delete() {
        [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title dialog --msgbox "Account ID: #${ID} deleted." "${L}" "${C}" || echo -ne "Account ID: #${ID} deleted.\n"
 }
 
-import() {
+importcsv() {
     local MAXID CSVF ERRLVL
     MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
@@ -315,7 +319,7 @@ import() {
         echo "${CSVF}" > "${TF}"
         [[ -z "${CSVF}" ]] && return
     fi
-    "${CCM[@]}" ".import ${CSVF} ${ACT}" 2> "${TF}"
+    "${ICM[@]}" ".import ${CSVF} ${ACT}" 2> "${TF}"
     ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
@@ -330,6 +334,11 @@ import() {
     else
         "${PAGER}" "${TF}"
     fi
+}
+
+exportcsv(){
+    "${ICM[@]}" "select rowid,* from ac;" &> "${TF}"
+    "${VISUAL}" "${TF}" || "${EDITOR}" "${TF}"
 }
 
 usage() {
@@ -349,10 +358,10 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    declare -a TUI_OPS=("${red}Create  ${reset}" "${green}Retrieve${reset}" "${blue}Update  ${reset}" "${cyan}Delete  ${reset}" "${yellow}CSV     ${reset}" "${magenta}SQLite3 ${reset}" "${white}Help    ${reset}" "${black}Quit    ${reset}")
-    declare -a GUI_OPS=("Create" "Retrieve" "Update" "Delete" "CSV" "SQLite3" "Help" "Quit")
-    declare -a SDESC=("New entry" "Find account" "Regen password" "Remove entry" "Import a file" "sqlite3 session" "Help screen" "Exit")
-    declare -a DESC=("gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import(eg:test.csv)." "start an sqlite session against ${BNDB}." "Show this message" "Quit this script.")
+    declare -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${black}Quit      ${reset}" )
+    declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
+    declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "sqlite3 session" "Help screen" "Exit" )
+    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "Preview a csv file." "start an sqlite session against ${BNDB}." "Show this message" "Quit this script." )
 
     declare -a TUI_MENU=()
     declare -a TUI_HMSG=("\n${BPUSAGE[*]}\n\n")
@@ -367,7 +376,7 @@ main() {
         declare -a GUI_HMSG+=("Use ${GUI_OPS[x]}, to ${DESC[x]}\n")
     done
 
-    declare -a TUI_MENU+=("Choose[0-$((${#TUI_OPS[*]}-1))]:")
+    declare -a TUI_MENU+=("\nChoose[0-$((${#TUI_OPS[*]}-1))]:")
     declare -a TUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
     declare -a GUI_HMSG+=("\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n")
 
@@ -393,10 +402,11 @@ main() {
                     "${GUI_OPS[1]}"|"1") retrieve ;;
                     "${GUI_OPS[2]}"|"2") update ;;
                     "${GUI_OPS[3]}"|"3") delete ;;
-                    "${GUI_OPS[4]}"|"4") import ;;
-                    "${GUI_OPS[5]}"|"5") "${RCM[@]}" ;;
-                    "${GUI_OPS[6]}"|"6") usage ;;
-                    "${GUI_OPS[7]}"|"7") do_quit ;;
+                    "${GUI_OPS[4]}"|"4") importcsv ;;
+                    "${GUI_OPS[5]}"|"5") exportcsv ;;
+                    "${GUI_OPS[6]}"|"6") "${RCM[@]}" ;;
+                    "${GUI_OPS[7]}"|"7") usage ;;
+                    "${GUI_OPS[8]}"|"8") do_quit ;;
                     *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
                 esac ;;
             "${DIALOG_CANCEL}") do_quit ;;
