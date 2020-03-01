@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# bashpass/install - Install bashpass
+# bashpass/setup - prep bashpass
 
 if [[ ! -t 1 ]]; then
     echo -en "Fatal: You'll need to run ${0/*\/} in a terminal (or tty)!\n" >&2

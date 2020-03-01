@@ -39,7 +39,7 @@ password generator, storage, reference for the terminal and X.
   3. [[file:import.csv]]
 
      Data import example format
-  4. [[file:install]]
+  4. [[file:setup]]
 
      First time run only commands
   5. [[file:readme.org]]
@@ -84,7 +84,7 @@ password generator, storage, reference for the terminal and X.
 
    1. ~git clone https://github.com/michaeltd/bashpass && cd bashpass~
 
-   2. ~./install [sample.pgp]~
+   2. ~./setup [sample.pgp]~
 
    3. ~Usage: bashpass [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]~
 
@@ -100,7 +100,7 @@ password generator, storage, reference for the terminal and X.
 
 ***** The easy way:
 
-      Run ~install [sample.pgp]~ from [[file:bashpass][bashpass]]'s directory.
+      Run ~setup [sample.pgp]~ from [[file:bashpass][bashpass]]'s directory.
 
       It'll create ~sample~ SQLite3 and encrypt it as ~sample.pgp~ to your personal keyring
 
