@@ -401,7 +401,7 @@ main() {
 
     declare -a SDESC=( "New entry" "Find account" "Regen password" \
 				   "Remove entry" "Import a file" \
-				   "Export a file" "sqlite3 session" \
+				   "Export a file" "Sqlite3 session" \
 				   "Help screen" "Exit" )
 
     declare -a DESC=( "gather details for a new account." \
@@ -409,10 +409,10 @@ main() {
 			  "regenerate an existing password." \
 			  "remove an account." \
 			  "prompt for csv file to import." \
-			  "Preview a csv file." \
+			  "preview a csv file." \
 			  "start an sqlite session against ${BNDB}." \
-			  "Show this message" \
-			  "Terminate this script." )
+			  "show this message" \
+			  "terminate this script." )
 
     declare -a TUI_MENU=()
     declare -a TUI_HMSG=("\n${BPUSAGE[*]}\n\n")
