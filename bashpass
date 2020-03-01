@@ -10,8 +10,9 @@ declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
+# SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)"
 #shellcheck disable=SC2155
-readonly SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)" \
+readonly SDN="$(dirname $(realpath ${BASH_SOURCE[0]}))" \
 	 SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
 
 readonly BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]"
@@ -101,13 +102,13 @@ display_feedback() {
 
 check_prereqs(){
     if [[ ! -t 1 ]]; then
-        display_feedback "Error: You'll need to run ${0/*\/} in a terminal (or tty)!"
+        display_feedback "Fatal: You'll need to run ${0/*\/} in a terminal (or tty)!"
     elif (( "${BASH_VERSINFO[0]}" < 4 )); then
-        display_feedback "Error: You'll need bash major version 4."
+        display_feedback "Fatal: You'll need bash major version no less than 4."
     elif [[ ! $(type -P sqlite3) ]]; then
-        display_feedback "Error: You need SQLite3 installed."
+        display_feedback "Fatal: You need SQLite3 installed."
     elif [[ ! $(type -P gpg2) ]]; then
-        display_feedback "Error: You need GNU Privacy Guard v2 (gnupg) installed."
+        display_feedback "Fatal: You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
 

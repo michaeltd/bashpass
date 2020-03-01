@@ -59,7 +59,7 @@ password generator, storage, reference for the terminal and X.
 
   3. BASH v4
 
-     A resent bash installation with a major version no less than 4.
+     A recent bash installation with a major version no less than 4.
 
   4. Optionally...
 
@@ -151,7 +151,7 @@ password generator, storage, reference for the terminal and X.
 
    ~sample~ SQLite files used by this application get shredded upon quiting, otherwise a file recovery tool could recover unencrypted versions of them.
 
-   Backup never hurt nobody ... ;..;
+   Backup never hurt nobody [+.-]
 
 
 * TO-DOS [3/3] [100%]
@@ -162,7 +162,7 @@ password generator, storage, reference for the terminal and X.
 
 ** ✔ Clipboard
    CLOSED: [2019-11-27 Wed 02:21]
-   Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pastable with middle mouse button), with it's trailing newline ('\n') removed.
+   Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pasteable with middle mouse button), with it's trailing newline ('\n') removed.
 
 ** ✔ Modular UI [2/2] [100%]
    CLOSED: [2019-08-22 Thu 01:43]

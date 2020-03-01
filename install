@@ -3,13 +3,16 @@
 # bashpass/install - Install bashpass
 
 if [[ ! -t 1 ]]; then
-    echo -ne "You'll need to run ${0/*\/} in a terminal\n" >&2
+    echo -en "Fatal: You'll need to run ${0/*\/} in a terminal (or tty)!\n" >&2
     exit 1
-elif [[ ! $(command -v sqlite3) ]]; then
-    echo -ne "You need SQLite3 installed.\n" >&2
+elif (( "${BASH_VERSINFO[0]}" < 4 )); then
+    echo -en "Fatal: You'll need bash major version no less than 4.\n" >&2
     exit 1
-elif [[ ! $(command -v gpg2) ]]; then
-    echo -ne "You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2
+elif [[ ! $(type -P sqlite3) ]]; then
+    echo -en "Fatal: You need SQLite3 installed.\n" >&2
+    exit 1
+elif [[ ! $(type -P gpg2) ]]; then
+    echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n"  >&2
     exit 1
 fi
 
