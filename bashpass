@@ -349,7 +349,7 @@ importcsv() {
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
             "${DIALOG}" --backtitle "${SBN}" --title "Error" \
-			--msgbox "Error reported: $(cat "${TF}")" "${L}" "${C}"
+			--msgbox "$(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return
