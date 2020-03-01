@@ -364,8 +364,8 @@ importcsv() {
 }
 
 exportcsv(){
-    "${ICM[@]}" "select rowid,* from ac;" &> "${TF}"
-    "${VISUAL}" "${TF}" || "${EDITOR}" "${TF}"
+    "${ICM[@]}" "select rowid,* from ${ACT};" &> "${TF}"
+    "${EDITOR}" "${TF}"
 }
 
 usage() {
