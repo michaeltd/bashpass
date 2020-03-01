@@ -16,15 +16,15 @@ password generator, storage, reference for the terminal and X.
   5. \slash \slash import a csv file
   6. \slash \slash export a csv file
 
-** [[file:bashpass][bashpass]] [[file:assets/bp.png][terminal]]
+** Using [[file:assets/bp.png][terminal]]
 
 #+html: <p align="center"><img src="assets/bp.png"/></p>
 
-** [[file:bashpass][bashpass]] [[file:assets/dp.png][dialog]]
+** Using [[file:assets/dp.png][dialog]]
    
 #+html: <p align="center"><img src="assets/dp.png"/></p>
 
-** [[file:bashpass][bashpass]] [[file:assets/xp.png][Xdialog]]
+** Using [[file:assets/xp.png][Xdialog]]
 
 #+html: <p align="center"><img src="assets/xp.png"/></p>
 
