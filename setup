@@ -38,12 +38,9 @@ echo -ne " This script will:\n \
  2. encrypt it to ${PGPF} \n \
  3. Execute bashpass ${PGPF} \n"
 
-echo -ne "Continue? [Y/n]: "
-read -r resp
-
-[[ ${resp:-y} == [Nn]* ]] && exit 1
-
-sqlite3 "${FPDB}" < ac.sql && \
-    gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
-    "${SDN}/bashpass" "${PGPF}" && \
-    echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
+if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" == [Yy]* ]]; then
+    sqlite3 "${FPDB}" < ac.sql && \
+	gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
+	"${SDN}/bashpass" "${PGPF}" && \
+	echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
+fi
