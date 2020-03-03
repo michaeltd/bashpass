@@ -2,8 +2,12 @@
 #
 # bashpass/setup - prep bashpass
 
+declare SDN SBN PGPF DB
+SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+
 if [[ ! -t 1 ]]; then
-    echo -en "Fatal: You'll need to run ${0/*\/} in a terminal (or tty)!\n" >&2
+    echo -en "Fatal: You'll need to run ${SBN} in a terminal (or tty)!\n" >&2
     exit 1
 elif (( "${BASH_VERSINFO[0]}" < 4 )); then
     echo -en "Fatal: You'll need bash major version no less than 4.\n" >&2
@@ -15,9 +19,6 @@ elif [[ ! $(type -P gpg2) ]]; then
     echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n"  >&2
     exit 1
 fi
-
-declare SDN PGPF DB
-SDN="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd -P)"
 
 if [[ -z "${1}" ]]; then
     PGPF="sample.pgp"
