@@ -4,7 +4,7 @@
 
 # Timeout settings for Xdialog, Xmessage
 declare -rx XMTO="30" # xmessage timeout is in seconds...
-declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in millisecond
+declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
 
 # Xdialog/dialog
 declare -rx XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
@@ -14,7 +14,6 @@ declare -rx XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
 	SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
-# SDN="$(cd $(dirname $(realpath ${BASH_SOURCE[0]})) && pwd -P)"
 #shellcheck disable=SC2155
 readonly SDN="$(dirname $(realpath ${BASH_SOURCE[0]}))" \
 	 SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
@@ -375,11 +374,7 @@ exportcsv(){
 }
 
 usage() {
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}"
-    else
-        echo -e "${TUI_HMSG[*]}"
-    fi
+    [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
 }
 
 main() {
@@ -420,24 +415,22 @@ main() {
 			  "show this message" \
 			  "terminate this script." )
 
-    declare -a TUI_MENU=()
-    declare -a TUI_HMSG=("\n${BPUSAGE[*]}\n\n")
+    declare -a TUI_MENU=( )
+    declare -a TUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
     declare GUI_MENU
-    declare -a GUI_HMSG=("\n${BPUSAGE[*]}\n\n")
+    declare -a GUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
-	declare -a TUI_MENU+=("${x}:${TUI_OPS[x]}")
-	(( ( x + 1 ) % 4 == 0 )) && \
-	    declare -a TUI_MENU+=("\n") || \
-		declare -a TUI_MENU+=("\t")
-        declare -a TUI_HMSG+=( "Use ${x}, for ${TUI_OPS[x]}, which will ${DESC[x]}\n" )
-        declare -a GUI_MENU+="${GUI_OPS[x]}|${SDESC[x]}|${DESC[x]}|"
-        declare -a GUI_HMSG+=( "Use ${GUI_OPS[x]}, to ${DESC[x]}\n" )
+	TUI_MENU+=("${x}:${TUI_OPS[x]}")
+	(( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
+        TUI_HMSG+=( "Use ${x}, for ${TUI_OPS[x]}, which will ${DESC[x]}\n" )
+        GUI_MENU+="${GUI_OPS[x]}|${SDESC[x]}|${DESC[x]}|"
+        GUI_HMSG+=( "Use ${GUI_OPS[x]}, to ${DESC[x]}\n" )
     done
 
-    declare -a TUI_MENU+=( "\nChoose[0-$((${#TUI_OPS[*]}-1))]:" )
-    declare -a TUI_HMSG+=( "\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n" )
-    declare -a GUI_HMSG+=( "\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n" )
+    TUI_MENU+=( "\nChoose[0-$((${#TUI_OPS[*]}-1))]:" )
+    TUI_HMSG+=( "\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n" )
+    GUI_HMSG+=( "\naccounts table format is as follows:\n$(${DCM[*]} ".schema ${ACT}")\n\n" )
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
@@ -445,7 +438,7 @@ main() {
             #shellcheck disable=SC2086
             "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--item-help" \
 			"--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" \
-			$((${#GUI_OPS[*]})) ${GUI_MENU} 2> "${TF}"
+			${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.
