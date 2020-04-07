@@ -370,7 +370,7 @@ importcsv() {
 
 exportcsv(){
     "${ICM[@]}" "select rowid,* from ${ACT};" &> "${TF}"
-    "${EDITOR}" "${TF}"
+    "${EDITOR}" "${TF}" || "${VISUAL}" "${TF}"
 }
 
 usage() {
@@ -421,8 +421,8 @@ main() {
     declare -a GUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
-	TUI_MENU+=("${x}:${TUI_OPS[x]}")
-	(( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=("\n") || TUI_MENU+=("\t")
+	TUI_MENU+=( "${x}:${TUI_OPS[x]}" )
+	(( ( x + 1 ) % 4 == 0 )) && TUI_MENU+=( "\n" ) || TUI_MENU+=( "\t" )
         TUI_HMSG+=( "Use ${x}, for ${TUI_OPS[x]}, which will ${DESC[x]}\n" )
         GUI_MENU+="${GUI_OPS[x]}|${SDESC[x]}|${DESC[x]}|"
         GUI_HMSG+=( "Use ${GUI_OPS[x]}, to ${DESC[x]}\n" )
