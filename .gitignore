@@ -6,8 +6,11 @@
 !.gitignore
 !ac.sql
 !bashpass
+!dialog.src
+!functions.src
 !import.csv
-!install
 !setup
 !license
 !readme.org
+!terminal.src
+!tests.bats

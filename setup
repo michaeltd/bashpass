@@ -15,7 +15,7 @@ elif (( "${BASH_VERSINFO[0]}" < 4 )); then
 elif [[ ! $(type -P sqlite3) ]]; then
     echo -en "Fatal: You need SQLite3 installed.\n" >&2
     exit 1
-elif [[ ! $(type -P gpg2) ]]; then
+elif [[ ! $(type -P gpg) ]]; then
     echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n"  >&2
     exit 1
 fi
@@ -41,7 +41,7 @@ echo -ne " This script will:\n \
 
 if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" == [Yy]* ]]; then
     sqlite3 "${FPDB}" < ac.sql && \
-	gpg2 --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
+	gpg --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
 	"${SDN}/bashpass" "${PGPF}" && \
 	echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
 fi

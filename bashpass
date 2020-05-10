@@ -4,12 +4,8 @@
 
 # Timeout settings for Xdialog, Xmessage
 declare -rx XMTO="30" # xmessage timeout is in seconds...
-declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
 
-# Xdialog/dialog
-declare -rx XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
-	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1 \
-	DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
+declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
 	SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
@@ -57,6 +53,9 @@ else # -z USERINTRFCE etc
     fi
 fi
 
+[[ -n "${DIALOG}" ]] && source "${SDN}/dialog.src"
+[[ -z "${DIALOG}" ]] && source "${SDN}/terminal.src"
+
 if [[ -n "${PGPF}" ]]; then
     readonly PGPF="${SDN}/${PGPF}"
     readonly DB="${PGPF%%\.pgp}"
@@ -79,7 +78,7 @@ declare -ra DCM=( "$(type -P sqlite3)" "${DB}" ) \
 readonly TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
 readonly MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
 
-declare -ra PGPC=( "$(type -P gpg2)" "--batch" "--yes" "--default-recipient-self" "--output" )
+declare -ra PGPC=( "$(type -P gpg)" "--batch" "--yes" "--default-recipient-self" "--output" )
 declare -ra SHRC=( "$(type -P shred)" "--zero" "--remove" )
 
 do_quit() {
@@ -112,7 +111,7 @@ check_prereqs(){
         display_feedback "You'll need bash major version no less than 4."
     elif [[ ! $(type -P sqlite3) ]]; then
         display_feedback "You need SQLite3 installed."
-    elif [[ ! $(type -P gpg2) ]]; then
+    elif [[ ! $(type -P gpg) ]]; then
         display_feedback "You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
@@ -155,40 +154,7 @@ check_sql() {
     fi
 }
 
-# Generate PassWord
-gpw() {
-    tr -dc "[:graph:]" < /dev/urandom | \
-	tr -d "[=\"=][=\'=][=\|=][=\,=]" | \
-	head -c "${1:-64}"
-}
-
-# RowID'S
-rids() {
-    "${DCM[@]}" "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;"
-}
-
-# -.-
-maxid() {
-    #shellcheck disable=SC2155
-    local MAXID="$("${DCM[@]}" "SELECT MAX(rowid) FROM ${ACT};")"
-    echo "${MAXID:-0}" # check null values
-}
-
-# Row count
-rcount() {
-    "${DCM[@]}" "SELECT COUNT(rowid) FROM ${ACT};"
-}
-
-# Build Row Lines (for (X)dialog check/radio lists)
-brl() {
-    local dm em rl
-    for i in $(rids); do
-        dm=$("${DCM[@]}" "SELECT dm FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        em=$("${DCM[@]}" "SELECT em FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        rl+="${i} ${dm:-null}_${em:-null} off "
-    done
-    echo "${rl[@]}"
-}
+source "${SDN}/functions.src"
 
 create() {
     #shellcheck disable=SC2155
@@ -339,7 +305,7 @@ importcsv() {
     MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
         "${DIALOG}" --backtitle "${SBN}" --title "Enter a csv file:" \
-		    --fselect "${SDN}/" "${L}" "${C}" 2> "${TF}"
+		    --fselect "${HOME}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
         CSVF=$(cat "${TF}")
         [[ -z "${CSVF}" ]] && return
@@ -357,7 +323,7 @@ importcsv() {
 			--msgbox "$(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
-        return
+        return "${ERRLVL}"
     fi
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
@@ -369,8 +335,35 @@ importcsv() {
 }
 
 exportcsv(){
-    "${ICM[@]}" "select rowid,* from ${ACT};" &> "${TF}"
-    "${EDITOR}" "${TF}" || "${VISUAL}" "${TF}"
+    local CSVF ERRLVL
+    if [[ -n "${DIALOG}" ]]; then
+        "${DIALOG}" --backtitle "${SBN}" --title "Enter a file name:" \
+		    --fselect "${HOME}/" "${L}" "${C}" 2> "${TF}"
+        (( $? != DIALOG_OK )) && return
+        CSVF=$(cat "${TF}")
+        [[ -z "${CSVF}" ]] && return
+    else
+        echo -ne "Enter a file name (empty to cancel): "
+        read -r CSVF
+        echo "${CSVF}" > "${TF}"
+        [[ -z "${CSVF}" ]] && return
+    fi
+
+    "${ICM[@]}" "select rowid,* from ${ACT} order by rowid ASC;" &> "${TF}"
+
+    ERRLVL=$?
+    if (( ERRLVL != 0 )); then
+        if [[ -n "${DIALOG}" ]]; then
+            "${DIALOG}" --backtitle "${SBN}" --title "Error" \
+			--msgbox "$(cat "${TF}")" "${L}" "${C}"
+        fi
+        echo "Error: $(cat "${TF}")"
+        return "${ERRLVL}"
+    fi
+
+    cat "${TF}" > "${CSVF}"
+    
+    "${VISUAL}" "${CSVF}" || "${EDITOR}" "${CSVF}"
 }
 
 usage() {
@@ -386,34 +379,13 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    declare -a TUI_OPS=( "${red}Create    ${reset}" \
-			     "${green}Retrieve  ${reset}" \
-			     "${blue}Update    ${reset}" \
-			     "${cyan}Delete    ${reset}" \
-			     "${yellow}Import CSV${reset}" \
-			     "${yellow}Export CSV${reset}" \
-			     "${magenta}SQLite3   ${reset}" \
-			     "${white}Help      ${reset}" \
-			     "${black}Quit      ${reset}" )
+    declare -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${black}Quit      ${reset}" )
 
-    declare -a GUI_OPS=( "Create" "Retrieve" "Update" \
-				  "Delete" "Import CSV" "Export CSV" \
-				  "SQLite3" "Help" "Quit" )
+    declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
 
-    declare -a SDESC=( "New entry" "Find account" "Regen password" \
-				   "Remove entry" "Import a file" \
-				   "Export a file" "Sqlite3 session" \
-				   "Help screen" "Exit" )
+    declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
 
-    declare -a DESC=( "gather details for a new account." \
-			  "search records by domain. (empty for all)" \
-			  "regenerate an existing password." \
-			  "remove an account." \
-			  "prompt for csv file to import." \
-			  "preview a csv file." \
-			  "start an sqlite session against ${BNDB}." \
-			  "show this message" \
-			  "terminate this script." )
+    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "preview a csv file." "start an sqlite session against ${BNDB}." "show this message" "terminate this script." )
 
     declare -a TUI_MENU=( )
     declare -a TUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
@@ -468,6 +440,4 @@ main() {
     done
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main 
-fi
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "${@}"

@@ -1,0 +1,6 @@
+declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
+
+# Xdialog/dialog
+declare -rx XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
+	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1 \
+
