@@ -5,7 +5,7 @@
 
 @test "Available Bash major version is greater or equal to 4" {
     run bash -c "echo ${BASH_VERSINFO[0]}"
-    [ "$output" -ge 4 ]
+    [ "$output" -ge "4" ]
 }
 
 @test "SQLite3 executable is available in path" {
