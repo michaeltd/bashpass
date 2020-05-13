@@ -1,3 +1,5 @@
+#!/bin/bash # Pick up right editor syntax highlighting
+
 # Generate PassWord
 gpw() {
     tr -dc "[:graph:]" < /dev/urandom | \

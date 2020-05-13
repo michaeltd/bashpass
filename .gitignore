@@ -3,6 +3,7 @@
 !assets/bp.png
 !assets/dp.png
 !assets/xp.png
+!tests/*
 !.gitignore
 !ac.sql
 !bashpass
