@@ -9,7 +9,7 @@ SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 if [[ ! -t 1 ]]; then
     echo -en "Fatal: You'll need to run ${SBN} in a terminal (or tty)!\n" >&2
     exit 1
-elif (( "${BASH_VERSINFO[0]}" < 4 )); then
+elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
     echo -en "Fatal: You'll need bash major version no less than 4.\n" >&2
     exit 1
 elif [[ ! $(type -P sqlite3) ]]; then
@@ -39,7 +39,7 @@ echo -ne " This script will:\n \
  2. encrypt it to ${PGPF} \n \
  3. Execute bashpass ${PGPF} \n"
 
-if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" == [Yy]* ]]; then
+if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" =~ ^[Yy] ]]; then
     sqlite3 "${FPDB}" < ac.sql && \
 	gpg --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
 	"${SDN}/bashpass" "${PGPF}" && \

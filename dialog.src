@@ -1,3 +1,5 @@
+#!/bin/bash # Just to pickup syntx highlighting
+
 declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
 
 # Xdialog/dialog

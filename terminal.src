@@ -1,3 +1,5 @@
+#!/bin/bash # Just to pickup syntx highlighting
+
 # Font attributes, Colors, bg_colors
 declare -r reset="$(tput sgr0)" bold="$(tput bold)" \
 	dim="$(tput dim)" blink="$(tput blink)" \

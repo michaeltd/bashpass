@@ -107,7 +107,7 @@ display_feedback() {
 check_prereqs(){
     if [[ ! -t 1 ]]; then
         display_feedback "You'll need to run ${0/*\/} in a terminal (or tty)!"
-    elif (( "${BASH_VERSINFO[0]}" < 4 )); then
+    elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
         display_feedback "You'll need bash major version no less than 4."
     elif [[ ! $(type -P sqlite3) ]]; then
         display_feedback "You need SQLite3 installed."
@@ -379,7 +379,7 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    declare -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${black}Quit      ${reset}" )
+    declare -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${dim}Quit      ${reset}" )
 
     declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
 
