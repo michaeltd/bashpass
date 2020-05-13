@@ -28,7 +28,6 @@ password generator, storage and reference for the terminal and/or X.
 
 #+html: <p align="center"><img src="assets/xp.png"/></p>
 
-
 * Files
   1. [[file:ac.sql]]
 
@@ -45,7 +44,6 @@ password generator, storage and reference for the terminal and/or X.
   5. [[file:readme.org]]
 
      This file
-
 
 * Dependencies
 
@@ -68,7 +66,6 @@ password generator, storage and reference for the terminal and/or X.
      2. dialog for a tty TUI.
 
      3. finally, xclip for some middle click password pasting functionality.
-
 
 * Usage
 
@@ -130,7 +127,6 @@ password generator, storage and reference for the terminal and/or X.
 
    - The order of arguments is irrelevant. ie: ~bashpass sample.pgp terminal~ == ~bashpass terminal sample.pgp~)
 
-
 * Notes
 
   1. You can only have one instance of [[file:bashpass][bashpass]] running at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
@@ -153,7 +149,6 @@ password generator, storage and reference for the terminal and/or X.
 
    Backup never hurt nobody [+.-]
 
-
 * TO-DOS [3/3] [100%]
 
 ** ✔ Encryption
@@ -175,3 +170,14 @@ password generator, storage and reference for the terminal and/or X.
 *** ✔ GUI/TUI
     CLOSED: [2019-08-22 Thu 01:44]
     Based on X
+* Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
+
+  Typos, syntactic and grammar welcome.
+
+  Other than that try a PR and we'll talk about it.
+
+  In the rare case that you really *must*, 
+
+  feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:3KCPkfTWqanYfgNvoUKP1S4bFXTDpaReUs][₿]] (bitcoin:3KCPkfTWqanYfgNvoUKP1S4bFXTDpaReUs).
+
+* [[file:license][ISC License]] [[https://opensource.org/licenses/ISC][https://img.shields.io/badge/License-ISC-yellow.svg]]
