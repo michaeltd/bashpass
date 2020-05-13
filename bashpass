@@ -363,7 +363,17 @@ exportcsv(){
 
     cat "${TF}" > "${CSVF}"
     
-    "${VISUAL}" "${CSVF}" || "${EDITOR}" "${CSVF}"
+    if [[ -x "$(type -P xdg-open 2>/dev/null)" ]]; then
+	"$(type -P xdg-open 2>/dev/null)" "${CSVF}"
+    elif [[ -x "$(type -P "${VISUAL}" 2>/dev/null)"  ]]; then
+	"$(type -P "${VISUAL}" 2>/dev/null)" "${CSVF}"
+    elif [[ -x "$(type -P "${EDITOR}" 2>/dev/null)"  ]]; then
+	"$(type -P "${EDITOR}" 2>/dev/null)" "${CSVF}"
+    elif [[ -x "$(type -P "${PAGER}" 2>/dev/null)"  ]]; then
+	"$(type -P "${PAGER}" 2>/dev/null)" "${CSVF}"
+    else
+	cat "${CSVF}"
+    fi
 }
 
 usage() {
@@ -371,6 +381,7 @@ usage() {
 }
 
 main() {
+    local OFS="" ERRLVL="" USRINPT=""
     check_prereqs || exit $?
     check_mutex || exit $?
     check_decrypt || exit $?
@@ -379,18 +390,18 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    declare -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${dim}Quit      ${reset}" )
+    local -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${dim}Quit      ${reset}" )
 
-    declare -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
+    local -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
 
-    declare -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
+    local -a SDESC=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
 
-    declare -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "preview a csv file." "start an sqlite session against ${BNDB}." "show this message" "terminate this script." )
+    local -a DESC=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "preview a csv file." "start an sqlite session against ${BNDB}." "show this message" "terminate this script." )
 
-    declare -a TUI_MENU=( )
-    declare -a TUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
-    declare GUI_MENU
-    declare -a GUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
+    local -a TUI_MENU=( )
+    local -a TUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
+    local GUI_MENU=""
+    local -a GUI_HMSG=( "\n${BPUSAGE[*]}\n\n" )
 
     for (( x = 0; x < ${#TUI_OPS[@]}; x++ )); do
 	TUI_MENU+=( "${x}:${TUI_OPS[x]}" )
