@@ -11,8 +11,8 @@ declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 #shellcheck disable=SC2155
-readonly SDN="$(dirname $(realpath ${BASH_SOURCE[0]}))" \
-	 SBN="$(basename $(realpath ${BASH_SOURCE[0]}))"
+readonly SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
+	 SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 readonly BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]"
 
@@ -45,15 +45,20 @@ else # -z USERINTRFCE etc
     if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
 	#shellcheck disable=SC2155
 	declare -r DIALOG="$(type -P Xdialog)" L="20" C="40"
+	readonly USRINTRFCE="Xdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
 	#shellcheck disable=SC2155
 	declare -r DIALOG="$(type -P dialog)" L="0" C="0"
+	readonly USRINTRFCE="dialog"
     else
 	unset DIALOG
+	readonly USRINTRFCE="terminal"
     fi
 fi
 
+#shellcheck disable=SC1090
 [[ -n "${DIALOG}" ]] && source "${SDN}/dialog.src"
+#shellcheck disable=SC1090
 [[ -z "${DIALOG}" ]] && source "${SDN}/terminal.src"
 
 if [[ -n "${PGPF}" ]]; then
@@ -69,17 +74,16 @@ fi
 readonly ACT="ac"
 
 # SQLite
-declare -ra DCM=( "$(type -P sqlite3)" "${DB}" ) \
-	RCM=( "$(type -P sqlite3)" "-line" "${DB}" ) \
-	ICM=( "$(type -P sqlite3)" "-csv" "${DB}" ) \
-	ECM=( "$(type -P sqlite3)" "-cmd" ".excel" "${DB}" )
+readonly -a DCM=( "sqlite3" "${DB}" ) \
+	RCM=( "sqlite3" "-line" "${DB}" ) \
+	ICM=( "sqlite3" "-csv" "${DB}" )
 
 # Temp files
 readonly TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
 readonly MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
 
-declare -ra PGPC=( "$(type -P gpg)" "--batch" "--yes" "--default-recipient-self" "--output" )
-declare -ra SHRC=( "$(type -P shred)" "--zero" "--remove" )
+readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
+	 SHRC=( "shred" "--zero" "--remove" )
 
 do_quit() {
     # Upon successfull encryption ONLY shred files
@@ -154,51 +158,22 @@ check_sql() {
     fi
 }
 
+#shellcheck disable=SC1090
 source "${SDN}/functions.src"
 
 create() {
     #shellcheck disable=SC2155
     local MAXID="$(maxid)" DM EM UN PW CM
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "domain" \
-		    --inputbox "Enter a domain:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title "email" \
-		    --inputbox "Enter an email:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title "username" \
-		    --inputbox "Enter a username:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title "password" \
-		    --passwordbox "Enter a password:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return
-        "${DIALOG}" --backtitle "${SBN}" --title "comment" \
-		    --inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
-        (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return
-    else
-        while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
-            if [[ -z "${DM}" ]]; then
-                echo -ne "Enter a domain: "
-                read -r DM
-            elif [[ -z "${EM}" ]]; then
-                echo -ne "Enter an email: "
-                read -r EM
-            elif [[ -z "${UN}" ]]; then
-                echo -ne "Enter a username: "
-                read -r UN
-            elif [[ -z "${PW}" ]]; then
-                echo -ne "Enter a password: "
-                read -r PW
-            elif [[ -z "${CM}" ]]; then
-                echo -ne "Enter comment: "
-                read -r CM
-            fi
-        done
-    fi
+
+    "${FUNCNAME[0]}_${USRINTRFCE}" || return $?
+
+    #shellcheck disable=SC1090
+    source "${TF}"
+
     "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
-    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
-        [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
+    if [[ "${DIALOG}" =~ Xdialog$ ]]; then
+        [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}" | "$(type -P xclip 2> /dev/null)" "-r"
         "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
@@ -221,7 +196,7 @@ retrieve() {
     # Record Set
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
-    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
+    if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         if [[ -n "$(type -P xclip 2> /dev/null)" ]]; then
             # Record Count
             RC="$("${DCM[@]}" "SELECT count(rowid) FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
@@ -267,8 +242,8 @@ update() {
     [[ -z "${PW}" ]] || (( ${#PW} < 8 )) && PW="$(gpw)"
     "${DCM[@]}" "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
-    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
-        [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
+    if [[ "${DIALOG}" =~ Xdialog$ ]]; then
+        [[ -x "$(type -P xclip 2> /dev/null)" ]] && echo "${PW}" | "xclip" "-r"
         "${DIALOG}" --backtitle "${SBN}" --title "results" \
 		    --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
@@ -307,7 +282,7 @@ importcsv() {
         "${DIALOG}" --backtitle "${SBN}" --title "Enter a csv file:" \
 		    --fselect "${HOME}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
-        CSVF=$(cat "${TF}")
+        CSVF="$(cat "${TF}")"
         [[ -z "${CSVF}" ]] && return
     else
         echo -ne "Enter a csv file (empty to cancel): "
@@ -362,7 +337,7 @@ exportcsv(){
     fi
 
     cat "${TF}" > "${CSVF}"
-    
+
     if [[ -x "$(type -P xdg-open 2>/dev/null)" ]]; then
 	"$(type -P xdg-open 2>/dev/null)" "${CSVF}"
     elif [[ -x "$(type -P "${VISUAL}" 2>/dev/null)"  ]]; then
@@ -390,7 +365,7 @@ main() {
     check_sql || do_quit $?
 
     # Build menus and help messages.
-    local -a TUI_OPS=( "${red}Create    ${reset}" "${green}Retrieve  ${reset}" "${blue}Update    ${reset}" "${cyan}Delete    ${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3   ${reset}" "${white}Help      ${reset}" "${dim}Quit      ${reset}" )
+    local -a TUI_OPS=( "${red}Create${reset}" "${green}Retrieve${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
 
     local -a GUI_OPS=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
 
@@ -417,6 +392,7 @@ main() {
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
+	    #shellcheck disable=SC2141
             OFS="${IFS}" IFS=$'\|'
             #shellcheck disable=SC2086
             "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--item-help" \

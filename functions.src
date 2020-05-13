@@ -1,4 +1,5 @@
-#!/bin/bash # Pick up right editor syntax highlighting
+#!/bin/bash
+# Pick up right editor syntax highlighting
 
 # Generate PassWord
 gpw() {
