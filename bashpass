@@ -170,6 +170,8 @@ create() {
     #shellcheck disable=SC1090
     source "${TF}"
 
+    [[ -z "${PW}" ]] && PW="$(gpw "8")"
+
     "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
