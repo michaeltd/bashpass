@@ -25,7 +25,7 @@ while [[ -n "${1}" ]]; do
         Xdialog|dialog|terminal) readonly USRINTRFCE="${1}" ;;
         d|-d|debug|--debug) set -x ;;
         h|-h|help|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
-        *) echo -ne "Unknown option: ${1}\n" >&2
+        *) echo -ne "Unknown option: ${1}\n" >&2;
 	   echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
     esac
     shift
@@ -358,7 +358,7 @@ usage() {
     [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
 }
 
-main() {
+bashpass() {
     local OFS="" ERRLVL="" USRINPT=""
     check_prereqs || exit $?
     check_mutex || exit $?
@@ -367,7 +367,12 @@ main() {
     # instead of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $?
 
-    trap "do_quit" $SIGNONE $SIGHUP $SIGINT $SIGQUIT $SIGKILL $SIGTERM
+    trap "do_quit ${SIGNONE}" "${SIGNONE}"
+    trap "do_quit ${SIGHUP}" "${SIGHUP}"
+    trap "do_quit ${SIGINT}" "${SIGINT}"
+    trap "do_quit ${SIGQUIT}" "${SIGQUIT}"
+    trap "do_quit ${SIGKILL}" "${SIGKILL}"
+    trap "do_quit ${SIGTERM}" "${SIGTERM}"
 
     # Build menus and help messages.
     local -a TUI_OPS=( "${red}Create${reset}" "${green}Retrieve${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
@@ -426,12 +431,10 @@ main() {
                     *) echo -ne "Invalid responce: ${USRINPT}. Choose from 0 to $((${#TUI_OPS[*]}-1))\n" >&2;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;
-            "2"|"${DIALOG_HELP}") usage ;;
-            "3"|"${DIALOG_EXTRA}") usage ;;
-            "4"|"${DIALOG_ITEM_HELP}") usage ;;
+            [2-4]|"${DIALOG_HELP}"|"${DIALOG_EXTRA}"|"${DIALOG_ITEM_HELP}") usage ;;
             "255"|"${DIALOG_ESC}") exit ;;
         esac
     done
 }
 
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "${@}"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && bashpass "${@}"
