@@ -29,13 +29,17 @@ password generator, storage and reference for the terminal and/or X.
 #+html: <p align="center"><img src="assets/xp.png"/></p>
 
 * Files
-  1. [[file:ac.sql]]
+  1. [[file:examples/ac.sql]]
 
      SQLite database create example script
   2. [[file:bashpass]]
 
      main script
-  3. [[file:import.csv]]
+
+     - [[file:sources/]]
+       Accompaning functions
+
+  3. [[file:examples/import.csv]]
 
      Data import example format
   4. [[file:setup]]
