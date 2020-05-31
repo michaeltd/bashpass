@@ -59,7 +59,7 @@ teardown() {
 }
 
 @test "Can create a bats SQLite3 database" {
-    run sqlite3 "test.sqlite3" < "${BATS_TEST_DIRNAME}/../hlprs/ac.sql"
+    run sqlite3 "test.sqlite3" < "${BATS_TEST_DIRNAME}/../helpers/ac.sql"
     [ "$status" -eq 0 ]
 }
 

@@ -130,9 +130,7 @@ check_mutex() {
 
 # Decrypt .sqlite, setup trap and mutex or die.
 check_decrypt() {
-    #shellcheck disable=SC2207
-    ftout=( "$(file -b "${PGPF}")" )
-    if ! [[ "${ftout[*]}" =~ ^PGP ]]; then
+    if ! [[ "$(file -b "${PGPF}")" =~ ^PGP ]]; then
         display_feedback "${BNPGPF}, does not appear to be a valid PGP file."
         return $?
     fi
@@ -142,8 +140,7 @@ check_decrypt() {
         return $?
     else
 	# We do have an decrypted $DB file so we might as well check it's validity.
-        ftout=( "$(file -b "${DB}")" ) 
-        if ! [[ "${ftout[*]}" =~ ^SQLite ]]; then
+        if ! [[ "$(file -b "${DB}")" =~ ^SQLite ]]; then
             display_feedback "${BNDB}, does not appear to be a valid SQLite 3.x database file."
             return $?
         fi

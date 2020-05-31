@@ -31,8 +31,8 @@ else
     DB="${PGPF%%.pgp}"
 fi
 
-FPDB="${SDN}/databases/${DB}"
 FPPGPF="${SDN}/databases/${PGPF}"
+FPDB="${SDN}/databases/${DB}"
 
 echo -ne " This script will:\n \
  1. Make a ${DB} SQLite3 file ... \n \
@@ -40,8 +40,8 @@ echo -ne " This script will:\n \
  3. Execute bashpass ${PGPF} \n"
 
 if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" =~ ^[Yy] ]]; then
-    sqlite3 "${FPDB}" < "${SDN}/helpers/ac.sql" && \
+    sqlite3 "${FPDB}" < "${SDN}/examples/ac.sql" && \
 	gpg --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
-	"${SDN}/bashpass" "${PGPF}" && \
+	"${SDN}/bashpass" "${FPPGPF}" && \
 	echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
 fi
