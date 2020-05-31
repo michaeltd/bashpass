@@ -36,15 +36,18 @@ password generator, storage and reference for the terminal and/or X.
 
      main script
 
-     - [[file:sources/]]
-       Accompaning functions
+     1) [[file:sources/]]
+
+       Accompanied functions
 
   3. [[file:examples/import.csv]]
 
      Data import example format
+
   4. [[file:setup]]
 
      First time run only commands
+
   5. [[file:readme.org]]
 
      This file
@@ -87,7 +90,7 @@ password generator, storage and reference for the terminal and/or X.
 
    2. ~./setup [sample.pgp]~
 
-   3. ~Usage: bashpass [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]~
+   3. ~Usage: bashpass [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]~
 
 ** In detail
 
@@ -103,13 +106,13 @@ password generator, storage and reference for the terminal and/or X.
 
       Run ~setup [sample.pgp]~ from [[file:bashpass][bashpass]]'s directory.
 
-      It'll create ~sample~ SQLite3 and encrypt it as ~sample.pgp~ to your personal keyring
+      It'll create ~databases/sample~ SQLite3 and encrypt it as ~databases/sample.pgp~ to your personal keyring
 
 ***** The hard way:
 
-      You'll need to build ~sample~ like so: ~sqlite3 sample < ac.sql~
+      You'll need to build ~sample~ like so: ~sqlite3 databases/sample < examples/ac.sql~
 
-      and encrypt it like so: ~gpg2 --default-recipient-self --output sample.pgp --encrypt sample~,
+      and encrypt it like so: ~gpg2 --default-recipient-self --output databases/sample.pgp --encrypt databases/sample~,
 
       Reason being SQLite3 ~sample~ file you'll work with, needs to be encrypted to your own keyring.
 

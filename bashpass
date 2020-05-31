@@ -14,7 +14,7 @@ declare -rx SIGNONE=0 SIGHUP=1 SIGINT=2 SIGQUIT=3 SIGKILL=9 SIGTERM=15
 readonly SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	 SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-readonly BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [debug] [help]"
+readonly BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]"
 
 declare PGPF DB BNPGPF BNDB USRINTRFCE
 
