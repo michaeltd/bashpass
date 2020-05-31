@@ -22,17 +22,17 @@ fi
 
 if [[ -z "${1}" ]]; then
     PGPF="sample.pgp"
-    DB="${PGPF%%\.pgp}"
-elif [[ "${1}" =~ \.pgp$ ]]; then
+    DB="${PGPF%%.pgp}"
+elif [[ "${1}" =~ .pgp$ ]]; then
     PGPF="${1}"
-    DB="${PGPF%%\.pgp}"
+    DB="${PGPF%%.pgp}"
 else
     PGPF="${1}.pgp"
-    DB="${PGPF%%\.pgp}"
+    DB="${PGPF%%.pgp}"
 fi
 
-FPDB="${SDN}/${DB}"
-FPPGPF="${SDN}/${PGPF}"
+FPDB="${SDN}/databases/${DB}"
+FPPGPF="${SDN}/databases/${PGPF}"
 
 echo -ne " This script will:\n \
  1. Make a ${DB} SQLite3 file ... \n \
@@ -40,7 +40,7 @@ echo -ne " This script will:\n \
  3. Execute bashpass ${PGPF} \n"
 
 if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" =~ ^[Yy] ]]; then
-    sqlite3 "${FPDB}" < ac.sql && \
+    sqlite3 "${FPDB}" < "${SDN}/helpers/ac.sql" && \
 	gpg --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
 	"${SDN}/bashpass" "${PGPF}" && \
 	echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2

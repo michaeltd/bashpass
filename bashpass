@@ -23,8 +23,8 @@ while [[ -n "${1}" ]]; do
     case "${1}" in
         *.pgp) PGPF="${1}";;
         Xdialog|dialog|terminal) readonly USRINTRFCE="${1}" ;;
-        d|-d|debug|--debug) set -x ;;
-        h|-h|help|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
+        -d|--debug) set -x ;;
+        -h|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
         *) echo -ne "Unknown option: ${1}\n" >&2;
 	   echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
     esac
@@ -57,17 +57,17 @@ else # -z USERINTRFCE etc
 fi
 
 #shellcheck disable=SC1090
-[[ -n "${DIALOG}" ]] && source "${SDN}/dialog.src"
+[[ -n "${DIALOG}" ]] && source "${SDN}/sources/dialog.src"
 #shellcheck disable=SC1090
-[[ -z "${DIALOG}" ]] && source "${SDN}/terminal.src"
+[[ -z "${DIALOG}" ]] && source "${SDN}/sources/terminal.src"
 
 if [[ -n "${PGPF}" ]]; then
-    readonly PGPF="${SDN}/${PGPF}"
-    readonly DB="${PGPF%%\.pgp}"
+    readonly PGPF="${SDN}/databases/${PGPF}"
+    readonly DB="${PGPF%%.pgp}"
     readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 else
-    readonly PGPF="${SDN}/sample.pgp"
-    readonly DB="${PGPF%%\.pgp}"
+    readonly PGPF="${SDN}/databases/sample.pgp"
+    readonly DB="${PGPF%%.pgp}"
     readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 fi
 
@@ -79,8 +79,8 @@ readonly -a DCM=( "sqlite3" "${DB}" ) \
 	ICM=( "sqlite3" "-csv" "${DB}" )
 
 # Temp files
-readonly TF="${SDN}/.${SBN}.${BNDB}.${$}.TF"
-readonly MUTEX="${SDN}/.${SBN}.${BNDB}.MUTEX"
+readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
+readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 SHRC=( "shred" "--zero" "--remove" )
@@ -160,7 +160,7 @@ check_sql() {
 }
 
 #shellcheck disable=SC1090
-source "${SDN}/functions.src"
+source "${SDN}/sources/functions.src"
 
 create() {
     #shellcheck disable=SC2155
