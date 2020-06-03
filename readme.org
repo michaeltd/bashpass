@@ -45,7 +45,7 @@ password generator, storage and reference for the terminal and/or X.
      
      Create DB script and import example files.
 
-     1) [[file:examples/ac.sql][ac.sql]]
+     1) [[file:examples/create.sql][create.sql]]
 
         SQLite database create example script
 
@@ -119,7 +119,7 @@ password generator, storage and reference for the terminal and/or X.
 
 ***** The hard way:
 
-      You'll need to build ~sample~ like so: ~sqlite3 databases/sample < examples/ac.sql~
+      You'll need to build ~sample~ like so: ~sqlite3 databases/sample < examples/create.sql~
 
       and encrypt it like so: ~gpg2 --default-recipient-self --output databases/sample.pgp --encrypt databases/sample~,
 

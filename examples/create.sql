@@ -1,6 +1,5 @@
--- bashpass/ac.sql
 --
--- Initialize a demo SQLite3 db. usage: sqlite3 git.db3 < ac.sql
+-- Initialize a demo SQLite3 db. usage: sqlite3 git.db3 < create.sql
 
 CREATE TABLE IF NOT EXISTS ac(dm varchar(100),em varchar(100),un varchar(100),pw varchar(256),cm varchar(100));
 
