@@ -58,17 +58,17 @@ teardown() {
     [ "${#output}" -eq 16 ]
 }
 
-@test "Can create a bats SQLite3 database" {
-    run sqlite3 "test.sqlite3" < "${BATS_TEST_DIRNAME}/../helpers/ac.sql"
+@test "Can create a ${BATS_TEST_FILENAME##*/} SQLite3 database" {
+    run sqlite3 "${BATS_TEST_DIRNAME}/../databases/${BATS_TEST_FILENAME##*/}.sqlite3" < "${BATS_TEST_DIRNAME}/../examples/create.sql"
     [ "$status" -eq 0 ]
 }
 
-@test "Can encrypt test SQLite3 to pgp (have default keyring)" {
-    run gpg --default-recipient-self --output "test.pgp" --encrypt "test.sqlite3"
+@test "Can encrypt ${BATS_TEST_FILENAME##*/} SQLite3 to pgp (have default keyring)" {
+    run gpg --default-recipient-self --output "${BATS_TEST_DIRNAME}/../databases/${BATS_TEST_FILENAME##*/}.pgp" --encrypt "${BATS_TEST_DIRNAME}/../databases/${BATS_TEST_FILENAME##*/}.sqlite3"
     [ "$status" -eq 0 ]
 }
 
-@test "Can shred .sqlite3 .pgp test files" {
-    run shred --zero --remove {test.sqlite3,test.pgp}
+@test "Can shred .sqlite3 .pgp ${BATS_TEST_FILENAME##*/} files" {
+    run shred --zero --remove {"${BATS_TEST_DIRNAME}/../databases/${BATS_TEST_FILENAME##*/}.pgp","${BATS_TEST_DIRNAME}/../databases/${BATS_TEST_FILENAME##*/}.sqlite3"}
     [ "$status" -eq 0 ]
 }
