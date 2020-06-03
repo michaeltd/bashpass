@@ -55,7 +55,9 @@ password generator, storage and reference for the terminal and/or X.
 
   4. [[file:tests/bashpass.bats][bashpass.bats]]
 
-     Bats tests file. Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
+     Bats tests file.
+
+     Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
 
   5. [[file:readme.org]]
 
