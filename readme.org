@@ -29,10 +29,7 @@ password generator, storage and reference for the terminal and/or X.
 #+html: <p align="center"><img src="assets/xp.png"/></p>
 
 * Files
-  1. [[file:examples/ac.sql]]
-
-     SQLite database create example script
-  2. [[file:bashpass]]
+  1. [[file:bashpass]]
 
      main script
 
@@ -40,17 +37,29 @@ password generator, storage and reference for the terminal and/or X.
 
        Accompanied functions
 
-  3. [[file:examples/import.csv]]
+  2. [[file:setup]]
 
-     Data import example format
+     Setup script with first time run only commands
 
-  4. [[file:setup]]
+  3. [[file:examples/][examples]]
+     
+     Create DB script and import example files.
 
-     First time run only commands
+     1) [[file:examples/ac.sql][ac.sql]]
 
-  5. [[file:readme.org]]
+        SQLite database create example script
+
+     2) [[file:examples/import.csv][import.csv]]
+
+        Accounts import example format
+
+  4. [[file:readme.org]]
 
      This file
+
+  4. [[file:license]]
+
+     A License
 
 * Dependencies
 
