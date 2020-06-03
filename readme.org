@@ -57,7 +57,7 @@ password generator, storage and reference for the terminal and/or X.
 
      This file
 
-  4. [[file:license]]
+  5. [[file:license]]
 
      A License
 
