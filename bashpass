@@ -80,7 +80,7 @@ readonly -a DCM=( "sqlite3" "${DB}" ) \
 
 # Temp files
 readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
-# readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
+readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 SHRC=( "shred" "--zero" "--remove" )
@@ -88,8 +88,7 @@ readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 do_quit() {
     # Upon successfull encryption ONLY shred files
     #shellcheck disable=SC2068
-    # "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
-    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}"}
+    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     read -rp "RET to continue ... "
     exit "${1:-0}"
 }
@@ -124,12 +123,8 @@ check_prereqs(){
 
 # No mutex or die.
 check_mutex() {
-    # if [[ -f "${MUTEX}" ]]; then
-    #     display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
-    # fi
-
-    if pgrep -U "${USER}" -f "${PGPF}" &>/dev/null; then
-	display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+    if [[ -f "${MUTEX}" ]]; then
+        display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
     fi
 }
 
@@ -149,7 +144,7 @@ check_decrypt() {
             display_feedback "${BNDB}, does not appear to be a valid SQLite 3.x database file."
             return $?
         fi
-        # touch "${MUTEX}"
+        touch "${MUTEX}"
         touch "${TF}"
     fi
 }
