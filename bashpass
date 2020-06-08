@@ -80,7 +80,7 @@ readonly -a DCM=( "sqlite3" "${DB}" ) \
 
 # Temp files
 readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
-readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
+# readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 SHRC=( "shred" "--zero" "--remove" )
@@ -88,8 +88,9 @@ readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 do_quit() {
     # Upon successfull encryption ONLY shred files
     #shellcheck disable=SC2068
-    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
-    read -rp "RET to continue ... " temp
+    # "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
+    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}"}
+    read -rp "RET to continue ... "
     exit "${1:-0}"
 }
 
@@ -101,7 +102,7 @@ display_feedback() {
         notify-send "Fatal:" "${msg}"
     elif [[ -n "$(type -P xmessage 2> /dev/null)" && -n "${DISPLAY}" ]]; then
         xmessage -nearmouse -timeout "${XMTO}" "${msg}"
-    elif [[ -n "$(type -P dialog 2> /dev/null)" ]]; then
+    elif [[ -n "$(type -P dialog 2> /dev/null)" && -z "${DISPLAY}" ]]; then
         dialog --title "Fatal:" --msgbox "${msg}" 0 0
     else
         echo -ne "Fatal: ${msg}\n" >&2
@@ -123,8 +124,12 @@ check_prereqs(){
 
 # No mutex or die.
 check_mutex() {
-    if [[ -f "${MUTEX}" ]]; then
-        display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+    # if [[ -f "${MUTEX}" ]]; then
+    #     display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+    # fi
+
+    if pgrep -U "${USER}" -f "${PGPF}" &>/dev/null; then
+	display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
     fi
 }
 
@@ -144,7 +149,7 @@ check_decrypt() {
             display_feedback "${BNDB}, does not appear to be a valid SQLite 3.x database file."
             return $?
         fi
-        touch "${MUTEX}"
+        # touch "${MUTEX}"
         touch "${TF}"
     fi
 }
@@ -364,12 +369,12 @@ bashpass() {
     # instead of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $?
 
-    trap "do_quit ${SIGNONE}" "${SIGNONE}"
-    trap "do_quit ${SIGHUP}" "${SIGHUP}"
-    trap "do_quit ${SIGINT}" "${SIGINT}"
-    trap "do_quit ${SIGQUIT}" "${SIGQUIT}"
-    trap "do_quit ${SIGKILL}" "${SIGKILL}"
-    trap "do_quit ${SIGTERM}" "${SIGTERM}"
+    trap 'do_quit ${SIGNONE}' "${SIGNONE}"
+    trap 'do_quit ${SIGHUP}' "${SIGHUP}"
+    trap 'do_quit ${SIGINT}' "${SIGINT}"
+    trap 'do_quit ${SIGQUIT}' "${SIGQUIT}"
+    trap 'do_quit ${SIGKILL}' "${SIGKILL}"
+    trap 'do_quit ${SIGTERM}' "${SIGTERM}"
 
     # Build menus and help messages.
     local -a TUI_OPS=( "${red}Create${reset}" "${green}Retrieve${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
