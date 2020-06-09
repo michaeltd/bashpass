@@ -42,6 +42,5 @@ echo -ne " This script will:\n \
 if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" =~ ^[Yy] ]]; then
     sqlite3 "${FPDB}" < "${SDN}/examples/create.sql" && \
 	gpg --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
-	"${SDN}/bashpass" "${PGPF}" && \
 	echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
 fi

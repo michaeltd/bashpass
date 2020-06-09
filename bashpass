@@ -80,7 +80,7 @@ readonly -a DCM=( "sqlite3" "${DB}" ) \
 
 # Temp files
 readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
-readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
+# readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 SHRC=( "shred" "--zero" "--remove" )
@@ -88,8 +88,9 @@ readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 do_quit() {
     # Upon successfull encryption ONLY shred files
     #shellcheck disable=SC2068
-    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
-    read -rp "RET to continue ... "
+    # "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
+    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}"}
+    read -rp "Return to continue ... "
     exit "${1:-0}"
 }
 
@@ -123,8 +124,13 @@ check_prereqs(){
 
 # No mutex or die.
 check_mutex() {
-    if [[ -f "${MUTEX}" ]]; then
-        display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+    # if [[ -f "${MUTEX}" ]]; then
+    #     display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+    # fi
+
+    local -ar pids=( $(pgrep -U "${USER}" -f "${BNPGPF}") )
+    if [[ "${#pids[*]}" -gt "1" ]]; then
+	display_feedback "You can only have one instance of ${SBN}."
     fi
 }
 
@@ -136,7 +142,7 @@ check_decrypt() {
     fi
     #shellcheck disable=SC2068
     if ! "${PGPC[@]}" "${DB}" "--decrypt" "${PGPF}"; then
-        display_feedback "Decryption failed. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+        display_feedback "Decryption failed."
         return $?
     else
 	# We do have an decrypted $DB file so we might as well check it's validity.
@@ -144,7 +150,7 @@ check_decrypt() {
             display_feedback "${BNDB}, does not appear to be a valid SQLite 3.x database file."
             return $?
         fi
-        touch "${MUTEX}"
+        # touch "${MUTEX}"
         touch "${TF}"
     fi
 }
@@ -152,7 +158,7 @@ check_decrypt() {
 # SQL or die.
 check_sql() {
     if ! "${DCM[@]}" "SELECT * FROM ${ACT} ORDER BY rowid ASC;" &> /dev/null; then
-        display_feedback "Need a working db to function. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
+        display_feedback "Need a working db to function."
     fi
 }
 
@@ -434,4 +440,5 @@ bashpass() {
     done
 }
 
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && bashpass "${@}"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && \
+    "$(basename "$(realpath "${BASH_SOURCE[0]}")")" "${@}"
