@@ -7,7 +7,7 @@
 declare -rx XMTO="30"
 
 # Signals to trap
-declare -rx SIGNONE=0 SIGHUP=1 SIGINT=2 SIGQUIT=3 SIGKILL=9 SIGTERM=15
+declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 #shellcheck disable=SC2155
@@ -22,11 +22,11 @@ declare PGPF DB BNPGPF BNDB USRINTRFCE
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.pgp) PGPF="${1}";;
-        Xdialog|dialog|terminal) readonly USRINTRFCE="${1}" ;;
-        -d|--debug) set -x ;;
-        -h|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
+        Xdialog|dialog|terminal) readonly USRINTRFCE="${1}";;
+        -d|--debug) set -x;;
+        -h|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n" >&2;
-	   echo -ne "${BPUSAGE}\n" >&2; exit 1 ;;
+	   echo -ne "${BPUSAGE}\n" >&2; exit 1;;
     esac
     shift
 done
@@ -362,7 +362,7 @@ usage() {
 }
 
 bashpass() {
-    local OFS="" ERRLVL="" USRINPT=""
+    local OFS=$'\ \t\n' ERRLVL=0 USRINPT=''
     check_prereqs || exit $?
     check_mutex || exit $?
     check_decrypt || exit $?
@@ -370,13 +370,13 @@ bashpass() {
     # instead of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $?
 
-    trap 'do_quit ${SIGNONE}' "${SIGNONE}"
-    trap 'do_quit ${SIGHUP}' "${SIGHUP}"
-    trap 'do_quit ${SIGINT}' "${SIGINT}"
-    trap 'do_quit ${SIGQUIT}' "${SIGQUIT}"
-    trap 'do_quit ${SIGKILL}' "${SIGKILL}"
-    trap 'do_quit ${SIGTERM}' "${SIGTERM}"
-
+    trap 'do_quit ${SIG_NONE}' "${SIG_NONE}"
+    trap 'do_quit ${SIG_HUP}' "${SIG_HUP}"
+    trap 'do_quit ${SIG_INT}' "${SIG_INT}"
+    trap 'do_quit ${SIG_QUIT}' "${SIG_QUIT}"
+    trap 'do_quit ${SIG_KILL}' "${SIG_KILL}"
+    trap 'do_quit ${SIG_TERM}' "${SIG_TERM}"
+    
     # Build menus and help messages.
     local -a TUI_OPS=( "${red}Create${reset}" "${green}Retrieve${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
 
@@ -440,5 +440,4 @@ bashpass() {
     done
 }
 
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && \
-    "$(basename "$(realpath "${BASH_SOURCE[0]}")")" "${@}"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && "${SBN}" "${@}"
