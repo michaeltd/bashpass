@@ -11,10 +11,10 @@ declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 #shellcheck disable=SC2155
-readonly SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
-	 SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+declare -r SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
+	SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-readonly BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]"
+declare -r BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]"
 
 declare PGPF DB BNPGPF BNDB USRINTRFCE
 
@@ -75,12 +75,11 @@ readonly ACT="ac"
 
 # SQLite
 readonly -a DCM=( "sqlite3" "${DB}" ) \
-	RCM=( "sqlite3" "-line" "${DB}" ) \
-	ICM=( "sqlite3" "-csv" "${DB}" )
+	 RCM=( "sqlite3" "-line" "${DB}" ) \
+	 ICM=( "sqlite3" "-csv" "${DB}" )
 
 # Temp files
 readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
-# readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 SHRC=( "shred" "--zero" "--remove" )
@@ -88,7 +87,6 @@ readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 do_quit() {
     # Upon successfull encryption ONLY shred files
     #shellcheck disable=SC2068
-    # "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}"}
     read -rp "Return to continue ... "
     exit "${1:-0}"
@@ -124,10 +122,6 @@ check_prereqs(){
 
 # No mutex or die.
 check_mutex() {
-    # if [[ -f "${MUTEX}" ]]; then
-    #     display_feedback "You can only have one instance of ${SBN}. Follow the instructions from here: https://github.com/michaeltd/bashpass/"
-    # fi
-
     local -ar pids=( $(pgrep -U "${USER}" -f "${BNPGPF}") )
     if [[ "${#pids[*]}" -gt "1" ]]; then
 	display_feedback "You can only have one instance of ${SBN}."
@@ -361,11 +355,88 @@ usage() {
     [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
 }
 
+do_defaults(){
+    # Try to accommodate optional preference...
+    if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+	#shellcheck disable=SC2155
+	declare -xr DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
+    elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then # Check for dialog
+	#shellcheck disable=SC2155
+	declare -xr DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
+    elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
+	unset DIALOG
+    else # -z USERINTRFCE etc
+	# ... or pick a default available UI
+	if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+	    #shellcheck disable=SC2155
+	    declare -xr DIALOG="$(type -P Xdialog)" L="20" C="40"
+	    declare -xr USRINTRFCE="Xdialog"
+	elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
+	    #shellcheck disable=SC2155
+	    declare -xr DIALOG="$(type -P dialog)" L="0" C="0"
+	    declare -xr USRINTRFCE="dialog"
+	else
+	    unset DIALOG
+	    declare -xr USRINTRFCE="terminal"
+	fi
+    fi
+
+    #shellcheck disable=SC1090
+    [[ -n "${DIALOG}" ]] && source "${SDN}/sources/dialog.src"
+    #shellcheck disable=SC1090
+    [[ -z "${DIALOG}" ]] && source "${SDN}/sources/terminal.src"
+
+    if [[ -n "${PGPF}" ]]; then
+	readonly PGPF="${SDN}/databases/${PGPF}"
+	readonly DB="${PGPF%%.pgp}"
+	readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+    else
+	readonly PGPF="${SDN}/databases/sample.pgp"
+	readonly DB="${PGPF%%.pgp}"
+	readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+    fi
+
+    readonly ACT="ac"
+
+    # SQLite
+    readonly -a DCM=( "sqlite3" "${DB}" ) \
+	     RCM=( "sqlite3" "-line" "${DB}" ) \
+	     ICM=( "sqlite3" "-csv" "${DB}" )
+
+    # Temp files
+    readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
+    # readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
+
+    readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
+	     SHRC=( "shred" "--zero" "--remove" )
+}
+
+do_options(){
+    # Process optional arguments
+    while [[ -n "${1}" ]]; do
+	case "${1}" in
+            *.pgp) PGPF="${1}";;
+            Xdialog|dialog|terminal) declare -rx USRINTRFCE="${1}";;
+            -d|--debug) set -x;;
+            -h|--help) echo -ne "${BPUSAGE}\n" >&2; return 1;;
+            *) echo -ne "Unknown option: ${1}\n" >&2;
+	       echo -ne "${BPUSAGE}\n" >&2; return 1;;
+	esac
+	shift
+    done
+}
+
 bashpass() {
-    local OFS=$'\ \t\n' ERRLVL=0 USRINPT=''
-    check_prereqs || exit $?
-    check_mutex || exit $?
-    check_decrypt || exit $?
+
+    local OFS=$' \t\n' ERRLVL=0 USRINPT=''
+
+    # do_options || return $?
+    # do_defaults || return $?
+
+    check_prereqs || return $?
+    check_mutex || return $?
+    check_decrypt || return $?
+
     # Have password $DB, $TF and $MUTEX so from now on,
     # instead of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $?
