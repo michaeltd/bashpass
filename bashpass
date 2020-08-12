@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash --norc --noprofile
 #
 # bashpass Xdialog/dialog/terminal assisted password management.
 

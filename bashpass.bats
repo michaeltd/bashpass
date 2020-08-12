@@ -43,7 +43,7 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
-@test "GNU Privacy Guard v2 executable is available in path" {
+@test "GNU Privacy Guard executable is available in path" {
     run gpg --version
     [ "$status" -eq 0 ]
 }
@@ -59,16 +59,16 @@ teardown() {
 }
 
 @test "Can create a ${BATS_TEST_FILENAME##*/} SQLite3 database" {
-    run sqlite3 "${BATS_TEST_FILENAME##*/}.sqlite3" < "${BATS_TEST_DIRNAME}/../examples/create.sql"
+    run sqlite3 "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.sqlite3" < "${BATS_TEST_DIRNAME}/examples/create.sql"
     [ "$status" -eq 0 ]
 }
 
 @test "Can encrypt ${BATS_TEST_FILENAME##*/} SQLite3 to pgp (have default keyring)" {
-    run gpg --default-recipient-self --output "${BATS_TEST_FILENAME##*/}.pgp" --encrypt "${BATS_TEST_FILENAME##*/}.sqlite3"
+    run gpg --default-recipient-self --output "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.pgp" --encrypt "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.sqlite3"
     [ "$status" -eq 0 ]
 }
 
 @test "Can shred .sqlite3 .pgp ${BATS_TEST_FILENAME##*/} files" {
-    run shred --zero --remove {${BATS_TEST_FILENAME##*/}.pgp,${BATS_TEST_FILENAME##*/}.sqlite3}
+    run shred --zero --remove ${BATS_TEST_DIRNAME}/databases/{${BATS_TEST_FILENAME##*/}.pgp,${BATS_TEST_FILENAME##*/}.sqlite3}
     [ "$status" -eq 0 ]
 }
