@@ -53,7 +53,7 @@ password generator, storage and reference for the terminal and/or X.
 
         Accounts import example format
 
-  4. [[file:tests/bashpass.bats][bashpass.bats]]
+  4. [[file:bashpass.bats]]
 
      Bats tests file.
 
@@ -69,9 +69,9 @@ password generator, storage and reference for the terminal and/or X.
 
 * Dependencies
 
-  1. GNU Privacy Guard v2
+  1. GNU Privacy Guard
 
-     You need gnupg installed, ~gpg2~ executable readily available in ~${PATH}.~
+     You need gnupg installed, ~gpg~ executable readily available in ~${PATH}.~
 
   2. SQLite v3
 
@@ -111,9 +111,9 @@ password generator, storage and reference for the terminal and/or X.
 
 *** First time only:
 
-**** [[https://www.gnupg.org/gph/en/manual/c14.html][Default gpg2 keyring]]
+**** [[https://www.gnupg.org/gph/en/manual/c14.html][Default gpg keyring]]
 
-     If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][default gpg2 keyring]].
+     If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][default gpg keyring]].
 
 **** Make and encrypt a ~sample.pgp~ SQLite3 file.
 
@@ -127,7 +127,7 @@ password generator, storage and reference for the terminal and/or X.
 
       You'll need to build ~sample~ like so: ~sqlite3 databases/sample < examples/create.sql~
 
-      and encrypt it like so: ~gpg2 --default-recipient-self --output databases/sample.pgp --encrypt databases/sample~,
+      and encrypt it like so: ~gpg --default-recipient-self --output databases/sample.pgp --encrypt databases/sample~,
 
       Reason being SQLite3 ~sample~ file you'll work with, needs to be encrypted to your own keyring.
 
@@ -151,7 +151,7 @@ password generator, storage and reference for the terminal and/or X.
 
 * Notes
 
-  1. You can only have one instance of [[file:bashpass][bashpass]] running at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
+  1. You can only have one instance of each ~*.pgp~ file open at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
 
   2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.pgp]~) as it will not run otherwise. For SQLite session availability, gnupg input and debugging purposes.
 
@@ -175,7 +175,7 @@ password generator, storage and reference for the terminal and/or X.
 
 ** ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
-   Add pgp2 encryption
+   Add pgp encryption
 
 ** ✔ Clipboard
    CLOSED: [2019-11-27 Wed 02:21]
@@ -194,12 +194,8 @@ password generator, storage and reference for the terminal and/or X.
     Based on X
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
-  Typos, syntactic and grammar welcome.
+  Typos, syntactic and grammar welcome, other than that try a PR and we'll talk about it.
 
-  Other than that try a PR and we'll talk about it.
-
-  In the rare case that you really *must*, 
-
-  feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
+  In the rare case that you really *must*, feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
 
 * [[file:license][ISC License]] [[https://opensource.org/licenses/ISC][https://img.shields.io/badge/License-ISC-yellow.svg]]
