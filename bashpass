@@ -124,7 +124,7 @@ check_prereqs(){
 check_mutex() {
     local -ar pids=( $(pgrep -U "${USER}" -f "${BNPGPF}") )
     if [[ "${#pids[*]}" -gt "1" ]]; then
-	display_feedback "You can only have one instance of ${SBN}."
+	display_feedback "You can only have one instance of ${BNPGPF}."
     fi
 }
 
