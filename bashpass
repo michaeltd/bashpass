@@ -1,4 +1,5 @@
 #!/usr/bin/env -S bash --norc --noprofile
+#shellcheck shell=bash disable=SC1008,SC2096
 #
 # bashpass Xdialog/dialog/terminal assisted password management.
 
@@ -80,6 +81,7 @@ readonly -a DCM=( "sqlite3" "${DB}" ) \
 
 # Temp files
 readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
+readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 SHRC=( "shred" "--zero" "--remove" )
@@ -87,7 +89,7 @@ readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 do_quit() {
     # Upon successfull encryption ONLY shred files
     #shellcheck disable=SC2068
-    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}"}
+    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     read -rp "Return to continue ... "
     exit "${1:-0}"
 }
@@ -123,10 +125,13 @@ check_prereqs(){
 
 # No mutex or die.
 check_mutex() {
-    local -ar pids=( $(pgrep -U "${USER}" -f "${BNPGPF}") )
-    if [[ "${#pids[*]}" -gt "1" ]]; then
+    if [[ -f "${MUTEX}" ]]; then
 	display_feedback "You can only have one instance of ${BNPGPF}."
     fi
+    # local -ar pids=( $(pgrep -U "${USER}" -f "${BNPGPF}") )
+    # if [[ "${#pids[*]}" -gt "1" ]]; then
+    # 	display_feedback "You can only have one instance of ${BNPGPF}."
+    # fi
 }
 
 # Decrypt .sqlite, setup trap and mutex or die.
@@ -145,7 +150,7 @@ check_decrypt() {
             display_feedback "${BNDB}, does not appear to be a valid SQLite 3.x database file."
             return $?
         fi
-        # touch "${MUTEX}"
+        touch "${MUTEX}"
         touch "${TF}"
     fi
 }
