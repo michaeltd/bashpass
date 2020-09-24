@@ -94,16 +94,16 @@ do_quit() {
 
 display_feedback() {
     local -r msg="${*}"
-    if [[ -n "$(type -P Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then
-        Xdialog --title "Fatal:" --msgbox "${msg}" 0 0
-    elif [[ -n "$(type -P notify-send 2> /dev/null)" && -n "${DISPLAY}" ]]; then
-        notify-send "Fatal:" "${msg}"
+    if [[ -n "$(type -P notify-send 2> /dev/null)" && -n "${DISPLAY}" ]]; then
+        notify-send "${SBN}, Fatal:" "${msg}"
+    elif [[ -n "$(type -P Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then
+        Xdialog --title "${SBN}, Fatal:" --msgbox "${msg}" 0 0
     elif [[ -n "$(type -P xmessage 2> /dev/null)" && -n "${DISPLAY}" ]]; then
-        xmessage -nearmouse -timeout "${XMTO}" "${msg}"
+        xmessage -nearmouse -timeout "${XMTO}" "${SBN}, Fatal: ${msg}"
     elif [[ -n "$(type -P dialog 2> /dev/null)" && -z "${DISPLAY}" ]]; then
-        dialog --title "Fatal:" --msgbox "${msg}" 0 0
+        dialog --title "${SBN}, Fatal:" --msgbox "${msg}" 0 0
     else
-        echo -ne "Fatal: ${msg}\n" >&2
+        echo -ne "${SBN}, Fatal: ${msg}\n" >&2
     fi
     return 1
 }
