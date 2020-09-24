@@ -94,16 +94,17 @@ do_quit() {
 
 display_feedback() {
     local -r msg="${*}"
+    local -r ttl="${SBN}: Fatal!"
     if [[ -n "$(type -P notify-send 2> /dev/null)" && -n "${DISPLAY}" ]]; then
-        notify-send "${SBN}, Fatal:" "${msg}"
+        notify-send "${ttl}" "${msg}"
     elif [[ -n "$(type -P Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then
-        Xdialog --title "${SBN}, Fatal:" --msgbox "${msg}" 0 0
+        Xdialog --title "${ttl}" --msgbox "${msg}" 0 0
     elif [[ -n "$(type -P xmessage 2> /dev/null)" && -n "${DISPLAY}" ]]; then
-        xmessage -nearmouse -timeout "${XMTO}" "${SBN}, Fatal: ${msg}"
+        xmessage -nearmouse -timeout "${XMTO}" "${ttl} ${msg}"
     elif [[ -n "$(type -P dialog 2> /dev/null)" && -z "${DISPLAY}" ]]; then
-        dialog --title "${SBN}, Fatal:" --msgbox "${msg}" 0 0
+        dialog --title "${ttl}" --msgbox "${msg}" 0 0
     else
-        echo -ne "${SBN}, Fatal: ${msg}\n" >&2
+        echo -ne "${ttl} ${msg}\n" >&2
     fi
     return 1
 }
@@ -113,9 +114,9 @@ check_prereqs(){
         display_feedback "You'll need to run ${0/*\/} in a terminal (or tty)!"
     elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
         display_feedback "You'll need bash major version no less than 4."
-    elif [[ ! $(type -P sqlite3) ]]; then
+    elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
         display_feedback "You need SQLite3 installed."
-    elif [[ ! $(type -P gpg) ]]; then
+    elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
         display_feedback "You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
