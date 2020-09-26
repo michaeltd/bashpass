@@ -97,13 +97,13 @@ do_quit() {
 display_feedback() {
     local -r msg="${*}"
     local -r ttl="${SBN}: Fatal!"
-    if [[ -n "$(type -P notify-send 2> /dev/null)" && -n "${DISPLAY}" ]]; then
+    if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
         notify-send "${ttl}" "${msg}"
-    elif [[ -n "$(type -P Xdialog 2> /dev/null)" && -n "${DISPLAY}" ]]; then
+    elif [[ -n "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then
         Xdialog --title "${ttl}" --msgbox "${msg}" 0 0
-    elif [[ -n "$(type -P xmessage 2> /dev/null)" && -n "${DISPLAY}" ]]; then
+    elif [[ -n "$(type -P xmessage)" && -n "${DISPLAY}" ]]; then
         xmessage -nearmouse -timeout "${XMTO}" "${ttl} ${msg}"
-    elif [[ -n "$(type -P dialog 2> /dev/null)" && -z "${DISPLAY}" ]]; then
+    elif [[ -n "$(type -P dialog)" && -z "${DISPLAY}" ]]; then
         dialog --title "${ttl}" --msgbox "${msg}" 0 0
     else
         echo -ne "${ttl} ${msg}\n" >&2
@@ -179,7 +179,7 @@ create() {
     "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        [[ $(type -P xclip 2> /dev/null) ]] && echo "${PW}" | "$(type -P xclip 2> /dev/null)" "-r"
+        [[ -n "$(type -P xclip)" ]] && echo "${PW}" | xclip "-r"
         "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
@@ -203,12 +203,12 @@ retrieve() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE dm LIKE '%${DM}%';" > "${TF}"
 
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        if [[ -n "$(type -P xclip 2> /dev/null)" ]]; then
+        if [[ -n "$(type -P xclip)" ]]; then
             # Record Count
             RC="$("${DCM[@]}" "SELECT count(rowid) FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
             if (( RC == 1 )); then
                 PW="$("${DCM[@]}" "SELECT pw FROM ${ACT} WHERE dm LIKE '%${DM}%';")"
-                echo "${PW}"|"$(type -P xclip 2> /dev/null)" "-r"
+                echo "${PW}" | xclip "-r"
             fi
         fi
         "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" \
@@ -249,7 +249,7 @@ update() {
     "${DCM[@]}" "UPDATE ${ACT} SET pw = '${PW}' WHERE rowid = '${ID}';"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        [[ -x "$(type -P xclip 2> /dev/null)" ]] && echo "${PW}" | "xclip" "-r"
+        [[ -n "$(type -P xclip)" ]] && echo "${PW}" | xclip -r
         "${DIALOG}" --backtitle "${SBN}" --title "results" \
 		    --editbox "${TF}" "${L}" "${C}" 2> /dev/null
     else
@@ -344,7 +344,7 @@ exportcsv(){
 
     cat "${TF}" > "${CSVF}"
 
-    if [[ -x "$(type -P xdg-open 2>/dev/null)" ]]; then
+    if [[ -x "$(type -P xdg-open)" ]]; then
 	"$(type -P xdg-open 2>/dev/null)" "${CSVF}"
     elif [[ -x "$(type -P "${VISUAL}" 2>/dev/null)"  ]]; then
 	"$(type -P "${VISUAL}" 2>/dev/null)" "${CSVF}"
@@ -353,7 +353,7 @@ exportcsv(){
     elif [[ -x "$(type -P "${PAGER}" 2>/dev/null)"  ]]; then
 	"$(type -P "${PAGER}" 2>/dev/null)" "${CSVF}"
     else
-	cat "${CSVF}"
+	"${PAGER}" "${CSVF}"
     fi
 }
 
@@ -361,83 +361,9 @@ usage() {
     [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
 }
 
-do_defaults(){
-    # Try to accommodate optional preference...
-    if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	#shellcheck disable=SC2155
-	declare -xr DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
-    elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then # Check for dialog
-	#shellcheck disable=SC2155
-	declare -xr DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
-    elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
-	unset DIALOG
-    else # -z USERINTRFCE etc
-	# ... or pick a default available UI
-	if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	    #shellcheck disable=SC2155
-	    declare -xr DIALOG="$(type -P Xdialog)" L="20" C="40"
-	    declare -xr USRINTRFCE="Xdialog"
-	elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-	    #shellcheck disable=SC2155
-	    declare -xr DIALOG="$(type -P dialog)" L="0" C="0"
-	    declare -xr USRINTRFCE="dialog"
-	else
-	    unset DIALOG
-	    declare -xr USRINTRFCE="terminal"
-	fi
-    fi
-
-    #shellcheck disable=SC1090
-    [[ -n "${DIALOG}" ]] && source "${SDN}/sources/dialog.src"
-    #shellcheck disable=SC1090
-    [[ -z "${DIALOG}" ]] && source "${SDN}/sources/terminal.src"
-
-    if [[ -n "${PGPF}" ]]; then
-	readonly PGPF="${SDN}/databases/${PGPF}"
-	readonly DB="${PGPF%%.pgp}"
-	readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
-    else
-	readonly PGPF="${SDN}/databases/sample.pgp"
-	readonly DB="${PGPF%%.pgp}"
-	readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
-    fi
-
-    readonly ACT="ac"
-
-    # SQLite
-    readonly -a DCM=( "sqlite3" "${DB}" ) \
-	     RCM=( "sqlite3" "-line" "${DB}" ) \
-	     ICM=( "sqlite3" "-csv" "${DB}" )
-
-    # Temp files
-    readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
-    # readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
-
-    readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
-	     SHRC=( "shred" "--zero" "--remove" )
-}
-
-do_options(){
-    # Process optional arguments
-    while [[ -n "${1}" ]]; do
-	case "${1}" in
-            *.pgp) PGPF="${1}";;
-            Xdialog|dialog|terminal) declare -rx USRINTRFCE="${1}";;
-            -d|--debug) set -x;;
-            -h|--help) echo -ne "${BPUSAGE}\n" >&2; return 1;;
-            *) echo -ne "Unknown option: ${1}\n" >&2;
-	       echo -ne "${BPUSAGE}\n" >&2; return 1;;
-	esac
-	shift
-    done
-}
-
 bashpass() {
 
-    local OFS=$' \t\n' ERRLVL=0 USRINPT=''
-
-    # do_options || return $?
-    # do_defaults || return $?
+    local OFS="${IFS}" ERRLVL=0 USRINPT=''
 
     check_prereqs || return $?
     check_mutex || return $?
