@@ -13,8 +13,7 @@ declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 #shellcheck disable=SC2155
-declare -r SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
-	SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+declare -r SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 declare -r BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]"
 
@@ -175,13 +174,13 @@ create() {
     #shellcheck disable=SC1090
     source "${TF}"
 
-    [[ -z "${PW}" ]] && PW="$(gpw "8")"
+    [[ -z "${PW}" ]] && PW="$(gpw "16")"
 
     "${DCM[@]}" "INSERT INTO ${ACT} VALUES('${DM//:/\:}', '${EM}', '${UN}', '${PW}', '${CM}');"
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        [[ -n "$(type -P xclip)" ]] && echo "${PW}" | xclip "-r"
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
+        [[ -n "$(type -P xclip)" ]] && echo "${PW}" | "$(type -P xclip)" "-r"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -190,8 +189,7 @@ create() {
 retrieve() {
     local DM RC PW
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "domain" \
-		    "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
     else
         echo -ne "Enter domain to look for (empty for All): "
@@ -212,8 +210,7 @@ retrieve() {
                 echo "${PW}" | xclip "-r"
             fi
         fi
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "results" "--editbox" \
-		    "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -223,8 +220,7 @@ update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
         #shellcheck disable=SC2046
-        "${DIALOG}" "--backtitle" "${SBN}" "--title" "update accout:" \
-		    "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
@@ -234,9 +230,7 @@ update() {
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     fi
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "password" \
-		    --inputbox "Enter a password or a password length (8-64) or empty for auto (max length): " \
-		    "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${TF}"
         ERRLVL=$? PW="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) && return
     else
@@ -251,8 +245,7 @@ update() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         [[ -n "$(type -P xclip)" ]] && echo "${PW}" | xclip -r
-        "${DIALOG}" --backtitle "${SBN}" --title "results" \
-		    --editbox "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -262,8 +255,7 @@ delete() {
     local ERRLVL ID
     if [[ -n "${DIALOG}" ]]; then
         #shellcheck disable=SC2046
-        "${DIALOG}" --backtitle "${SBN}" --title "delete account:" \
-		    --radiolist "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
@@ -274,8 +266,7 @@ delete() {
     fi
     "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
     if [[ -n "${DIALOG}" ]]; then
-	"${DIALOG}" --backtitle "${SBN}" --title "dialog" \
-		    --msgbox "Account ID: #${ID} deleted." "${L}" "${C}"
+	"${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--msgbox" "Account ID: #${ID} deleted." "${L}" "${C}"
     else
 	echo -ne "Account ID: #${ID} deleted.\n"
     fi
@@ -286,8 +277,7 @@ importcsv() {
     local MAXID CSVF ERRLVL
     MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "Enter a csv file:" \
-		    --fselect "${HOME}/" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Enter a csv file:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
         CSVF="$(cat "${TF}")"
         [[ -z "${CSVF}" ]] && return
@@ -301,16 +291,14 @@ importcsv() {
     ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" --backtitle "${SBN}" --title "Error" \
-			--msgbox "$(cat "${TF}")" "${L}" "${C}"
+            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Error" "--msgbox" "$(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return "${ERRLVL}"
     fi
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "results" \
-		    --editbox "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -319,8 +307,7 @@ importcsv() {
 exportcsv(){
     local CSVF ERRLVL
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" --backtitle "${SBN}" --title "Enter a file name:" \
-		    --fselect "${HOME}/" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Enter a file name:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
         CSVF=$(cat "${TF}")
         [[ -z "${CSVF}" ]] && return
@@ -336,8 +323,7 @@ exportcsv(){
     ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" --backtitle "${SBN}" --title "Error" \
-			--msgbox "$(cat "${TF}")" "${L}" "${C}"
+            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Error" "--msgbox" "$(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return "${ERRLVL}"
@@ -346,20 +332,18 @@ exportcsv(){
     cat "${TF}" > "${CSVF}"
 
     if [[ -x "$(type -P xdg-open)" ]]; then
-	"$(type -P xdg-open 2>/dev/null)" "${CSVF}"
-    elif [[ -x "$(type -P "${VISUAL}" 2>/dev/null)"  ]]; then
-	"$(type -P "${VISUAL}" 2>/dev/null)" "${CSVF}"
-    elif [[ -x "$(type -P "${EDITOR}" 2>/dev/null)"  ]]; then
-	"$(type -P "${EDITOR}" 2>/dev/null)" "${CSVF}"
-    elif [[ -x "$(type -P "${PAGER}" 2>/dev/null)"  ]]; then
-	"$(type -P "${PAGER}" 2>/dev/null)" "${CSVF}"
+	"$(type -P xdg-open)" "${CSVF}"
+    elif [[ -x "$(type -P "${VISUAL}")"  ]]; then
+	"$(type -P "${VISUAL}")" "${CSVF}"
+    elif [[ -x "$(type -P "${EDITOR}")"  ]]; then
+	"$(type -P "${EDITOR}")" "${CSVF}"
     else
 	"${PAGER}" "${CSVF}"
     fi
 }
 
 usage() {
-    [[ -n "${DIALOG}" ]] && "${DIALOG}" --backtitle "${SBN}" --title "Help" --msgbox "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
+    [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Help" "--msgbox" "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
 }
 
 bashpass() {
@@ -412,9 +396,7 @@ bashpass() {
 	    #shellcheck disable=SC2141
             OFS="${IFS}" IFS=$'\|'
             #shellcheck disable=SC2086
-            "${DIALOG}" "--backtitle" "${SBN}" "--title" "dialog" "--item-help" \
-			"--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" \
-			${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
+            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" ${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.

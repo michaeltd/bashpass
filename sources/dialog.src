@@ -9,20 +9,15 @@ declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 
 create_dialog() {
     local DM EM UN PW CM
-    "${DIALOG}" --backtitle "${SBN}" --title "domain" \
-		--inputbox "Enter a domain:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return $?
-    "${DIALOG}" --backtitle "${SBN}" --title "email" \
-		--inputbox "Enter an email:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return $?
-    "${DIALOG}" --backtitle "${SBN}" --title "username" \
-		--inputbox "Enter a username:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return $?
-    "${DIALOG}" --backtitle "${SBN}" --title "password" \
-		--passwordbox "Enter a password: (alpha, numeric and punctuation characters ok. No quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return $?
-    "${DIALOG}" --backtitle "${SBN}" --title "comment" \
-		--inputbox "Enter comments:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return $?
 
     echo -ne "DM=\"${DM}\"\nEM=\"${EM}\"\nUN=\"${UN}\"\nPW=\"${PW}\"\nCM=\"${CM}\"\n" > "${TF}"
