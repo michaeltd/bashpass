@@ -1,9 +1,6 @@
 #!/bin/bash
 # Just to pickup syntax highlighting
 
-#shellcheck disable=SC2153
-declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
-
 # Xdialog/dialog
 declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \

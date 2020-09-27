@@ -6,6 +6,7 @@
 # Timeout settings for Xdialog, Xmessage
 # xmessage timeout is in seconds...
 declare -rx XMTO="30"
+declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
 
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
@@ -98,15 +99,15 @@ display_feedback() {
     local -r msg="${*}"
     local -r ttl="${SBN}: Fatal!"
     if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
-        notify-send "${ttl}" "${msg}"
+        "$(type -P notify-send)" "-i" "gpa" "-c" "notification" "-t" "${XDTO}" "${ttl}" "${msg}"
     elif [[ -n "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then
-        Xdialog --title "${ttl}" --msgbox "${msg}" 0 0
+        "$(type -P Xdialog)" "--title" "${ttl}" "--msgbox" "${msg}" "0" "0"
     elif [[ -n "$(type -P xmessage)" && -n "${DISPLAY}" ]]; then
-        xmessage -nearmouse -timeout "${XMTO}" "${ttl} ${msg}"
+        "$(type -P xmessage)" "-nearmouse" "-timeout" "${XMTO}" "${ttl} ${msg}"
     elif [[ -n "$(type -P dialog)" && -z "${DISPLAY}" ]]; then
-        dialog --title "${ttl}" --msgbox "${msg}" 0 0
+        "$(type -P dialog)" "--title" "${ttl}" "--msgbox" "${msg}" "0" "0"
     else
-        echo -ne "${ttl} ${msg}\n" >&2
+        echo -ne "${ttl}\n${msg}\n" >&2
     fi
     return 1
 }
