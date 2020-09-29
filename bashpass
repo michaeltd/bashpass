@@ -1,5 +1,5 @@
 #!/usr/bin/env -S bash --norc --noprofile
-#shellcheck shell=bash disable=SC1008,SC2096
+#shellcheck shell=bash source=/dev/null disable=SC1008,SC2096,SC2155,SC1090,SC2068,SC2086,SC2141,SC2046,SC2015
 #
 # bashpass Xdialog/dialog/terminal assisted password management.
 
@@ -12,7 +12,6 @@ declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
-#shellcheck disable=SC2155
 declare -r SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 declare -r BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]"
@@ -34,21 +33,17 @@ done
 
 # Try to accommodate optional preference...
 if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    #shellcheck disable=SC2155
-    declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="20" C="40"
+    declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="25" C="50"
 elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then # Check for dialog
-    #shellcheck disable=SC2155
     declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 else # -z USERINTRFCE etc
     # ... or pick a default available UI
     if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	#shellcheck disable=SC2155
-	declare -r DIALOG="$(type -P Xdialog)" L="20" C="40"
+	declare -r DIALOG="$(type -P Xdialog)" L="25" C="50"
 	readonly USRINTRFCE="Xdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-	#shellcheck disable=SC2155
 	declare -r DIALOG="$(type -P dialog)" L="0" C="0"
 	readonly USRINTRFCE="dialog"
     else
@@ -57,10 +52,7 @@ else # -z USERINTRFCE etc
     fi
 fi
 
-#shellcheck disable=SC1090
-[[ -n "${DIALOG}" ]] && source "${SDN}/sources/dialog.src"
-#shellcheck disable=SC1090
-[[ -z "${DIALOG}" ]] && source "${SDN}/sources/terminal.src"
+[[ -n "${DIALOG}" ]] && . "${SDN}/sources/dialog.src" || . "${SDN}/sources/terminal.src"
 
 if [[ -n "${PGPF}" ]]; then
     readonly PGPF="${SDN}/databases/${PGPF}"
@@ -73,22 +65,15 @@ else
 fi
 
 readonly ACT="ac"
-
+# gpg & shred commands
+readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) SHRC=( "shred" "--zero" "--remove" )
 # SQLite
-readonly -a DCM=( "sqlite3" "${DB}" ) \
-	 RCM=( "sqlite3" "-line" "${DB}" ) \
-	 ICM=( "sqlite3" "-csv" "${DB}" )
-
+readonly -a DCM=( "sqlite3" "${DB}" ) RCM=( "sqlite3" "-line" "${DB}" ) ICM=( "sqlite3" "-csv" "${DB}" )
 # Temp files
-readonly TF="${SDN}/databases/.${BNDB}.${$}.TF"
-readonly MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
-
-readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
-	 SHRC=( "shred" "--zero" "--remove" )
+readonly TF="${SDN}/databases/.${BNDB}.${$}.TF" MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 do_quit() {
     # Upon successfull encryption ONLY shred files
-    #shellcheck disable=SC2068
     "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     read -rp "Return to continue ... "
     exit "${1:-0}"
@@ -140,7 +125,6 @@ check_decrypt() {
         display_feedback "${BNPGPF}, does not appear to be a valid PGP file."
         return $?
     fi
-    #shellcheck disable=SC2068
     if ! "${PGPC[@]}" "${DB}" "--decrypt" "${PGPF}"; then
         display_feedback "Decryption failed."
         return $?
@@ -162,16 +146,13 @@ check_sql() {
     fi
 }
 
-#shellcheck disable=SC1090
 source "${SDN}/sources/functions.src"
 
 create() {
-    #shellcheck disable=SC2155
     local MAXID="$(maxid)" DM EM UN PW CM
 
     "${FUNCNAME[0]}_${USRINTRFCE}" || return $?
 
-    #shellcheck disable=SC1090
     source "${TF}"
 
     [[ -z "${PW}" ]] && PW="$(gpw "16")"
@@ -219,7 +200,6 @@ retrieve() {
 update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
-        #shellcheck disable=SC2046
         "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
@@ -254,7 +234,6 @@ update() {
 delete() {
     local ERRLVL ID
     if [[ -n "${DIALOG}" ]]; then
-        #shellcheck disable=SC2046
         "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
@@ -266,9 +245,9 @@ delete() {
     fi
     "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
     if [[ -n "${DIALOG}" ]]; then
-	"${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--msgbox" "Account ID: #${ID} deleted." "${L}" "${C}"
+	    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--msgbox" "Account ID: #${ID} deleted." "${L}" "${C}"
     else
-	echo -ne "Account ID: #${ID} deleted.\n"
+	    echo -ne "Account ID: #${ID} deleted.\n"
     fi
     
 }
@@ -332,18 +311,18 @@ exportcsv(){
     cat "${TF}" > "${CSVF}"
 
     if [[ -x "$(type -P xdg-open)" ]]; then
-	"$(type -P xdg-open)" "${CSVF}"
+    	"$(type -P xdg-open)" "${CSVF}"
     elif [[ -x "$(type -P "${VISUAL}")"  ]]; then
-	"$(type -P "${VISUAL}")" "${CSVF}"
+    	"$(type -P "${VISUAL}")" "${CSVF}"
     elif [[ -x "$(type -P "${EDITOR}")"  ]]; then
-	"$(type -P "${EDITOR}")" "${CSVF}"
+    	"$(type -P "${EDITOR}")" "${CSVF}"
     else
-	"${PAGER}" "${CSVF}"
+	    "${PAGER}" "${CSVF}"
     fi
 }
 
 usage() {
-    [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Help" "--msgbox" "${GUI_HMSG[*]}" "${L}" "${C}" || echo -e "${TUI_HMSG[*]}"
+    [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${GUI_HMSG[*]}" "0" "0" || echo -e "${TUI_HMSG[*]}"
 }
 
 bashpass() {
@@ -393,10 +372,8 @@ bashpass() {
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
-	    #shellcheck disable=SC2141
             OFS="${IFS}" IFS=$'\|'
-            #shellcheck disable=SC2086
-            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${L}" "${C}" ${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
+            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "0" "0" ${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.

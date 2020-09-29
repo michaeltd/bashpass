@@ -4,7 +4,7 @@
 # Xdialog/dialog
 declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
-	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
+	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=0 \
 	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
 
 create_dialog() {
@@ -15,7 +15,7 @@ create_dialog() {
     (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return $?
     "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No single/double-quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return $?
     "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return $?
