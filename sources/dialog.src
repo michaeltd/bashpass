@@ -9,6 +9,28 @@ declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 
 create_dialog() {
     local DM EM UN PW CM
+
+    exec 3>&1
+    # Store data to $VALUES variable
+    local -a vals=($("${DIALOG}" --ok-label "Submit" \
+				--backtitle "${BNPGPF}" \
+				--title "Set details" \
+				--form "Create Form" \
+				15 50 0 \
+				"Domain:"   1 1	"$DM" 	1 10 40 0 \
+				"Email:"    2 1	"$EM"  	2 10 40 0 \
+				"User:"     3 1	"$UN"  	3 10 40 0 \
+				"Passwd:"   4 1	"$PW" 	4 10 40 0 \
+				"Comments:" 5 1	"$CM" 	5 10 40 0 \
+				2>&1 1>&3))
+    # close fd
+    exec 3>&-
+
+    echo -ne "DM=\"${vals[0]}\"\nEM=\"${vals[1]}\"\nUN=\"${vals[2]}\"\nPW=\"${vals[3]}\"\nCM=\"${vals[4]}\"\n" > "${TF}"
+}
+
+create_Xdialog() {
+    local DM EM UN PW CM
     "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return $?
     "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${TF}"
@@ -21,8 +43,4 @@ create_dialog() {
     (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return $?
 
     echo -ne "DM=\"${DM}\"\nEM=\"${EM}\"\nUN=\"${UN}\"\nPW=\"${PW}\"\nCM=\"${CM}\"\n" > "${TF}"
-}
-
-create_Xdialog() {
-    create_dialog || return $?
 }
