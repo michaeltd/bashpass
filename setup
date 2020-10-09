@@ -21,14 +21,14 @@ elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
 fi
 
 if [[ -z "${1}" ]]; then
-    PGPF="sample.pgp"
-    DB="${PGPF%%.pgp}"
-elif [[ "${1}" =~ .pgp$ ]]; then
+    PGPF="sample.gpg"
+    DB="${PGPF%%.gpg}"
+elif [[ "${1}" =~ .gpg$ ]]; then
     PGPF="${1}"
-    DB="${PGPF%%.pgp}"
+    DB="${PGPF%%.gpg}"
 else
-    PGPF="${1}.pgp"
-    DB="${PGPF%%.pgp}"
+    PGPF="${1}.gpg"
+    DB="${PGPF%%.gpg}"
 fi
 
 FPPGPF="${SDN}/databases/${PGPF}"

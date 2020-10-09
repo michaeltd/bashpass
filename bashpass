@@ -14,14 +14,14 @@ declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 declare -r SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-declare -r BPUSAGE="Usage: ${SBN} [sample.pgp] [Xdialog|dialog|terminal] [--debug] [--help]"
+declare -r BPUSAGE="Usage: ${SBN} [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]"
 
 declare PGPF DB BNPGPF BNDB USRINTRFCE
 
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
-        *.pgp) PGPF="${1}";;
+        *.gpg) PGPF="${1}";;
         Xdialog|dialog|terminal) readonly USRINTRFCE="${1}";;
         -d|--debug) set -x;;
         -h|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1;;
@@ -56,11 +56,11 @@ fi
 
 if [[ -n "${PGPF}" ]]; then
     readonly PGPF="${SDN}/databases/${PGPF}"
-    readonly DB="${PGPF%%.pgp}"
+    readonly DB="${PGPF%%.gpg}"
     readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 else
-    readonly PGPF="${SDN}/databases/sample.pgp"
-    readonly DB="${PGPF%%.pgp}"
+    readonly PGPF="${SDN}/databases/sample.gpg"
+    readonly DB="${PGPF%%.gpg}"
     readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
 fi
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 # Just to pickup syntax highlighting
+#shellcheck disable=SC2207
 
 # Xdialog/dialog
 declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
@@ -26,7 +27,7 @@ create_dialog() {
     # close fd
     exec 3>&-
 
-    echo -ne "DM=\"${vals[0]}\"\nEM=\"${vals[1]}\"\nUN=\"${vals[2]}\"\nPW=\"${vals[3]}\"\nCM=\"${vals[4]}\"\n" > "${TF}"
+    echo -ne "DM=\"${vals[*]:0:1}\"\nEM=\"${vals[*]:1:1}\"\nUN=\"${vals[*]:2:1}\"\nPW=\"${vals[*]:3:1}\"\nCM=\"${vals[*]:4}\"\n" > "${TF}"
 }
 
 create_Xdialog() {

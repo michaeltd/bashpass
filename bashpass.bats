@@ -29,13 +29,13 @@
     [ "$status" -eq 0 ]
 }
 
-@test "Can we encrypt ${BATS_TEST_FILENAME##*/}'s SQLite3 to pgp (have default keyring)?" {
-    run gpg --default-recipient-self --output "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.pgp" --encrypt "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.sqlite3"
+@test "Can we encrypt ${BATS_TEST_FILENAME##*/}'s SQLite3 to gpg (have default keyring)?" {
+    run gpg --default-recipient-self --output "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.gpg" --encrypt "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.sqlite3"
     [ "$status" -eq 0 ]
 }
 
-@test "Can we shred ${BATS_TEST_FILENAME##*/}'s .sqlite3 .pgp files?" {
-    run shred --zero --remove ${BATS_TEST_DIRNAME}/databases/{${BATS_TEST_FILENAME##*/}.pgp,${BATS_TEST_FILENAME##*/}.sqlite3}
+@test "Can we shred ${BATS_TEST_FILENAME##*/}'s .sqlite3 .gpg files?" {
+    run shred --zero --remove ${BATS_TEST_DIRNAME}/databases/{${BATS_TEST_FILENAME##*/}.gpg,${BATS_TEST_FILENAME##*/}.sqlite3}
     [ "$status" -eq 0 ]
 }
 
