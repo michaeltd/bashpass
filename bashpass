@@ -16,12 +16,12 @@ declare -r SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" SBN="$(basename "$
 
 declare -r BPUSAGE="Usage: ${SBN} [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]"
 
-declare PGPF DB BNPGPF BNDB USRINTRFCE
+declare GPGF DB BNGPGF BNDB USRINTRFCE
 
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
-        *.gpg) PGPF="${1}";;
+        *.gpg) GPGF="${1}";;
         Xdialog|dialog|terminal) readonly USRINTRFCE="${1}";;
         -d|--debug) set -x;;
         -h|--help) echo -ne "${BPUSAGE}\n" >&2; exit 1;;
@@ -33,7 +33,7 @@ done
 
 # Try to accommodate optional preference...
 if [[ "${USRINTRFCE}" == "Xdialog" && -x "$(type -P "${USRINTRFCE}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="25" C="50"
+    declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0" 
 elif [[ "${USRINTRFCE}" == "dialog" && -x "$(type -P "${USRINTRFCE}")" ]]; then # Check for dialog
     declare -r DIALOG="$(type -P "${USRINTRFCE}")" L="0" C="0"
 elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
@@ -41,7 +41,7 @@ elif [[ "${USRINTRFCE}" == "terminal" ]]; then # plain ol' terminal
 else # -z USERINTRFCE etc
     # ... or pick a default available UI
     if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	declare -r DIALOG="$(type -P Xdialog)" L="25" C="50"
+	declare -r DIALOG="$(type -P Xdialog)" L="0" C="0"
 	readonly USRINTRFCE="Xdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
 	declare -r DIALOG="$(type -P dialog)" L="0" C="0"
@@ -54,19 +54,19 @@ fi
 
 [[ -n "${DIALOG}" ]] && . "${SDN}/sources/dialog.src" || . "${SDN}/sources/terminal.src"
 
-if [[ -n "${PGPF}" ]]; then
-    readonly PGPF="${SDN}/databases/${PGPF}"
-    readonly DB="${PGPF%%.gpg}"
-    readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+if [[ -n "${GPGF}" ]]; then
+    readonly GPGF="${SDN}/databases/${GPGF}"
+    readonly DB="${GPGF%%.gpg}"
+    readonly BNGPGF="${GPGF/*\/}" BNDB="${DB/*\/}"
 else
-    readonly PGPF="${SDN}/databases/sample.gpg"
-    readonly DB="${PGPF%%.gpg}"
-    readonly BNPGPF="${PGPF/*\/}" BNDB="${DB/*\/}"
+    readonly GPGF="${SDN}/databases/sample.gpg"
+    readonly DB="${GPGF%%.gpg}"
+    readonly BNGPGF="${GPGF/*\/}" BNDB="${DB/*\/}"
 fi
 
 readonly ACT="ac"
 # gpg & shred commands
-readonly -a PGPC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) SHRC=( "shred" "--zero" "--remove" )
+readonly -a GPGC=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) SHRC=( "shred" "--zero" "--remove" )
 # SQLite
 readonly -a DCM=( "sqlite3" "${DB}" ) RCM=( "sqlite3" "-line" "${DB}" ) ICM=( "sqlite3" "-csv" "${DB}" )
 # Temp files
@@ -74,7 +74,7 @@ readonly TF="${SDN}/databases/.${BNDB}.${$}.TF" MUTEX="${SDN}/databases/.${BNDB}
 
 do_quit() {
     # Upon successfull encryption ONLY shred files
-    "${PGPC[@]}" "${PGPF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
+    "${GPGC[@]}" "${GPGF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     read -rp "Return to continue ... "
     exit "${1:-0}"
 }
@@ -111,21 +111,21 @@ check_prereqs(){
 # No mutex or die.
 check_mutex() {
     if [[ -f "${MUTEX}" ]]; then
-	display_feedback "You can only have one instance of ${BNPGPF}."
+	display_feedback "You can only have one instance of ${BNGPGF}."
     fi
-    # local -ar pids=( $(pgrep -U "${USER}" -f "${BNPGPF}") )
+    # local -ar pids=( $(pgrep -U "${USER}" -f "${BNGPGF}") )
     # if [[ "${#pids[*]}" -gt "1" ]]; then
-    # 	display_feedback "You can only have one instance of ${BNPGPF}."
+    # 	display_feedback "You can only have one instance of ${BNGPGF}."
     # fi
 }
 
 # Decrypt .sqlite, setup trap and mutex or die.
 check_decrypt() {
-    if ! [[ "$(file -b "${PGPF}")" =~ ^PGP ]]; then
-        display_feedback "${BNPGPF}, does not appear to be a valid PGP file."
+    if ! [[ "$(file -b "${GPGF}")" =~ ^PGP ]]; then
+        display_feedback "${BNGPGF}, does not appear to be a valid PGP file."
         return $?
     fi
-    if ! "${PGPC[@]}" "${DB}" "--decrypt" "${PGPF}"; then
+    if ! "${GPGC[@]}" "${DB}" "--decrypt" "${GPGF}"; then
         display_feedback "Decryption failed."
         return $?
     else
@@ -161,7 +161,7 @@ create() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = $(( ++MAXID ));" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         [[ -n "$(type -P xclip)" ]] && echo "${PW}" | "$(type -P xclip)" "-r"
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -170,7 +170,7 @@ create() {
 retrieve() {
     local DM RC PW
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
     else
         echo -ne "Enter domain to look for (empty for All): "
@@ -191,7 +191,7 @@ retrieve() {
                 echo "${PW}" | xclip "-r"
             fi
         fi
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -200,7 +200,7 @@ retrieve() {
 update() {
     local ID ERRLVL PW
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
@@ -210,7 +210,7 @@ update() {
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     fi
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${TF}"
         ERRLVL=$? PW="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) && return
     else
@@ -225,7 +225,7 @@ update() {
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE id = '${ID}';" > "${TF}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         [[ -n "$(type -P xclip)" ]] && echo "${PW}" | xclip -r
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -234,7 +234,7 @@ update() {
 delete() {
     local ERRLVL ID
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${TF}"
         ERRLVL=$? ID="$(cat "${TF}")"
         (( ERRLVL != DIALOG_OK )) || [[ -z "${ID}" ]] && return
     else
@@ -245,7 +245,7 @@ delete() {
     fi
     "${DCM[@]}" "DELETE FROM ${ACT} WHERE rowid = '$(cat "${TF}")';"
     if [[ -n "${DIALOG}" ]]; then
-	    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--msgbox" "Account ID: #${ID} deleted." "${L}" "${C}"
+	    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "dialog" "--msgbox" "Account ID: #${ID} deleted." "${L}" "${C}"
     else
 	    echo -ne "Account ID: #${ID} deleted.\n"
     fi
@@ -256,7 +256,7 @@ importcsv() {
     local MAXID CSVF ERRLVL
     MAXID="$(maxid)"
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Enter a csv file:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "Enter a csv file:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
         CSVF="$(cat "${TF}")"
         [[ -z "${CSVF}" ]] && return
@@ -270,14 +270,14 @@ importcsv() {
     ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Error" "--msgbox" "$(cat "${TF}")" "${L}" "${C}"
+            "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "Error" "--msgbox" "$(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return "${ERRLVL}"
     fi
     "${RCM[@]}" "SELECT rowid AS id,* FROM ${ACT} WHERE rowid > ${MAXID};" > "${TF}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "results" "--editbox" "${TF}" "${L}" "${C}" 2> /dev/null
     else
         "${PAGER}" "${TF}"
     fi
@@ -286,7 +286,7 @@ importcsv() {
 exportcsv(){
     local CSVF ERRLVL
     if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Enter a file name:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${TF}"
+        "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "Enter a file name:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${TF}"
         (( $? != DIALOG_OK )) && return
         CSVF=$(cat "${TF}")
         [[ -z "${CSVF}" ]] && return
@@ -302,7 +302,7 @@ exportcsv(){
     ERRLVL=$?
     if (( ERRLVL != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Error" "--msgbox" "$(cat "${TF}")" "${L}" "${C}"
+            "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "Error" "--msgbox" "$(cat "${TF}")" "${L}" "${C}"
         fi
         echo "Error: $(cat "${TF}")"
         return "${ERRLVL}"
@@ -322,7 +322,7 @@ exportcsv(){
 }
 
 usage() {
-    [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${GUI_HMSG[*]}" "0" "0" || echo -e "${TUI_HMSG[*]}"
+    [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${GUI_HMSG[*]}" "0" "0" || echo -e "${TUI_HMSG[*]}"
 }
 
 bashpass() {
@@ -373,7 +373,7 @@ bashpass() {
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
-            "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "0" "0" ${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
+            "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "$L" "$C" ${#GUI_OPS[*]} ${GUI_MENU} 2> "${TF}"
             ERRLVL=$?
             IFS="${OFS}"
         else # Just terminal menu.

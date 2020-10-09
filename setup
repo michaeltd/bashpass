@@ -2,7 +2,7 @@
 #
 # bashpass/setup - prep bashpass
 
-declare SDN SBN PGPF DB
+declare SDN SBN GPGF DB
 SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
@@ -21,27 +21,27 @@ elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
 fi
 
 if [[ -z "${1}" ]]; then
-    PGPF="sample.gpg"
-    DB="${PGPF%%.gpg}"
+    GPGF="sample.gpg"
+    DB="${GPGF%%.gpg}"
 elif [[ "${1}" =~ .gpg$ ]]; then
-    PGPF="${1}"
-    DB="${PGPF%%.gpg}"
+    GPGF="${1}"
+    DB="${GPGF%%.gpg}"
 else
-    PGPF="${1}.gpg"
-    DB="${PGPF%%.gpg}"
+    GPGF="${1}.gpg"
+    DB="${GPGF%%.gpg}"
 fi
 
-FPPGPF="${SDN}/databases/${PGPF}"
+FPGPGF="${SDN}/databases/${GPGF}"
 FPDB="${SDN}/databases/${DB}"
 
 echo -ne " This script will:\n \
  1. Make a ${DB} SQLite3 file ... \n \
- 2. encrypt it to ${PGPF} \n \
- 3. Execute bashpass ${PGPF} \n"
+ 2. encrypt it to ${GPGF} \n \
+ 3. Execute bashpass ${GPGF} \n"
 
 if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" =~ ^[Yy] ]]; then
     sqlite3 "${FPDB}" < "${SDN}/examples/create.sql" && \
-	gpg --default-recipient-self --output "${FPPGPF}" --encrypt "${FPDB}" && \
-	"${SDN}/bashpass" "${PGPF}" && \
-	echo -ne "From now on you'll be able to call bashpass with: bashpass ${PGPF}\n" >&2
+	gpg --default-recipient-self --output "${FPGPGF}" --encrypt "${FPDB}" && \
+	"${SDN}/bashpass" "${GPGF}" && \
+	echo -ne "From now on you'll be able to call bashpass with: bashpass ${GPGF}\n" >&2
 fi

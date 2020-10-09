@@ -1,21 +1,20 @@
 #!/bin/bash
+#
 # Just to pickup syntax highlighting
+#shellcheck disable=SC2034,SC2155,SC2034,SC2155
 
 # Font attributes, Colors, bg_colors
-#shellcheck disable=SC2034,SC2155,SC2034,SC2155
 declare -r reset="$(tput sgr0)" bold="$(tput bold)" \
 	dim="$(tput dim)" blink="$(tput blink)" \
 	underline="$(tput smul)" end_underline="$(tput rmul)" \
 	reverse="$(tput rev)" hidden="$(tput invis)"
 
-#shellcheck disable=SC2034,SC2155,SC2034,SC2155
 declare -r black="$(tput setaf 0)" red="$(tput setaf 1)" \
 	green="$(tput setaf 2)" yellow="$(tput setaf 3)" \
 	blue="$(tput setaf 4)" magenta="$(tput setaf 5)" \
 	cyan="$(tput setaf 6)" white="$(tput setaf 7)" \
 	default="$(tput setaf 9)"
 
-#shellcheck disable=SC2034,SC2155,SC2034,SC2155
 declare -r bg_black="$(tput setab 0)" bg_red="$(tput setab 1)" \
 	bg_green="$(tput setab 2)" bg_yellow="$(tput setab 3)" \
 	bg_blue="$(tput setab 4)" bg_magenta="$(tput setab 5)" \

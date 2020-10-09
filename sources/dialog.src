@@ -14,7 +14,7 @@ create_dialog() {
     exec 3>&1
     # Store data to $VALUES variable
     local -a vals=($("${DIALOG}" --ok-label "Submit" \
-				--backtitle "${BNPGPF}" \
+				--backtitle "${BNGPGF}" \
 				--title "Set details" \
 				--form "Create Form" \
 				15 50 0 \
@@ -31,16 +31,18 @@ create_dialog() {
 }
 
 create_Xdialog() {
+    # --2inputsbox <text> <height> <width> <label1> <init1> <label2> <init2>
+    # --3inputsbox <text> <height> <width> <label1> <init1> <label2> <init2> <label3> <init3> 
     local DM EM UN PW CM
-    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No single/double-quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No single/double-quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNPGPF}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${TF}"
+    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${TF}"
     (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return $?
 
     echo -ne "DM=\"${DM}\"\nEM=\"${EM}\"\nUN=\"${UN}\"\nPW=\"${PW}\"\nCM=\"${CM}\"\n" > "${TF}"
