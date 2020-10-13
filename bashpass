@@ -73,6 +73,8 @@ readonly -a DCM=( "sqlite3" "${DB}" ) RCM=( "sqlite3" "-line" "${DB}" ) ICM=( "s
 readonly TF="${SDN}/databases/.${BNDB}.${$}.TF" MUTEX="${SDN}/databases/.${BNDB}.MUTEX"
 
 do_quit() {
+    # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
+    "${DCM[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     "${GPGC[@]}" "${GPGF}" "--encrypt" "${DB}" && "${SHRC[@]}" {"${DB}","${TF}","${MUTEX}"}
     read -rp "Return to continue ... "
