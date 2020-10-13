@@ -325,7 +325,7 @@ usage() {
     [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${GUI_HMSG[*]}" "0" "0" || echo -e "${TUI_HMSG[*]}"
 }
 
-bashpass() {
+main() {
 
     local OFS="${IFS}" ERRLVL=0 USRINPT=''
 
@@ -403,4 +403,4 @@ bashpass() {
     done
 }
 
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && "${SBN}" "${@}"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "${@}"
