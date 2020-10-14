@@ -52,7 +52,7 @@ else # -z USERINTRFCE etc
     fi
 fi
 
-[[ -n "${DIALOG}" ]] && . "${SDN}/sources/dialog.src" || . "${SDN}/sources/terminal.src"
+[[ -n "${DIALOG}" ]] && source "${SDN}/sources/dialog.src" || source "${SDN}/sources/terminal.src"
 
 if [[ -n "${GPGF}" ]]; then
     readonly GPGF="${SDN}/databases/${GPGF}"
@@ -99,7 +99,7 @@ display_feedback() {
 }
 
 check_prereqs(){
-    if [[ ! -t 1 ]]; then
+    if ! tty -s; then
         display_feedback "You'll need to run ${0/*\/} in a terminal (or tty)!"
     elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
         display_feedback "You'll need bash major version no less than 4."

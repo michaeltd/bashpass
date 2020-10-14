@@ -6,7 +6,7 @@ declare SDN SBN GPGF DB
 SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-if [[ ! -t 1 ]]; then
+if ! tty -s; then
     echo -en "Fatal: You'll need to run ${SBN} in a terminal (or tty)!\n" >&2
     exit 1
 elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
@@ -16,7 +16,7 @@ elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
     echo -en "Fatal: You need SQLite3 installed.\n" >&2
     exit 1
 elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
-    echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n"  >&2
+    echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2
     exit 1
 fi
 
