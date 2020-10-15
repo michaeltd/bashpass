@@ -9,41 +9,41 @@ declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
 
 create_dialog() {
-    local DM EM UN PW CM
+    local dm em un pw cm
 
     exec 3>&1
     # Store data to $VALUES variable
     local -a vals=($("${DIALOG}" --ok-label "Submit" \
-				--backtitle "${BNGPGF}" \
+				--backtitle "${bngpgf}" \
 				--title "Set details" \
 				--form "Create Form" \
 				15 50 0 \
-				"Domain:"   1 1	"$DM" 	1 10 40 0 \
-				"Email:"    2 1	"$EM"  	2 10 40 0 \
-				"User:"     3 1	"$UN"  	3 10 40 0 \
-				"Passwd:"   4 1	"$PW" 	4 10 40 0 \
-				"Comments:" 5 1	"$CM" 	5 10 40 0 \
+				"Domain:"   1 1	"$dm" 	1 10 40 0 \
+				"Email:"    2 1	"$em"  	2 10 40 0 \
+				"User:"     3 1	"$un"  	3 10 40 0 \
+				"Passwd:"   4 1	"$pw" 	4 10 40 0 \
+				"Comments:" 5 1	"$cm" 	5 10 40 0 \
 				2>&1 1>&3))
     # close fd
     exec 3>&-
 
-    echo -ne "DM=\"${vals[*]:0:1}\"\nEM=\"${vals[*]:1:1}\"\nUN=\"${vals[*]:2:1}\"\nPW=\"${vals[*]:3:1}\"\nCM=\"${vals[*]:4}\"\n" > "${TF}"
+    echo -ne "dm=\"${vals[*]:0:1}\"\nem=\"${vals[*]:1:1}\"\nun=\"${vals[*]:2:1}\"\npw=\"${vals[*]:3:1}\"\ncm=\"${vals[*]:4}\"\n" > "${tf}"
 }
 
 create_Xdialog() {
     # --2inputsbox <text> <height> <width> <label1> <init1> <label2> <init2>
     # --3inputsbox <text> <height> <width> <label1> <init1> <label2> <init2> <label3> <init3> 
-    local DM EM UN PW CM
-    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${TF}"
-    (( $? == DIALOG_OK )) && DM=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${TF}"
-    (( $? == DIALOG_OK )) && EM=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${TF}"
-    (( $? == DIALOG_OK )) && UN=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No single/double-quotes, pipes or commas!)" "${L}" "${C}" 2> "${TF}"
-    (( $? == DIALOG_OK )) && PW=$(cat "${TF}") || return $?
-    "${DIALOG}" "--backtitle" "${BNGPGF}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${TF}"
-    (( $? == DIALOG_OK )) && CM=$(cat "${TF}") || return $?
+    local dm em un pw cm
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${tf}"
+    (( $? == DIALOG_OK )) && dm=$(cat "${tf}") || return $?
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${tf}"
+    (( $? == DIALOG_OK )) && em=$(cat "${tf}") || return $?
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${tf}"
+    (( $? == DIALOG_OK )) && un=$(cat "${tf}") || return $?
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No single/double-quotes, pipes or commas!)" "${L}" "${C}" 2> "${tf}"
+    (( $? == DIALOG_OK )) && pw=$(cat "${tf}") || return $?
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${tf}"
+    (( $? == DIALOG_OK )) && cm=$(cat "${tf}") || return $?
 
-    echo -ne "DM=\"${DM}\"\nEM=\"${EM}\"\nUN=\"${UN}\"\nPW=\"${PW}\"\nCM=\"${CM}\"\n" > "${TF}"
+    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\ncm=\"${cm}\"\n" > "${tf}"
 }

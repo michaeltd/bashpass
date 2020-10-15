@@ -10,27 +10,27 @@ gpw() {
 
 # RowID'S
 rids() {
-    "${DCM[@]}" "SELECT rowid FROM ${ACT} ORDER BY rowid ASC;"
+    "${dcm[@]}" "SELECT rowid FROM ${act} ORDER BY rowid ASC;"
 }
 
 # -.-
 maxid() {
     #shellcheck disable=SC2155
-    local MAXID="$("${DCM[@]}" "SELECT MAX(rowid) FROM ${ACT};")"
-    echo "${MAXID:-0}" # check null values
+    local maxid="$("${dcm[@]}" "SELECT MAX(rowid) FROM ${act};")"
+    echo "${maxid:-0}" # check null values
 }
 
 # Row count
 rcount() {
-    "${DCM[@]}" "SELECT COUNT(rowid) FROM ${ACT};"
+    "${dcm[@]}" "SELECT COUNT(rowid) FROM ${act};"
 }
 
 # Build Row Lines (for (X)dialog check/radio lists)
 brl() {
     local dm em rl
     for i in $(rids); do
-        dm=$("${DCM[@]}" "SELECT dm FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        em=$("${DCM[@]}" "SELECT em FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
+        dm=$("${dcm[@]}" "SELECT dm FROM ${act} WHERE rowid = '${i}';"|sed 's/ /-/g')
+        em=$("${dcm[@]}" "SELECT em FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
         rl+="${i} ${dm:-null}_${em:-null} off "
     done
     echo "${rl[@]}"

@@ -2,12 +2,12 @@
 #
 # bashpass/setup - prep bashpass
 
-declare SDN SBN GPGF DB
-SDN="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-SBN="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+declare sdn sbn gpgf db
+sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
-if ! tty -s; then
-    echo -en "Fatal: You'll need to run ${SBN} in a terminal (or tty)!\n" >&2
+if [[ ! -t 0 ]]; then
+    echo -en "Fatal: You'll need to run ${sbn} in a terminal (or tty)!\n" >&2
     exit 1
 elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
     echo -en "Fatal: You'll need bash major version no less than 4.\n" >&2
@@ -21,27 +21,27 @@ elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
 fi
 
 if [[ -z "${1}" ]]; then
-    GPGF="sample.gpg"
-    DB="${GPGF%%.gpg}"
+    gpgf="sample.gpg"
+    db="${gpgf%%.gpg}"
 elif [[ "${1}" =~ .gpg$ ]]; then
-    GPGF="${1}"
-    DB="${GPGF%%.gpg}"
+    gpgf="${1}"
+    db="${gpgf%%.gpg}"
 else
-    GPGF="${1}.gpg"
-    DB="${GPGF%%.gpg}"
+    gpgf="${1}.gpg"
+    db="${gpgf%%.gpg}"
 fi
 
-FPGPGF="${SDN}/databases/${GPGF}"
-FPDB="${SDN}/databases/${DB}"
+fpgpgf="${sdn}/databases/${gpgf}"
+fpdb="${sdn}/databases/${db}"
 
 echo -ne " This script will:\n \
- 1. Make a ${DB} SQLite3 file ... \n \
- 2. encrypt it to ${GPGF} \n \
- 3. Execute bashpass ${GPGF} \n"
+ 1. Make a ${db} SQLite3 file ... \n \
+ 2. encrypt it to ${gpgf} \n \
+ 3. Execute bashpass ${gpgf} \n"
 
-if [[ "$(read -rp " Continue? [Y/n]: " r;echo "${r:-y}")" =~ ^[Yy] ]]; then
-    sqlite3 "${FPDB}" < "${SDN}/examples/create.sql" && \
-	gpg --default-recipient-self --output "${FPGPGF}" --encrypt "${FPDB}" && \
-	"${SDN}/bashpass" "${GPGF}" && \
-	echo -ne "From now on you'll be able to call bashpass with: bashpass ${GPGF}\n" >&2
+if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
+    sqlite3 "${fpdb}" < "${sdn}/examples/create.sql" && \
+	gpg --default-recipient-self --output "${fpgpgf}" --encrypt "${fpdb}" && \
+	"${sdn}/bashpass" "${gpgf}" && \
+	echo -ne "From now on you'll be able to start bashpass with: bashpass ${gpgf}\n" >&2
 fi
