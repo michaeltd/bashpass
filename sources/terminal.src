@@ -22,25 +22,25 @@ declare -r bg_black="$(tput setab 0)" bg_red="$(tput setab 1)" \
 	bg_default="$(tput setab 9)"
 
 create_terminal() {
-    local DM EM UN PW CM
-    while [[ -z "${DM}" || -z "${EM}" || -z "${UN}" || -z "${PW}" || -z "${CM}" ]]; do
-        if [[ -z "${DM}" ]]; then
+    local dm em un pw cm
+    while [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${pw}" || -z "${cm}" ]]; do
+        if [[ -z "${dm}" ]]; then
             echo -ne "Enter a domain: (Ctrl-D to cancel) "
-            read -r DM || return $?
-        elif [[ -z "${EM}" ]]; then
+            read -r dm || return $?
+        elif [[ -z "${em}" ]]; then
             echo -ne "Enter an email: (Ctrl-D to cancel) "
-            read -r EM || return $?
-        elif [[ -z "${UN}" ]]; then
+            read -r em || return $?
+        elif [[ -z "${un}" ]]; then
             echo -ne "Enter a username: (Ctrl-D to cancel) "
-            read -r UN || return $?
-        elif [[ -z "${PW}" ]]; then
+            read -r un || return $?
+        elif [[ -z "${pw}" ]]; then
             echo -ne "Enter a password: (alpha, numeric and punctuation characters ok. No quotes, pipes or commas! Ctrl-D to cancel) "
-            read -r PW || return $?
-        elif [[ -z "${CM}" ]]; then
+            read -r pw || return $?
+        elif [[ -z "${cm}" ]]; then
             echo -ne "Enter comment: (Ctrl-D to cancel) "
-            read -r CM || return $?
+            read -r cm || return $?
         fi
     done
 
-    echo -ne "DM=\"${DM}\"\nEM=\"${EM}\"\nUN=\"${UN}\"\nPW=\"${PW}\"\nCM=\"${CM}\"\n" > "${TF}"
+    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\ncm=\"${cm}\"\n" > "${tf}"
 }

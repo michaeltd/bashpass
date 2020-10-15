@@ -1,6 +1,7 @@
 #!/bin/bash
+#
 # Just to pickup syntax highlighting
-#shellcheck disable=SC2207
+#shellcheck disable=SC2207,SC2154
 
 # Xdialog/dialog
 declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \

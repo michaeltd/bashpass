@@ -1,5 +1,7 @@
 #!/bin/bash
+#
 # Pick up right editor syntax highlighting
+#shellcheck disable=SC2207,SC2154
 
 # Generate PassWord
 gpw() {
@@ -30,7 +32,7 @@ brl() {
     local dm em rl
     for i in $(rids); do
         dm=$("${dcm[@]}" "SELECT dm FROM ${act} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        em=$("${dcm[@]}" "SELECT em FROM ${ACT} WHERE rowid = '${i}';"|sed 's/ /-/g')
+        em=$("${dcm[@]}" "SELECT em FROM ${act} WHERE rowid = '${i}';"|sed 's/ /-/g')
         rl+="${i} ${dm:-null}_${em:-null} off "
     done
     echo "${rl[@]}"
