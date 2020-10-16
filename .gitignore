@@ -1,6 +1,9 @@
 *
 !assets/*
 !databases/.keep
+!databases/sqliterc_data
+!databases/sqliterc_import
+!databases/sqliterc_report
 !examples/*
 !sources/*
 !tests/*
