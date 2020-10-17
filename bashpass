@@ -68,7 +68,9 @@ readonly act="ac"
 # gpg & shred commands
 readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
 	 shrc=( "shred" "--zero" "--remove" )
-# SQLite # Custom -init files ensure there will be no functionality breaking ~/.sqliterc surprises.
+# SQLite
+# Custom -init files ensures there will be no functionality breaking ~/.sqliterc surprises.
+# We also need to dump stderr into /dev/null to spare users "-- loading resources from ..." msgs.
 readonly sql3rc="${sdn}/databases/sqliterc_"
 readonly -a dcm=( "sqlite3" "-init" "${sql3rc}data" "${db}" ) \
 	 rcm=( "sqlite3" "-init" "${sql3rc}report" "${db}" ) \
