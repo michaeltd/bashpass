@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Just to pickup syntax highlighting
-#shellcheck disable=SC2034,SC2155,SC2034,SC2155
+#shellcheck disable=SC2034,SC2155,SC2034,SC2155,SC2154
 
 # Font attributes, Colors, bg_colors
 declare -r reset="$(tput sgr0)" bold="$(tput bold)" \
