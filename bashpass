@@ -72,14 +72,14 @@ readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 readonly sql3rc="${sdn}/databases/sqliterc_"
 readonly -a dcm=( "sqlite3" "-init" "${sql3rc}data" "${db}" ) \
 	 rcm=( "sqlite3" "-init" "${sql3rc}report" "${db}" ) \
-	 icm=( "sqlite3" "-init" "${sql3rc}import" "${db}" ) 
+	 icm=( "sqlite3" "-init" "${sql3rc}import" "${db}" )
 # Temp files
 readonly tf="${sdn}/databases/.${bndb}.${$}.tf" \
 	 mutex="${sdn}/databases/.${bndb}.mutex"
 
 do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    "${dcm[@]}" "VACUUM;"
+    2> /dev/null "${dcm[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
     read -rp "Return to continue ... "
@@ -164,8 +164,8 @@ create() {
 
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
 
-    "${dcm[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
-    "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = $(( ++maxid ));" > "${tf}"
+    2> /dev/null "${dcm[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
+    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = $(( ++maxid ));" > "${tf}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "$(type -P xclip)" "-r"
         "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
@@ -187,14 +187,14 @@ retrieve() {
     dm=$(cat "${tf}")
 
     # Record Set
-    "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE dm LIKE '%${dm}%';" > "${tf}"
+    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE dm LIKE '%${dm}%';" > "${tf}"
 
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         if [[ -n "$(type -P xclip)" ]]; then
             # Record Count
-            rc="$("${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE dm LIKE '%${dm}%';")"
+            rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE dm LIKE '%${dm}%';")"
             if (( rc == 1 )); then
-                pw="$("${dcm[@]}" "SELECT pw FROM ${act} WHERE dm LIKE '%${dm}%';")"
+                pw="$(2> /dev/null "${dcm[@]}" "SELECT pw FROM ${act} WHERE dm LIKE '%${dm}%';")"
                 echo "${pw}" | xclip "-r"
             fi
         fi
@@ -228,8 +228,8 @@ update() {
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
-    "${dcm[@]}" "UPDATE ${act} SET pw = '${pw}' WHERE rowid = '${id}';"
-    "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = '${id}';" > "${tf}"
+    2> /dev/null "${dcm[@]}" "UPDATE ${act} SET pw = '${pw}' WHERE rowid = '${id}';"
+    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = '${id}';" > "${tf}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         [[ -n "$(type -P xclip)" ]] && echo "${pw}" | xclip -r
         "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
@@ -250,7 +250,7 @@ delete() {
         echo "${id}" > "${tf}"
         [[ -z "${id}" ]] && return
     fi
-    "${dcm[@]}" "DELETE FROM ${act} WHERE rowid = '$(cat "${tf}")';"
+    2> /dev/null "${dcm[@]}" "DELETE FROM ${act} WHERE rowid = '$(cat "${tf}")';"
     if [[ -n "${DIALOG}" ]]; then
 	    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
     else
@@ -273,7 +273,7 @@ importcsv() {
         echo "${csvf}" > "${tf}"
         [[ -z "${csvf}" ]] && return
     fi
-    "${icm[@]}" ".import ${csvf} ${act}" 2> "${tf}"
+    "${icm[@]}" ".import ${csvf} ${act}" 2> /dev/null
     errlvl=$?
     if (( errlvl != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
@@ -282,7 +282,7 @@ importcsv() {
         echo "Error: $(cat "${tf}")"
         return "${errlvl}"
     fi
-    "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE rowid > ${maxid};" > "${tf}"
+    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE rowid > ${maxid};" > "${tf}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
         "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
     else
@@ -304,7 +304,7 @@ exportcsv(){
         [[ -z "${csvf}" ]] && return
     fi
 
-    "${icm[@]}" "select rowid,* from ${act} order by rowid ASC;" &> "${tf}"
+    2> /dev/null "${icm[@]}" "select rowid,* from ${act} order by rowid ASC;" > "${tf}"
 
     errlvl=$?
     if (( errlvl != 0 )); then
@@ -395,7 +395,7 @@ main() {
                     "${gui_ops[3]}"|"3") delete ;;
                     "${gui_ops[4]}"|"4") importcsv ;;
                     "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") "${rcm[@]}" ;;
+                    "${gui_ops[6]}"|"6") 2> /dev/null "${rcm[@]}" ;;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
