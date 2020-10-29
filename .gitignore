@@ -10,6 +10,7 @@
 !.gitignore
 !bashpass
 !bashpass.bats
+!tests.bats
 !license
 !readme.org
 !setup
