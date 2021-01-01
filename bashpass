@@ -6,13 +6,14 @@
 # Timeout settings for Xdialog, Xmessage
 # xmessage timeout is in seconds...
 declare -rx XMTO="30"
-declare -rx XDTO="$(( XMTO * 1000 ))" # Xdialog/dialog is in milliseconds
+declare -rx XDTO="$((XMTO * 1000))" # Xdialog/dialog is in milliseconds
 
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
-declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
+	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]"
 
@@ -256,7 +257,7 @@ delete() {
     if [[ -n "${DIALOG}" ]]; then
 	    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
     else
-	    echo -ne "Account ID: #${id} deleted.\n"
+	echo -ne "Account ID: #${id} deleted.\n"
     fi
     
 }
