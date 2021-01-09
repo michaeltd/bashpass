@@ -332,7 +332,11 @@ exportcsv(){
 }
 
 usage() {
-    [[ -n "${DIALOG}" ]] && "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${gui_hmsg[*]}" "0" "0" || echo -e "${tui_hmsg[*]}"
+    if [[ -n "${DIALOG}" ]]; then
+	"${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${gui_hmsg[*]}" "0" "0"
+    else
+	echo -e "${tui_hmsg[*]}"
+    fi
 }
 
 main() {
