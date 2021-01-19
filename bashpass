@@ -75,14 +75,15 @@ readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output"
 readonly sql3rc="${sdn}/databases/sqliterc_"
 readonly -a dcm=( "sqlite3" "-init" "${sql3rc}data" "${db}" ) \
 	 rcm=( "sqlite3" "-init" "${sql3rc}report" "${db}" ) \
-	 icm=( "sqlite3" "-init" "${sql3rc}import" "${db}" )
+	 icm=( "sqlite3" "-init" "${sql3rc}import" "${db}" ) \
+	 sql3=( "sqlite3" "${db}" )
 # Temp files
 readonly tf="${sdn}/databases/.${bndb}.${$}.tf" \
 	 mutex="${sdn}/databases/.${bndb}.mutex"
 
 do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    2> /dev/null "${dcm[@]}" "VACUUM;"
+    "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
     read -rp "Return to continue ... "
@@ -167,8 +168,8 @@ create() {
 
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
 
-    2> /dev/null "${dcm[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
-    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = $(( ++maxid ));" > "${tf}"
+    "${sql3[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
+    echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE id = $(( ++maxid ));" | "${sql3[@]}" > "${tf}"
     if [[ "${DIALOG}" =~ Xdialog$ ]]; then
         [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "$(type -P xclip)" "-r"
         "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
