@@ -91,7 +91,7 @@ password generator, storage and reference for the terminal and/or X.
 
 * Usage
 
-** Use at your own risk!!!
+** Disclaimer - Use at your own risk!!!
 
    This author makes no claims, guarantees or promises of any kind!
 
@@ -105,7 +105,7 @@ password generator, storage and reference for the terminal and/or X.
 
    2. ~./setup [sample.gpg]~
 
-   3. ~Usage: bashpass [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]~
+   3. ~./bashpass [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]~
 
 ** In detail
 
@@ -167,7 +167,7 @@ password generator, storage and reference for the terminal and/or X.
 
    This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
-   ~sample~ SQLite files used by this application get shredded upon quitting, otherwise a file recovery tool could recover unencrypted versions of them.
+   ~sample~ SQLite files used by this application get shredded upon quitting (if ~shred~ is available in system), otherwise a file recovery tool could recover unencrypted versions of them.
 
    Backup never hurt nobody [+.-]
 
@@ -194,8 +194,8 @@ password generator, storage and reference for the terminal and/or X.
     Based on X
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
-  Typos, syntactic and grammar welcome, other than that try a PR and we'll talk about it.
+  Typos, syntactic and grammar welcome, other than that all PR's will be reviewed.
 
-  In the rare case that you really *must*, feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
+  In the rare case that you really *must* contribute, feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
 
 * [[file:license][ISC License]] [[https://opensource.org/licenses/ISC][https://img.shields.io/badge/License-ISC-yellow.svg]]

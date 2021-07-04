@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env -S bash --norc --noprofile
 #shellcheck shell=bash source=/dev/null disable=SC1008,SC2096,SC2155,SC1090,SC2068,SC2086,SC2141,SC2046,SC2015
 #
 # bashpass Xdialog/dialog/terminal assisted password management.
@@ -67,8 +67,9 @@ fi
 
 readonly act="ac"
 # gpg & shred commands
-readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" ) \
-	 shrc=( "shred" "--zero" "--remove" )
+readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" )
+type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
+
 # SQLite
 # Custom -init files ensures there will be no functionality breaking ~/.sqliterc surprises.
 # We also need to dump stderr into /dev/null to spare users "-- loading resources from ..." msgs.
