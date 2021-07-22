@@ -380,8 +380,9 @@ main() {
     done
 
     tui_menu+=( "\nChoose[0-$((${#tui_ops[*]}-1))]:" )
-    tui_hmsg+=( "\naccounts table format is as follows:\n$(2> /dev/null ${dcm[*]} ".schema ${act}")\n\n" )
-    gui_hmsg+=( "\naccounts table format is as follows:\n$(2> /dev/null ${dcm[*]} ".schema ${act}")\n\n" )
+    local tmp_hmsg="\naccounts table format is as follows:\n$(2> /dev/null ${dcm[*]} ".schema ${act}")\n\n"
+    tui_hmsg+=( "${tmp_hmsg}" )
+    gui_hmsg+=( "${tmp_hmsg}" )
 
     while :; do
         if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
