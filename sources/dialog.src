@@ -48,3 +48,78 @@ create_Xdialog() {
 
     echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\ncm=\"${cm}\"\n" > "${tf}"
 }
+
+retrieve_dialog(){
+    local dm errlvl
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${tf}"
+    errlvl=$? dm="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
+    echo -ne "dm=\"${dm}\"" > "${tf}"
+}
+
+retrieve_Xdialog(){
+    retrieve_dialog
+}
+
+update_dialog(){
+    local id errlvl pw
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
+    errlvl=$? id="$(cat "${tf}")"
+
+    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	return 1
+    fi
+    
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${tf}"
+    errlvl=$? pw="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
+
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
+}
+
+update_Xdialog(){
+    update_dialog
+}
+
+delete_dialog(){
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
+    errlvl=$? id="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	return 1
+    fi
+    echo -ne "id=\"${id}\"" > "${tf}"
+}
+
+delete_Xdialog(){
+    delete_dialog
+}
+
+results_dialog(){
+    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | xclip -r
+    "${PAGER}" "${tf}"
+}
+
+results_Xdialog(){
+    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | xclip -r
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
+}
+
+message_dialog(){
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
+}
+
+message_Xdialog(){
+    message_dialog
+}
+
+usage_dialog(){
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${gui_hmsg[*]}" "0" "0"
+}
+
+usage_Xdialog(){
+    usage_dialog
+}

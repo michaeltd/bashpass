@@ -171,97 +171,57 @@ create() {
 
     "${sql3[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
     echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE id = $(( ++maxid ));" | "${sql3[@]}" > "${tf}"
-    if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "$(type -P xclip)" "-r"
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
-    else
-        "${PAGER}" "${tf}"
-    fi
+
+    "results_${usrintrfce}"
 }
 
 retrieve() {
     local dm rc pw
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${tf}"
-        (( $? != DIALOG_OK )) && return
-    else
-        echo -ne "Enter domain to look for (empty for All): "
-        read -r dm
-        echo "${dm}" > "${tf}"
-    fi
-    dm=$(cat "${tf}")
+
+    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+
+    source "${tf}"
 
     # Record Set
     2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE dm LIKE '%${dm}%';" > "${tf}"
 
-    if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        if [[ -n "$(type -P xclip)" ]]; then
-            # Record Count
-            rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE dm LIKE '%${dm}%';")"
-            if (( rc == 1 )); then
-                pw="$(2> /dev/null "${dcm[@]}" "SELECT pw FROM ${act} WHERE dm LIKE '%${dm}%';")"
-                echo "${pw}" | xclip "-r"
-            fi
+    if [[ -n "$(type -P xclip)" ]]; then
+        # Record Count
+        rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE dm LIKE '%${dm}%';")"
+        if (( rc == 1 )); then
+            pw="$(2> /dev/null "${dcm[@]}" "SELECT pw FROM ${act} WHERE dm LIKE '%${dm}%';")"
+            echo "${pw}" | xclip "-r"
         fi
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
-    else
-        "${PAGER}" "${tf}"
     fi
+
+    "results_${usrintrfce}"
 }
 
 update() {
     local id errlvl pw
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
-        errlvl=$? id="$(cat "${tf}")"
-        (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]] && return
-    else
-        echo -ne "Select an id to update (empty to cancel): "
-        read -r id
-        errlvl=$?
-        (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]] && return
-    fi
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${tf}"
-        errlvl=$? pw="$(cat "${tf}")"
-        (( errlvl != DIALOG_OK )) && return
-    else
-        echo -ne "Enter a password or a password length (8-64) or empty for auto (max length): "
-        read -r pw
-        errlvl=$?
-        (( errlvl != DIALOG_OK )) && return
-    fi
+
+    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+
+    source "${tf}"
+
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
     2> /dev/null "${dcm[@]}" "UPDATE ${act} SET pw = '${pw}' WHERE rowid = '${id}';"
     2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = '${id}';" > "${tf}"
-    if [[ "${DIALOG}" =~ Xdialog$ ]]; then
-        [[ -n "$(type -P xclip)" ]] && echo "${pw}" | xclip -r
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
-    else
-        "${PAGER}" "${tf}"
-    fi
+
+    "results_${usrintrfce}"
 }
 
 delete() {
     local errlvl id
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
-        errlvl=$? id="$(cat "${tf}")"
-        (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]] && return
-    else
-        echo -ne "Select an id to delete (empty to cancel): "
-        read -r id
-        echo "${id}" > "${tf}"
-        [[ -z "${id}" ]] && return
-    fi
-    2> /dev/null "${dcm[@]}" "DELETE FROM ${act} WHERE rowid = '$(cat "${tf}")';"
-    if [[ -n "${DIALOG}" ]]; then
-	    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
-    else
-	echo -ne "Account ID: #${id} deleted.\n"
-    fi
-    
+
+    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+
+    source "${tf}"
+
+    2> /dev/null "${dcm[@]}" "DELETE FROM ${act} WHERE rowid = '${id}';"
+
+    "message_${usrintrfce}"
 }
 
 importcsv() {
@@ -334,11 +294,7 @@ exportcsv(){
 }
 
 usage() {
-    if [[ -n "${DIALOG}" ]]; then
-	"${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${gui_hmsg[*]}" "0" "0"
-    else
-	echo -e "${tui_hmsg[*]}"
-    fi
+    "${FUNCNAME[0]}_${usrintrfce}"
 }
 
 main() {
@@ -349,8 +305,8 @@ main() {
     check_mutex || return $?
     check_decrypt || return $?
 
-    # Have password $DB, $tf and $mutex so from now on,
-    # instead of exiting, we're do_quit and trap for propper housekeeping.
+    # Have password $DB, $tf and $mutex so from now on, instead
+    # of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $?
 
     trap 'do_quit ${SIG_NONE}' "${SIG_NONE}"

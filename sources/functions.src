@@ -5,7 +5,7 @@
 
 # Generate PassWord
 gpw() {
-    tr -dc "[:graph:]" < /dev/urandom | \
+    tr -cd "[:graph:]" < /dev/urandom | \
 	tr -d "[=\"=][=\'=][=\|=][=\,=]" | \
 	head -c "${1:-64}"
 }
