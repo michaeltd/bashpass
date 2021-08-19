@@ -1,0 +1,96 @@
+#!/bin/bash
+#
+# Just to pickup syntax highlighting
+#shellcheck disable=SC2207,SC2154
+
+declare H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+
+create_zenity() {
+    local errlvl cnt=0
+    "${DIALOG}" "--height=$H" "--width=$W" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-entry=Comment" > "${tf}"
+    errlvl=$?
+    (( errlvl != DIALOG_OK )) && return $errlvl
+    local -r vals="$(cat "${tf}")"
+    OFS=$IFS IFS=,
+    for i in $vals; do
+	arv[((cnt++))]="$i"
+    done
+    IFS=$OFS
+    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\ncm=\"${arv[4]}\"\n" > "${tf}"
+}
+
+retrieve_zenity() {
+    local dm errlvl
+    "${DIALOG}" --height=$H --width=$W --title="${bngpgf}" --text="Enter domain to look for (empty for All):" --entry-text="" --entry > "${tf}"
+    errlvl=$? dm="$(cat "${tf}")"
+    (( errlvl != DIALOG_OK )) && return "${errlvl}"
+    echo -ne "dm=\"${dm}\"" > "${tf}"
+}
+
+update_zenity() {
+    local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
+    local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${REC[@]})
+    OFS=$IFS
+    IFS=$'\|'
+    for ID in $ZEN; do
+	sqlite3 ${DB} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
+	"${DIALOG}" --height=$H --width=$W --text-info --title="New password" \
+	    --text=<<<$(sqlite3 -line ${DB} "select * from ${ACT} where rowid = '${ID}';")
+    done
+    IFS=$OFS
+}
+
+delete_zenity() {
+    local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain, em as email from ${ACT} order by rowid asc;")
+    local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" --column "Email" ${REC[@]})
+    
+    local RES=""
+
+    if [[ "x${ZEN}" != "x" ]]; then
+	OFS=$IFS IFS=$'\|'
+	for ID in ${ZEN}; do
+	    sqlite3 ${DB} "delete from ${ACT} where rowid = '${ID}';"
+	    RES+=$?
+	done
+	IFS=$OFS
+	
+	for ((x=0;x<${#RES};x++)); do
+	    if [[ "${RES:$x:1}" != "0" ]]; then
+		"${DIALOG}" --error --title="Error." --text="Errors reported."
+		return
+	    fi
+	done
+	"${DIALOG}" --info --title="Account(/s) deleted successfully." --text="No errors reported."
+    fi
+}
+
+import_zenity() {
+
+    local MAXID=$(maxid)
+    
+    local CSVF=$("${DIALOG}" --title="Select a csv file to import:" --file-selection)
+
+    if [[ -n ${CSVF} ]]; then
+	${CCM} ".import ${CSVF} ${ACT}" > ${TF}
+	if (( $? == 0 )); then
+	    "${DIALOG}" --height=$H --width=$W --text-info --title="New account(/s)" \
+		--text=<<<$(${RCM} "select * from ${ACT} where rowid > '${MAXID}';")
+	else
+	    "${DIALOG}" --height=$H --width=$W --text-info --title="Error" \
+		--text=<<<$(cat ${TF})
+	fi
+    fi
+}
+
+results_zenity(){
+    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    "${DIALOG}" "--height=$W" "--width=$W" "--text-info" "--title=${bngpgf}" "--filename=${tf}"
+}
+
+message_zenity(){
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
+}
+
+usage_zenity() {
+    "${DIALOG}" "--height=$H" "--width=$W" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
+}

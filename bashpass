@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash --norc --noprofile
+#!/usr/bin/env bash
 #shellcheck shell=bash source=/dev/null disable=SC1008,SC2096,SC2155,SC1090,SC2068,SC2086,SC2141,SC2046,SC2015
 #
 # bashpass Xdialog/dialog/terminal assisted password management.
@@ -8,14 +8,22 @@
 declare -rx XMTO="30"
 declare -rx XDTO="$((XMTO * 1000))" # Xdialog/dialog is in milliseconds
 
+# Xdialog/dialog
+declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
+	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
+	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=0 \
+	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
+
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+declare -r dbsd="${sdn}/databases" \
+	scsd="${sdn}/sources"
 
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|dialog|terminal] [--debug] [--help]"
 
 declare gpgf db bngpgf bndb usrintrfce
 
@@ -23,17 +31,20 @@ declare gpgf db bngpgf bndb usrintrfce
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
-        Xdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        yad|zenity|Xdialog|dialog|terminal) readonly usrintrfce="${1}";;
         -d|--debug) set -x;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
-        *) echo -ne "Unknown option: ${1}\n" >&2;
-	   echo -ne "${bpusage}\n" >&2; exit 1;;
+        *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
     esac
     shift
 done
 
 # Try to accommodate optional preference...
-if [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
+    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0" 
+elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0" 
+elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0" 
 elif [[ "${usrintrfce}" == "dialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for dialog
     declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
@@ -41,7 +52,13 @@ elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 else # -z USERINTRFCE etc
     # ... or pick a default available UI
-    if [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+    if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
+	declare -xr DIALOG="$(type -P yad)" L="0" C="0"
+	readonly usrintrfce="yad"
+    elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+	declare -xr DIALOG="$(type -P zenity)" L="0" C="0"
+	readonly usrintrfce="zenity"
+    elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
 	declare -xr DIALOG="$(type -P Xdialog)" L="0" C="0"
 	readonly usrintrfce="Xdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
@@ -53,14 +70,12 @@ else # -z USERINTRFCE etc
     fi
 fi
 
-[[ -n "${DIALOG}" ]] && source "${sdn}/sources/dialog.src" || source "${sdn}/sources/terminal.src"
-
 if [[ -n "${gpgf}" ]]; then
-    readonly gpgf="${sdn}/databases/${gpgf}"
+    readonly gpgf="${dbsd}/${gpgf}"
     readonly db="${gpgf%%.gpg}"
     readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
 else
-    readonly gpgf="${sdn}/databases/sample.gpg"
+    readonly gpgf="${dbsd}/sample.gpg"
     readonly db="${gpgf%%.gpg}"
     readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
 fi
@@ -73,92 +88,20 @@ type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) |
 # SQLite
 # Custom -init files ensures there will be no functionality breaking ~/.sqliterc surprises.
 # We also need to dump stderr into /dev/null to spare users "-- loading resources from ..." msgs.
-readonly sql3rc="${sdn}/databases/sqliterc_"
+readonly sql3rc="${dbsd}/sqliterc_"
 readonly -a dcm=( "sqlite3" "-init" "${sql3rc}data" "${db}" ) \
 	 rcm=( "sqlite3" "-init" "${sql3rc}report" "${db}" ) \
 	 icm=( "sqlite3" "-init" "${sql3rc}import" "${db}" ) \
 	 sql3=( "sqlite3" "${db}" )
 # Temp files
-readonly tf="${sdn}/databases/.${bndb}.${$}.tf" \
-	 mutex="${sdn}/databases/.${bndb}.mutex"
+readonly tf="${dbsd}/.${bndb}.${$}.tf" \
+	 mutex="${dbsd}/.${bndb}.mutex"
 
-do_quit() {
-    # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    "${sql3[@]}" "VACUUM;"
-    # Upon successfull encryption ONLY shred files
-    "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
-    read -rp "Return to continue ... "
-    exit "${1:-0}"
-}
+source "${scsd}/functions.src"
 
-display_feedback() {
-    local -r msg="${*}"
-    local -r ttl="${sbn}: Fatal!"
-    if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
-        "$(type -P notify-send)" "-i" "gpa" "-c" "notification" "-t" "${XDTO}" "${ttl}" "${msg}"
-    elif [[ -n "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then
-        "$(type -P Xdialog)" "--title" "${ttl}" "--msgbox" "${msg}" "0" "0"
-    elif [[ -n "$(type -P xmessage)" && -n "${DISPLAY}" ]]; then
-        "$(type -P xmessage)" "-nearmouse" "-timeout" "${XMTO}" "${ttl} ${msg}"
-    elif [[ -n "$(type -P dialog)" && -z "${DISPLAY}" ]]; then
-        "$(type -P dialog)" "--title" "${ttl}" "--msgbox" "${msg}" "0" "0"
-    else
-        echo -ne "${ttl}\n${msg}\n" >&2
-    fi
-    return 1
-}
+[[ "${usrintrfce}" == "yad" ]] && { display_feedback "SOON(tm)!";exit $?; }
 
-check_prereqs(){
-    if [[ ! -t 0 ]]; then
-        display_feedback "You'll need to run ${0/*\/} in a terminal (or tty)!"
-    elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
-        display_feedback "You'll need bash major version no less than 4."
-    elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
-        display_feedback "You need SQLite3 installed."
-    elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
-        display_feedback "You need GNU Privacy Guard v2 (gnupg) installed."
-    fi
-}
-
-# No mutex or die.
-check_mutex() {
-    if [[ -f "${mutex}" ]]; then
-	display_feedback "You can only have one instance of ${bngpgf}."
-    fi
-    # local -ar pids=( $(pgrep -U "${USER}" -f "${bngpgf}") )
-    # if [[ "${#pids[*]}" -gt "1" ]]; then
-    # 	display_feedback "You can only have one instance of ${bngpgf}."
-    # fi
-}
-
-# Decrypt .sqlite, setup trap and mutex or die.
-check_decrypt() {
-    if ! [[ "$(file -b "${gpgf}")" =~ ^PGP ]]; then
-        display_feedback "${bngpgf}, does not appear to be a valid PGP file."
-        return $?
-    fi
-    if ! "${gpgc[@]}" "${db}" "--decrypt" "${gpgf}"; then
-        display_feedback "Decryption failed."
-        return $?
-    else
-	# We do have an decrypted $db file so we might as well check it's validity.
-        if ! [[ "$(file -b "${db}")" =~ ^SQLite ]]; then
-            display_feedback "${bndb}, does not appear to be a valid SQLite 3.x database file."
-            return $?
-        fi
-        touch "${mutex}"
-        touch "${tf}"
-    fi
-}
-
-# SQL or die.
-check_sql() {
-    if ! "${dcm[@]}" "SELECT * FROM ${act} ORDER BY rowid ASC;" &> /dev/null; then
-        display_feedback "Need a working db to function."
-    fi
-}
-
-source "${sdn}/sources/functions.src"
+source "${scsd}/${usrintrfce}.src"
 
 create() {
     local maxid="$(maxid)" dm em un pw cm
@@ -190,7 +133,7 @@ retrieve() {
         rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE dm LIKE '%${dm}%';")"
         if (( rc == 1 )); then
             pw="$(2> /dev/null "${dcm[@]}" "SELECT pw FROM ${act} WHERE dm LIKE '%${dm}%';")"
-            echo "${pw}" | xclip "-r"
+            echo "${pw}" | "xclip" "-r"
         fi
     fi
 
@@ -289,7 +232,7 @@ exportcsv(){
     elif [[ -x "$(type -P "${EDITOR}")"  ]]; then
     	"$(type -P "${EDITOR}")" "${csvf}"
     else
-	    "${PAGER}" "${csvf}"
+	"${PAGER}" "${csvf}"
     fi
 }
 
@@ -341,9 +284,19 @@ main() {
     gui_hmsg+=( "${tmp_hmsg}" )
 
     while :; do
-        if [[ -n "${DIALOG}" ]]; then # Xdialog, dialog menu
+        if [[ "${DIALOG}" =~ dialog$ ]]; then # Xdialog, dialog menu
             OFS="${IFS}" IFS=$'\|'
-            "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "$L" "$C" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
+            "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" \
+			"--item-help" "--cancel-label" "Quit" "--menu" "Menu:" \
+			"$L" "$C" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
+            errlvl=$?
+            IFS="${OFS}"
+	elif [[ "${DIALOG}" =~ zenity$ ]]; then # zenity
+	    OFS=$IFS IFS=$'\|'
+	    "${DIALOG}" "--height=$H" "--width=$W" "--list" \
+			"--title=Select action" "--hide-header" \
+			"--column=Option" "--column=Desc" \
+			"--column=Description" ${gui_menu} > "${tf}"
             errlvl=$?
             IFS="${OFS}"
         else # Just terminal menu.

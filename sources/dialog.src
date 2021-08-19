@@ -3,12 +3,6 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-# Xdialog/dialog
-declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
-	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
-	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=0 \
-	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
-
 create_dialog() {
     local dm em un pw cm
 
@@ -99,12 +93,12 @@ delete_Xdialog(){
 }
 
 results_dialog(){
-    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | xclip -r
+    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     "${PAGER}" "${tf}"
 }
 
 results_Xdialog(){
-    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | xclip -r
+    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
 }
 
@@ -117,9 +111,9 @@ message_Xdialog(){
 }
 
 usage_dialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo -n "--left") "--msgbox" "${gui_hmsg[*]}" "0" "0"
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--msgbox" "${gui_hmsg[*]}" "0" "0"
 }
 
 usage_Xdialog(){
-    usage_dialog
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--left" "--msgbox" "${gui_hmsg[*]}" "0" "0"
 }

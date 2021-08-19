@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash --norc --noprofile
+#!/usr/bin/env bash
 #
 # bashpass/setup - prep bashpass
 
