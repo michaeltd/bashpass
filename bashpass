@@ -81,7 +81,7 @@ else
 fi
 
 # table and field names
-readonly act="ACCOUNTS" idf="rowid" dmf="DOMAIN" emf="EMAIL" pwf="PASSWORD" cmf="COMMENT"
+readonly act="ACCOUNTS" idf="rowid" dmf="DM" emf="EM" pwf="PW" cmf="CM"
 # gpg & shred commands
 readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" )
 type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
@@ -114,7 +114,7 @@ create() {
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
 
     "${sql3[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
-    echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE rowid > ${maxid};" | "${sql3[@]}" > "${tf}"
+    echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE ${idf} > ${maxid};" | "${sql3[@]}" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -127,13 +127,13 @@ retrieve() {
     source "${tf}"
 
     # Record Set
-    2> /dev/null "${rcm[@]}" "SELECT rowid AS ID,DOMAIN as DM, EMAIL as EM, PASSWORD AS PW, COMMENT AS CM FROM ${act} WHERE DOMAIN LIKE '%${dm}%';" > "${tf}"
+    2> /dev/null "${rcm[@]}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${pwf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${dm}%';" > "${tf}"
 
     if [[ -n "$(type -P xclip)" ]]; then
         # Record Count
-        rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE DOMAIN LIKE '%${dm}%';")"
+        rc="$(2> /dev/null "${dcm[@]}" "SELECT count(${idf}) FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
         if (( rc == 1 )); then
-            pw="$(2> /dev/null "${dcm[@]}" "SELECT PASSWORD FROM ${act} WHERE DOMAIN LIKE '%${dm}%';")"
+            pw="$(2> /dev/null "${dcm[@]}" "SELECT ${pwf} FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
             echo "${pw}" | "xclip" "-r"
         fi
     fi
@@ -150,8 +150,8 @@ update() {
 
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
-    2> /dev/null "${dcm[@]}" "UPDATE ${act} SET PASSWORD = '${pw}' WHERE rowid = '${id}';"
-    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE rowid = '${id}';" > "${tf}"
+    2> /dev/null "${dcm[@]}" "UPDATE ${act} SET ${pwf} = '${pw}' WHERE ${idf} = '${id}';"
+    2> /dev/null "${rcm[@]}" "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} = '${id}';" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -163,7 +163,7 @@ delete() {
 
     source "${tf}"
 
-    2> /dev/null "${dcm[@]}" "DELETE FROM ${act} WHERE rowid = '${id}';"
+    2> /dev/null "${dcm[@]}" "DELETE FROM ${act} WHERE ${idf} = '${id}';"
 
     "message_${usrintrfce}"
 }
@@ -185,7 +185,7 @@ importcsv() {
         echo "Error: $(cat "${tf}")"
         return "${errlvl}"
     fi
-    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE rowid > ${maxid};" > "${tf}"
+    2> /dev/null "${rcm[@]}" "SELECT ${dmf} AS ID,* FROM ${act} WHERE ${idf} > ${maxid};" > "${tf}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
         "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
     else
@@ -200,7 +200,7 @@ exportcsv(){
 
     source "${tf}"
     
-    2> /dev/null "${icm[@]}" "select rowid,* from ${act} order by rowid ASC;" > "${tf}"
+    2> /dev/null "${icm[@]}" "select ${idf} AS ID,* from ${act} order by ${idf} ASC;" > "${tf}"
 
     errlvl=$?
     if (( errlvl != 0 )); then
