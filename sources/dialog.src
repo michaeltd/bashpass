@@ -3,6 +3,10 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
+# L="" C="0"
+# L=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) C=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 )) 
+declare -rx L="0" C="0"
+
 create_dialog() {
     local dm em un pw cm
 
@@ -92,6 +96,28 @@ delete_Xdialog(){
     delete_dialog
 }
 
+importcsv_dialog(){
+    local errlvl csvf
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Enter a csv file:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${tf}"
+    errlvl=$?
+    (( errlvl != DIALOG_OK )) && return $errlvl
+    csvf="$(cat "${tf}")"
+    [[ -z "${csvf}" ]] && return 1
+    echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
+}
+
+importcsv_Xdialog(){
+    importcsv_dialog
+}
+
+exportcsv_dialog(){
+    importcsv_dialog
+}
+
+exportcsv_Xdialog(){
+    exportcsv_dialog
+}
+
 results_dialog(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     "${PAGER}" "${tf}"
@@ -111,9 +137,9 @@ message_Xdialog(){
 }
 
 usage_dialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--msgbox" "${gui_hmsg[*]}" "0" "0"
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--msgbox" "${gui_hmsg[*]}" "${L}" "${C}"
 }
 
 usage_Xdialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--left" "--msgbox" "${gui_hmsg[*]}" "0" "0"
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--left" "--msgbox" "${gui_hmsg[*]}" "${L}" "${C}"
 }

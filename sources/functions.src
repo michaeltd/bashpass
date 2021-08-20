@@ -74,7 +74,7 @@ check_decrypt() {
 
 # SQL or die.
 check_sql() {
-    if ! "${dcm[@]}" "SELECT * FROM ${act} ORDER BY rowid ASC;" &> /dev/null; then
+    if ! "${dcm[@]}" "SELECT * FROM ${act} ORDER BY ${idf} ASC;" &> /dev/null; then
         display_feedback "Need a working db to function."
     fi
 }
@@ -88,28 +88,33 @@ gpw() {
 
 # RowID'S
 rids() {
-    2> /dev/null "${dcm[@]}" "SELECT rowid FROM ${act} ORDER BY rowid ASC;"
+    2> /dev/null "${dcm[@]}" "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 # -.-
 maxid() {
     #shellcheck disable=SC2155
-    local maxid="$(2> /dev/null "${dcm[@]}" "SELECT MAX(rowid) FROM ${act};")"
+    local maxid="$(2> /dev/null "${dcm[@]}" "SELECT MAX(${idf}) FROM ${act};")"
     echo "${maxid:-0}" # check null values
 }
 
 # Row count
 rcount() {
-    2> /dev/null "${dcm[@]}" "SELECT COUNT(rowid) FROM ${act};"
+    2> /dev/null "${dcm[@]}" "SELECT COUNT(${idf}) FROM ${act};"
 }
 
 # Build Row Lines (for (X)dialog check/radio lists)
 brl() {
-    local dm em rl
+    local dm em un rl
     for i in $(rids); do
-        dm=$(2> /dev/null "${dcm[@]}" "SELECT dm FROM ${act} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        em=$(2> /dev/null "${dcm[@]}" "SELECT em FROM ${act} WHERE rowid = '${i}';"|sed 's/ /-/g')
-        rl+="${i} ${dm:-null}_${em:-null} off "
+        dm=$(2> /dev/null "${dcm[@]}" "SELECT ${dmf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        em=$(2> /dev/null "${dcm[@]}" "SELECT ${emf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        un=$(2> /dev/null "${dcm[@]}" "SELECT ${unf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        rl+="${i} ${dm:-NULL}_${em:-NULL}_${un:-NULL} off "
     done
     echo "${rl[@]}"
+}
+
+brlzen(){
+    echo "$(sqlite3 -separator " " ${db} "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;")"
 }

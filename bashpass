@@ -41,13 +41,13 @@ done
 
 # Try to accommodate optional preference...
 if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0" 
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0" 
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0" 
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "dialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for dialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 else # -z USERINTRFCE etc
@@ -80,7 +80,8 @@ else
     readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
 fi
 
-readonly act="ac"
+# table and field names
+readonly act="ACCOUNTS" idf="rowid" dmf="DOMAIN" emf="EMAIL" pwf="PASSWORD" cmf="COMMENT"
 # gpg & shred commands
 readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" )
 type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
@@ -113,7 +114,7 @@ create() {
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
 
     "${sql3[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
-    echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE id = $(( ++maxid ));" | "${sql3[@]}" > "${tf}"
+    echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE rowid > ${maxid};" | "${sql3[@]}" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -126,13 +127,13 @@ retrieve() {
     source "${tf}"
 
     # Record Set
-    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE dm LIKE '%${dm}%';" > "${tf}"
+    2> /dev/null "${rcm[@]}" "SELECT rowid AS ID,DOMAIN as DM, EMAIL as EM, PASSWORD AS PW, COMMENT AS CM FROM ${act} WHERE DOMAIN LIKE '%${dm}%';" > "${tf}"
 
     if [[ -n "$(type -P xclip)" ]]; then
         # Record Count
-        rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE dm LIKE '%${dm}%';")"
+        rc="$(2> /dev/null "${dcm[@]}" "SELECT count(rowid) FROM ${act} WHERE DOMAIN LIKE '%${dm}%';")"
         if (( rc == 1 )); then
-            pw="$(2> /dev/null "${dcm[@]}" "SELECT pw FROM ${act} WHERE dm LIKE '%${dm}%';")"
+            pw="$(2> /dev/null "${dcm[@]}" "SELECT PASSWORD FROM ${act} WHERE DOMAIN LIKE '%${dm}%';")"
             echo "${pw}" | "xclip" "-r"
         fi
     fi
@@ -149,8 +150,8 @@ update() {
 
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
-    2> /dev/null "${dcm[@]}" "UPDATE ${act} SET pw = '${pw}' WHERE rowid = '${id}';"
-    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE id = '${id}';" > "${tf}"
+    2> /dev/null "${dcm[@]}" "UPDATE ${act} SET PASSWORD = '${pw}' WHERE rowid = '${id}';"
+    2> /dev/null "${rcm[@]}" "SELECT rowid AS id,* FROM ${act} WHERE rowid = '${id}';" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -170,17 +171,11 @@ delete() {
 importcsv() {
     local maxid csvf errlvl
     maxid="$(maxid)"
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Enter a csv file:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${tf}"
-        (( $? != DIALOG_OK )) && return
-        csvf="$(cat "${tf}")"
-        [[ -z "${csvf}" ]] && return
-    else
-        echo -ne "Enter a csv file (empty to cancel): "
-        read -r csvf
-        echo "${csvf}" > "${tf}"
-        [[ -z "${csvf}" ]] && return
-    fi
+
+    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+
+    source "${tf}"
+    
     "${icm[@]}" ".import ${csvf} ${act}" 2> /dev/null
     errlvl=$?
     if (( errlvl != 0 )); then
@@ -200,18 +195,11 @@ importcsv() {
 
 exportcsv(){
     local csvf errlvl
-    if [[ -n "${DIALOG}" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Enter a file name:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${tf}"
-        (( $? != DIALOG_OK )) && return
-        csvf=$(cat "${tf}")
-        [[ -z "${csvf}" ]] && return
-    else
-        echo -ne "Enter a file name (empty to cancel): "
-        read -r csvf
-        echo "${csvf}" > "${tf}"
-        [[ -z "${csvf}" ]] && return
-    fi
 
+    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+
+    source "${tf}"
+    
     2> /dev/null "${icm[@]}" "select rowid,* from ${act} order by rowid ASC;" > "${tf}"
 
     errlvl=$?

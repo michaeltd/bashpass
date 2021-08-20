@@ -48,35 +48,40 @@ create_terminal() {
 retrieve_terminal(){
     local dm
     echo -ne "Enter domain to look for (empty for All): "
-    read -r dm
-    echo "${dm}" > "${tf}"
+    read -r dm || return $?
+    echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_terminal(){
-    local id errlvl pw
+    local id pw
     echo -ne "Select an id to update (empty to cancel): "
-    read -r id
-    errlvl=$?
-    if (( errlvl != 0 )) || [[ -z "${id}" ]]; then
-	return 1
-    fi
+    read -r id || return $?
+    [[ -z "${id}" ]] && return 1
 
     echo -ne "Enter a password or a password length (8-64) or empty for auto (max length): "
-    read -r pw
-    errlvl=$?
-    if (( errlvl != 0 )); then
-	return "${errlvl}"
-    fi
+    read -r pw || return $?
 
     echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
 }
 
 delete_terminal(){
+    local id
     echo -ne "Select an id to delete (empty to cancel): "
-    read -r id
-    echo "${id}" > "${tf}"
+    read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    echo -ne "id=\"${id}\""
+    echo -ne "id=\"${id}\"" > "${tf}"
+}
+
+importcsv_terminal(){
+    local csvf
+    echo -ne "Enter a csv file (empty to cancel): "
+    read -r csvf || return $?
+    [[ -z "${csvf}" ]] && return 1
+    echo -ne "csvf=\"${csvf}\"" > "${tf}"
+}
+
+exportcsv_terminal(){
+    importcsv_terminal
 }
 
 results_terminal(){

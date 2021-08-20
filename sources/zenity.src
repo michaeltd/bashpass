@@ -3,7 +3,7 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-declare H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
 
 create_zenity() {
     local errlvl cnt=0
@@ -28,16 +28,35 @@ retrieve_zenity() {
 }
 
 update_zenity() {
-    local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
-    local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${REC[@]})
-    OFS=$IFS
-    IFS=$'\|'
-    for ID in $ZEN; do
-	sqlite3 ${DB} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
-	"${DIALOG}" --height=$H --width=$W --text-info --title="New password" \
-	    --text=<<<$(sqlite3 -line ${DB} "select * from ${ACT} where rowid = '${ID}';")
-    done
-    IFS=$OFS
+    # local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
+    # local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${REC[@]})
+    # OFS=$IFS
+    # IFS=$'\|'
+    # for ID in $ZEN; do
+    # 	sqlite3 ${DB} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
+    # 	"${DIALOG}" --height=$H --width=$W --text-info --title="New password" \
+    # 	    --text=<<<$(sqlite3 -line ${DB} "select * from ${ACT} where rowid = '${ID}';")
+    # done
+    # IFS=$OFS
+
+    "${DIALOG}" --height=$H --width=$W --list --radiolist --column "Update" --column "ID" --column "Domain" --column "Email" --column "UName" $(brlzen) > "${tf}"
+    
+    # local id errlvl pw
+    # "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
+    # errlvl=$? id="$(cat "${tf}")"
+
+    # if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+    # 	return 1
+    # fi
+    
+    # "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${tf}"
+    # errlvl=$? pw="$(cat "${tf}")"
+    # if (( errlvl != DIALOG_OK )); then
+    # 	return "${errlvl}"
+    # fi
+
+    # echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
+
 }
 
 delete_zenity() {
@@ -64,7 +83,25 @@ delete_zenity() {
     fi
 }
 
-import_zenity() {
+importcsv_zenity() {
+
+    local MAXID=$(maxid)
+    
+    local CSVF=$("${DIALOG}" --title="Select a csv file to import:" --file-selection)
+
+    if [[ -n ${CSVF} ]]; then
+	${CCM} ".import ${CSVF} ${ACT}" > ${TF}
+	if (( $? == 0 )); then
+	    "${DIALOG}" --height=$H --width=$W --text-info --title="New account(/s)" \
+		--text=<<<$(${RCM} "select * from ${ACT} where rowid > '${MAXID}';")
+	else
+	    "${DIALOG}" --height=$H --width=$W --text-info --title="Error" \
+		--text=<<<$(cat ${TF})
+	fi
+    fi
+}
+
+exportcsv_zenity() {
 
     local MAXID=$(maxid)
     
