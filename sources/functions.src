@@ -14,7 +14,7 @@ do_quit() {
 
 display_feedback() {
     local -r msg="${*}"
-    local -r ttl="${sbn}: Fatal!"
+    local -r ttl="${sbn}: Error!"
     if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
         "$(type -P notify-send)" "-i" "${sdn}/assets/gpa.png" "-c" "notification" "-t" "${XDTO}" "${ttl}" "${msg}"
     elif [[ -n "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then
@@ -81,35 +81,36 @@ check_sql() {
 
 # Generate PassWord
 gpw() {
-    LC_CTYPE=C tr -cd "[:graph:]" < /dev/urandom | \
+    LC_ALL=C tr -dc "[:graph:]" < /dev/urandom | \
 	tr -d "[=\"=][=\'=][=\|=][=\,=]" | \
-	head -c "${1:-64}"
+	dd ibs=1 obs=1 count="${1:-64}" 2>/dev/null
+    echo
 }
 
 # RowID'S
 rids() {
-    2> /dev/null "${dcm[@]}" "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
+    "${dcm[@]}" "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 # -.-
 maxid() {
     #shellcheck disable=SC2155
-    local maxid="$(2> /dev/null "${dcm[@]}" "SELECT MAX(${idf}) FROM ${act};")"
+    local maxid="$("${dcm[@]}" "SELECT MAX(${idf}) FROM ${act};")"
     echo "${maxid:-0}" # check null values
 }
 
 # Row count
 rcount() {
-    2> /dev/null "${dcm[@]}" "SELECT COUNT(${idf}) FROM ${act};"
+    "${dcm[@]}" "SELECT COUNT(${idf}) FROM ${act};"
 }
 
 # Build Row Lines (for (X)dialog check/radio lists)
 brl() {
     local dm em un rl
     for i in $(rids); do
-        dm=$(2> /dev/null "${dcm[@]}" "SELECT ${dmf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
-        em=$(2> /dev/null "${dcm[@]}" "SELECT ${emf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
-        un=$(2> /dev/null "${dcm[@]}" "SELECT ${unf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        dm=$("${dcm[@]}" "SELECT ${dmf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        em=$("${dcm[@]}" "SELECT ${emf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        un=$("${dcm[@]}" "SELECT ${unf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
         rl+="${i} ${dm:-NULL}_${em:-NULL}_${un:-NULL} off "
     done
     echo "${rl[@]}"

@@ -81,18 +81,15 @@ else
 fi
 
 # table and field names
-readonly act="ACCOUNTS" idf="rowid" dmf="DM" emf="EM" pwf="PW" cmf="CM"
+readonly act="ACCOUNTS" idf="rowid" dmf="DM" emf="EM" unf="UN" pwf="PW" cmf="CM"
 # gpg & shred commands
 readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" )
 type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
 
 # SQLite
-# Custom -init files ensures there will be no functionality breaking ~/.sqliterc surprises.
-# We also need to dump stderr into /dev/null to spare users "-- loading resources from ..." msgs.
-readonly sql3rc="${dbsd}/sqliterc_"
-readonly -a dcm=( "sqlite3" "-init" "${sql3rc}data" "${db}" ) \
-	 rcm=( "sqlite3" "-init" "${sql3rc}report" "${db}" ) \
-	 icm=( "sqlite3" "-init" "${sql3rc}import" "${db}" ) \
+readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
+	 rcm=( "sqlite3" "-line" "${db}" ) \
+	 icm=( "sqlite3" "-csv" "${db}" ) \
 	 sql3=( "sqlite3" "${db}" )
 # Temp files
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
@@ -114,7 +111,7 @@ create() {
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
 
     "${sql3[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
-    echo -ne ".mode line\nSELECT rowid AS id,* FROM ${act} WHERE ${idf} > ${maxid};" | "${sql3[@]}" > "${tf}"
+    echo -ne ".mode line\nSELECT rowid AS ID,* FROM ${act} WHERE ${idf} > ${maxid};" | "${sql3[@]}" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -127,13 +124,13 @@ retrieve() {
     source "${tf}"
 
     # Record Set
-    2> /dev/null "${rcm[@]}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${pwf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${dm}%';" > "${tf}"
+    "${rcm[@]}" "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${dm}%';" > "${tf}"
 
     if [[ -n "$(type -P xclip)" ]]; then
         # Record Count
-        rc="$(2> /dev/null "${dcm[@]}" "SELECT count(${idf}) FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
+        rc="$("${dcm[@]}" "SELECT count(${idf}) FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
         if (( rc == 1 )); then
-            pw="$(2> /dev/null "${dcm[@]}" "SELECT ${pwf} FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
+            pw="$("${dcm[@]}" "SELECT ${pwf} FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
             echo "${pw}" | "xclip" "-r"
         fi
     fi
@@ -150,8 +147,8 @@ update() {
 
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
-    2> /dev/null "${dcm[@]}" "UPDATE ${act} SET ${pwf} = '${pw}' WHERE ${idf} = '${id}';"
-    2> /dev/null "${rcm[@]}" "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} = '${id}';" > "${tf}"
+    "${dcm[@]}" "UPDATE ${act} SET ${pwf} = '${pw}' WHERE ${idf} = '${id}';"
+    "${rcm[@]}" "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} = '${id}';" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -163,7 +160,7 @@ delete() {
 
     source "${tf}"
 
-    2> /dev/null "${dcm[@]}" "DELETE FROM ${act} WHERE ${idf} = '${id}';"
+     "${dcm[@]}" "DELETE FROM ${act} WHERE ${idf} = '${id}';"
 
     "message_${usrintrfce}"
 }
@@ -176,7 +173,7 @@ importcsv() {
 
     source "${tf}"
     
-    "${icm[@]}" ".import ${csvf} ${act}" 2> /dev/null
+    "${icm[@]}" ".import ${csvf} ${act}" 
     errlvl=$?
     if (( errlvl != 0 )); then
         if [[ -n "${DIALOG}" ]]; then
@@ -185,7 +182,7 @@ importcsv() {
         echo "Error: $(cat "${tf}")"
         return "${errlvl}"
     fi
-    2> /dev/null "${rcm[@]}" "SELECT ${dmf} AS ID,* FROM ${act} WHERE ${idf} > ${maxid};" > "${tf}"
+     "${rcm[@]}" "SELECT ${dmf} AS ID,* FROM ${act} WHERE ${idf} > ${maxid};" > "${tf}"
     if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
         "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
     else
@@ -200,7 +197,7 @@ exportcsv(){
 
     source "${tf}"
     
-    2> /dev/null "${icm[@]}" "select ${idf} AS ID,* from ${act} order by ${idf} ASC;" > "${tf}"
+     "${icm[@]}" "select ${idf} AS ID,* from ${act} order by ${idf} ASC;" > "${tf}"
 
     errlvl=$?
     if (( errlvl != 0 )); then
@@ -267,7 +264,7 @@ main() {
     done
 
     tui_menu+=( "\nChoose[0-$((${#tui_ops[*]}-1))]:" )
-    local tmp_hmsg="\naccounts table format is as follows:\n$(2> /dev/null ${dcm[*]} ".schema ${act}")\n\n"
+    local tmp_hmsg="\naccounts table format is as follows:\n$( ${dcm[*]} ".schema ${act}")\n\n"
     tui_hmsg+=( "${tmp_hmsg}" )
     gui_hmsg+=( "${tmp_hmsg}" )
 
@@ -302,7 +299,7 @@ main() {
                     "${gui_ops[3]}"|"3") delete ;;
                     "${gui_ops[4]}"|"4") importcsv ;;
                     "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") 2> /dev/null "${rcm[@]}" ;;
+                    "${gui_ops[6]}"|"6") "${rcm[@]}" ;;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
