@@ -23,6 +23,8 @@ declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 declare -r dbsd="${sdn}/databases" \
 	scsd="${sdn}/sources"
 
+declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
+
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|dialog|terminal] [--debug] [--help]"
 
 declare gpgf db bngpgf bndb usrintrfce
