@@ -95,9 +95,11 @@ readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
 	 mutex="${dbsd}/.${bndb}.mutex"
 
+source "${scsd}/sqlite3.src"
+
 source "${scsd}/functions.src"
 
-[[ "${usrintrfce}" == "yad" ]] && { display_feedback "SOON(tm)!";exit $?; }
+[[ "${usrintrfce}" == "yad" ]] && { display_feedback "For yad, check back SOON(tm)!";exit $?; }
 
 source "${scsd}/${usrintrfce}.src"
 
@@ -110,8 +112,9 @@ create() {
 
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
 
-    "${sql3[@]}" "INSERT INTO ${act} VALUES('${dm//:/\:}', '${em}', '${un}', '${pw}', '${cm}');"
-    echo -ne ".mode line\nSELECT rowid AS ID,* FROM ${act} WHERE ${idf} > ${maxid};" | "${sql3[@]}" > "${tf}"
+    "${sql3[@]}" "$(insert_into "${dm}" "${em}" "${un}" "${pw}" "${cm}")"
+
+    "${rcm[@]}" "$(select_gt "${maxid}")" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -160,7 +163,7 @@ delete() {
 
     source "${tf}"
 
-     "${dcm[@]}" "DELETE FROM ${act} WHERE ${idf} = '${id}';"
+    "${dcm[@]}" "DELETE FROM ${act} WHERE ${idf} = '${id}';"
 
     "message_${usrintrfce}"
 }
@@ -197,7 +200,7 @@ exportcsv(){
 
     source "${tf}"
     
-     "${icm[@]}" "select ${idf} AS ID,* from ${act} order by ${idf} ASC;" > "${tf}"
+    "${icm[@]}" "select ${idf} AS ID,* from ${act} order by ${idf} ASC;" > "${tf}"
 
     errlvl=$?
     if (( errlvl != 0 )); then

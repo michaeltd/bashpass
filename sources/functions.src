@@ -81,8 +81,8 @@ check_sql() {
 
 # Generate PassWord
 gpw() {
-    LC_ALL=C tr -dc "[:graph:]" < /dev/urandom | \
-	tr -d "[=\"=][=\'=][=\|=][=\,=]" | \
+    LC_ALL=C tr -dc [:graph:] < /dev/urandom | \
+	tr -d [=\"=][=\'=][=\|=][=\,=] | \
 	dd ibs=1 obs=1 count="${1:-64}" 2>/dev/null
     echo
 }
