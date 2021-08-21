@@ -1,0 +1,9 @@
+#!/bin/bash
+
+insert_into(){
+    echo -ne "INSERT INTO ${act} VALUES('${1//:/\:}', '${2}', '${3}', '${4}', '${5}');"
+}
+
+select_gt(){
+    echo -ne "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} > ${1};"
+}
