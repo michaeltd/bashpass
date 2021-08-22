@@ -1,28 +1,28 @@
 #!/bin/bash
 
 # table and field names
-declare idf="rowid" act="ACCOUNTS" # dmf="DM" emf="EM" unf="UN" pwf="PW" cmf="CM"
+declare idf="rowid" act="ACCOUNTS" dmf="DM" emf="EM" unf="UN" pwf="PW" cmf="CM"
 
-reread_flds(){
-    declare -a tbls=( $(sqlite3 "${db}" ".tables") )
-    # echo "tables: ${tbls[@]}"
-    declare schm="$(sqlite3 "${db}" ".schema ${tbls[0]}")"
-    # echo "schema: ${schm}"
-    declare -a brkdwn=("CREATE"	"TABLE"	"IF" "NOT" "NULL" "EXISTS" "NCHAR(100)" "NCHAR(256)" "PRIMARY" "KEY" "(" ")" "," ";")
-    # echo "breakdown: ${brkdwn[@]}"
-    flds="${schm}"
-    for i in ${brkdwn[@]}; do
-	flds="${flds//${i}}"
-	flds="${flds//${i,,}}"
-	flds="${flds//${i,}}"
-	flds="${flds//${i^}}"
-    done
-    # echo "flds: ${flds}"
-    declare -ar arrflds=( ${flds} )
-    # echo "arrflds: ${arrflds[@]}"
-    declare -x act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
-    # echo "act=${arrflds[0]} dmf=${arrflds[1]} emf=${arrflds[2]} unf=${arrflds[3]}  pwf=${arrflds[4]} cmf=${arrflds[5]}"
-}
+# reread_flds(){
+#     declare -a tbls=( $(sqlite3 "${db}" ".tables") )
+#     # echo "tables: ${tbls[@]}"
+#     declare schm="$(sqlite3 "${db}" ".schema ${tbls[0]}")"
+#     # echo "schema: ${schm}"
+#     declare -a brkdwn=("CREATE"	"TABLE"	"IF" "NOT" "NULL" "EXISTS" "NCHAR(100)" "NCHAR(256)" "PRIMARY" "KEY" "(" ")" "," ";")
+#     # echo "breakdown: ${brkdwn[@]}"
+#     flds="${schm}"
+#     for i in ${brkdwn[@]}; do
+# 	flds="${flds//${i}}"
+# 	flds="${flds//${i,,}}"
+# 	flds="${flds//${i,}}"
+# 	flds="${flds//${i^}}"
+#     done
+#     # echo "flds: ${flds}"
+#     declare -ar arrflds=( ${flds} )
+#     # echo "arrflds: ${arrflds[@]}"
+#     declare -x act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
+#     # echo "act=${arrflds[0]} dmf=${arrflds[1]} emf=${arrflds[2]} unf=${arrflds[3]}  pwf=${arrflds[4]} cmf=${arrflds[5]}"
+# }
 
 sql_check(){
     echo -ne "SELECT * FROM ${act} ORDER BY ${idf} ASC;"
