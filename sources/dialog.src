@@ -7,6 +7,20 @@
 # L=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) C=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 )) 
 declare -rx L="0" C="0"
 
+bashpass_dialog(){
+    OFS="${IFS}" IFS=$'\|'
+    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" \
+		"--item-help" "--cancel-label" "Quit" "--menu" "Menu:" \
+		"$L" "$C" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
+    errlvl=$?
+    IFS="${OFS}"
+    return $errlvl
+}
+
+bashpass_Xdialog(){
+    bashpass_dialog
+}
+
 create_dialog() {
     local dm em un pw cm
 

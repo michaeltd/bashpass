@@ -3,110 +3,93 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-declare H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 3 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 3 ))
+declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+
+bashpass_yad(){
+    OFS=$IFS IFS=$'\|'
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--list" \
+		"--title=Select action" "--no-headers" \
+		"--column=Option" "--column=SDesc" \
+		"--column=LDesc" ${gui_menu} > "${tf}"
+    errlvl=$?
+    IFS="${OFS}"
+    return $errlvl
+}
 
 create_yad() {
-    "${DIALOG}" --height=$H --width=$W --forms --separator=',' --add-entry="Domain" --add-entry="Email" --add-entry="Uname" --add-entry="Password" --add-entry="Comment" > ${TF}
-
-    if (( $? == 0 )); then
-	${CCM} ".import ${TF} ${ACT}" 2> ${TF}
-	if (( $? == 0 )); then
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="New account" \
-		--text=<<<$(${RCM} "select * from ${ACT} where rowid = $(( maxid + 1 ));")
-	else
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="Error" \
-		--text=<<<$(cat ${TF})
-	fi
-    fi
+    local errlvl cnt=0
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--form" "--separator=," \
+		"--field=Domain" "--field=Email" "--field=Uname" \
+ 		"--field=Password" "--field=Comment" > "${tf}"
+    errlvl=$?
+    (( errlvl != DIALOG_OK )) && return $errlvl
+    local -r vals="$(cat "${tf}")"
+    OFS=$IFS IFS=,
+    for i in $vals; do
+	arv[((cnt++))]="$i"
+    done
+    IFS=$OFS
+    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\ncm=\"${arv[4]}\"\n" > "${tf}"
 }
 
 retrieve_yad() {
-
-    DM=$("${DIALOG}" --height=$H --width=$W --title="Enter domain" --text "Domain?" --entry-text="enter a domain" --entry)
-
-    if (( ${?} == 0 )); then
-	${RCM} "select rowid as id,* from ${ACT} where dm like '%${DM}%';" > ${TF}
-	"${DIALOG}" --height=$(( W + 200 )) --width=$(( W + 100 )) --text-info \
-	    --title="Results" --filename=${TF}
-    fi
+    local dm errlvl
+    "${DIALOG}" "--center" "--title=${bngpgf}" "--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
+    errlvl=$? dm="$(cat "${tf}")"
+    (( errlvl != DIALOG_OK )) && return "${errlvl}"
+    echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_yad() {
-    local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
-    local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${REC[@]})
-    OFS=$IFS
-    IFS=$'\|'
-    for ID in $ZEN; do
-	sqlite3 ${DB} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
-	"${DIALOG}" --height=$H --width=$W --text-info --title="New password" \
-	    --text=<<<$(sqlite3 -line ${DB} "select * from ${ACT} where rowid = '${ID}';")
-    done
-    IFS=$OFS
+    local id errlvl pw
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlyad) > "${tf}"
+    errlvl=$? id="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	return 1
+    fi
+
+    "${DIALOG}" --height=$H --width=$W --title="${bngpgf}" --text="Enter a password or a password length (8-64) or empty for auto (max length): " --entry-text="" --entry > "${tf}"
+    errlvl=$? pw="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
+
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
 }
 
 delete_yad() {
-    local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain, em as email from ${ACT} order by rowid asc;")
-    local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" --column "Email" ${REC[@]})
-    
-    local RES=""
-
-    if [[ "x${ZEN}" != "x" ]]; then
-	OFS=$IFS IFS=$'\|'
-	for ID in ${ZEN}; do
-	    sqlite3 ${DB} "delete from ${ACT} where rowid = '${ID}';"
-	    RES+=$?
-	done
-	IFS=$OFS
-	
-	for ((x=0;x<${#RES};x++)); do
-	    if [[ "${RES:$x:1}" != "0" ]]; then
-		"${DIALOG}" --error --title="Error." --text="Errors reported."
-		return
-	    fi
-	done
-	"${DIALOG}" --info --title="Account(/s) deleted successfully." --text="No errors reported."
+    local id errlvl
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlyad) > "${tf}"
+    errlvl=$? id="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	return 1
     fi
+    echo -ne "id=\"${id}\"" > "${tf}"
 }
 
-import_yad() {
+importcsv_yad() {
+    local errlvl csvf
+    "${DIALOG}" "--width=$W" "--height=$H" "--text-info" "--center" "--title" "Select a csv file:" "--text" "\nPress [Ok] to continue, or [Cancel] to return to menu\n" "--button=gtk-ok" "--button=gtk-cancel" "--editable" "--wrap" "--filename=ProcessList" > "${tf}"
+    errlvl=$?
+    (( errlvl != DIALOG_OK )) && return $errlvl
+    csvf="$(cat "${tf}")"
+    [[ -z "${csvf}" ]] && return 1
+    echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
+}
 
-    local MAXID=$(maxid)
-    
-    local CSVF=$("${DIALOG}" --title="Select a csv file to import:" --file-selection)
+exportcsv_yad() {
+    importcsv_yad
+}
 
-    if [[ -n ${CSVF} ]]; then
-	${CCM} ".import ${CSVF} ${ACT}" > ${TF}
-	if (( $? == 0 )); then
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="New account(/s)" \
-		--text=<<<$(${RCM} "select * from ${ACT} where rowid > '${MAXID}';")
-	else
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="Error" \
-		--text=<<<$(cat ${TF})
-	fi
-    fi
+results_yad(){
+    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--text-info" "--title=${bngpgf}" "--filename=${tf}"
+}
+
+message_yad(){
+    "${DIALOG}" "--center" "--info" "--title=${bngpgf}" "--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
 usage_yad() {
-    "${DIALOG}" --height=$H --width=$W --info \
-	--title="Help screen" --text="${HM[@]}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
 }
-
-# while :; do
-#     OFS=$IFS IFS=$'\|'
-
-#     RES=$(yad --height=$H --width=$W --list --title="Select action" --hide-header --column="Option" --column="Desc" --column="Description" ${MT})
-
-#     IFS=$OFS
-
-#     case "${RES}" in
-# 	"${GOP[0]}") create ;;
-# 	"${GOP[1]}") retrieve ;;
-# 	"${GOP[2]}") update ;;
-# 	"${GOP[3]}") delete ;;
-# 	"${GOP[4]}") import ;;
-# 	"${GOP[5]}") ${RCM} ;;
-# 	"${GOP[6]}") usage ;;
-# 	"${GOP[7]}") exit ;;
-# 	*) exit;;
-#     esac
-# done

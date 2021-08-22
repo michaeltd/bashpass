@@ -21,6 +21,14 @@ declare -r bg_black="$(tput setab 0)" bg_red="$(tput setab 1)" \
 	bg_cyan="$(tput setab 6)" bg_white="$(tput setab 7)" \
 	bg_default="$(tput setab 9)"
 
+bashpass_terminal(){
+    echo -ne " ${tui_menu[*]}"
+    read -r usrinpt
+    errlvl=$?
+    echo "${usrinpt}" > "${tf}"
+    return $errlvl
+}
+
 create_terminal() {
     local dm em un pw cm
     while [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${pw}" || -z "${cm}" ]]; do
@@ -89,7 +97,7 @@ results_terminal(){
 }
 
 message_terminal(){
-    echo -ne "Account ID: #${id} deleted.\n"
+    echo -ne "Account ID: #${id} deleted.\nNo errors reported!\n"
 }
 
 usage_terminal(){

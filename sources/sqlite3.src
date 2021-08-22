@@ -1,9 +1,64 @@
 #!/bin/bash
 
+# table and field names
+readonly idf="rowid" act="ACCOUNTS" dmf="DM" emf="EM" unf="UN" pwf="PW" cmf="CM"
+
+sql_check(){
+    echo -ne "SELECT * FROM ${act} ORDER BY ${idf} ASC;"
+}
+
+sql_rids(){
+    echo -ne "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
+}
+
+sql_maxid(){
+    echo -ne "SELECT MAX(${idf}) FROM ${act};"
+}
+
+sql_rcount(){
+    echo -ne "SELECT COUNT(${idf}) FROM ${act};"
+}
+
+sql_brl(){
+    echo -ne "SELECT ${1} FROM ${act} WHERE ${idf} = '${2}';"
+}
+
+sql_brlzen(){
+    echo -ne "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;"
+}
+
+sql_brlyad(){
+    echo -ne "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;"
+}
+
 insert_into(){
     echo -ne "INSERT INTO ${act} VALUES('${1//:/\:}', '${2}', '${3}', '${4}', '${5}');"
 }
 
-select_gt(){
+select_newrecs(){
     echo -ne "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} > ${1};"
+}
+
+select_dm_like(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${1}%';"
+}
+
+update_pw(){
+    echo -ne "UPDATE ${act} SET ${pwf} = '${1}' WHERE ${idf} = '${2}';"
+}
+
+select_id_eq(){
+    echo -ne "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+delete_id_eq(){
+    echo -ne "DELETE FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+importcsv_sql(){
+    echo -ne  ".import ${1} ${act}\n"
+}
+
+select_all(){
+    echo -ne "SELECT ${idf} AS ID,* FROM ${act} ORDER BY ${idf} ASC;"
 }

@@ -5,6 +5,17 @@
 
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
 
+bashpass_zenity(){
+    OFS=$IFS IFS=$'\|'
+    "${DIALOG}" "--height=$H" "--width=$W" "--list" \
+		"--title=Select action" "--hide-header" \
+		"--column=Option" "--column=SDesc" \
+		"--column=LDesc" ${gui_menu} > "${tf}"
+    errlvl=$?
+    IFS="${OFS}"
+    return $errlvl
+}
+
 create_zenity() {
     local errlvl cnt=0
     "${DIALOG}" "--height=$H" "--width=$W" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-entry=Comment" > "${tf}"
@@ -21,102 +32,51 @@ create_zenity() {
 
 retrieve_zenity() {
     local dm errlvl
-    "${DIALOG}" --height=$H --width=$W --title="${bngpgf}" --text="Enter domain to look for (empty for All):" --entry-text="" --entry > "${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
     (( errlvl != DIALOG_OK )) && return "${errlvl}"
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_zenity() {
-    # local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain from ${ACT} order by rowid asc;")
-    # local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" ${REC[@]})
-    # OFS=$IFS
-    # IFS=$'\|'
-    # for ID in $ZEN; do
-    # 	sqlite3 ${DB} "update ${ACT} set pw = '$(gpw)' where rowid = '${ID}';"
-    # 	"${DIALOG}" --height=$H --width=$W --text-info --title="New password" \
-    # 	    --text=<<<$(sqlite3 -line ${DB} "select * from ${ACT} where rowid = '${ID}';")
-    # done
-    # IFS=$OFS
+    local id errlvl pw
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    errlvl=$? id="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	return 1
+    fi
 
-    "${DIALOG}" --height=$H --width=$W --list --radiolist --column "Update" --column "ID" --column "Domain" --column "Email" --column "UName" $(brlzen) > "${tf}"
-    
-    # local id errlvl pw
-    # "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
-    # errlvl=$? id="$(cat "${tf}")"
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" > "${tf}"
+    errlvl=$? pw="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
 
-    # if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
-    # 	return 1
-    # fi
-    
-    # "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${tf}"
-    # errlvl=$? pw="$(cat "${tf}")"
-    # if (( errlvl != DIALOG_OK )); then
-    # 	return "${errlvl}"
-    # fi
-
-    # echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
-
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
 }
 
 delete_zenity() {
-    local REC=$(sqlite3 -separator " " ${DB} "select 'FALSE' as state, rowid as id, dm as domain, em as email from ${ACT} order by rowid asc;")
-    local ZEN=$("${DIALOG}" --height=$H --width=$W --list --checklist --column "Update" --column "ID" --column "Domain" --column "Email" ${REC[@]})
-    
-    local RES=""
-
-    if [[ "x${ZEN}" != "x" ]]; then
-	OFS=$IFS IFS=$'\|'
-	for ID in ${ZEN}; do
-	    sqlite3 ${DB} "delete from ${ACT} where rowid = '${ID}';"
-	    RES+=$?
-	done
-	IFS=$OFS
-	
-	for ((x=0;x<${#RES};x++)); do
-	    if [[ "${RES:$x:1}" != "0" ]]; then
-		"${DIALOG}" --error --title="Error." --text="Errors reported."
-		return
-	    fi
-	done
-	"${DIALOG}" --info --title="Account(/s) deleted successfully." --text="No errors reported."
+    local id errlvl
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    errlvl=$? id="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	return 1
     fi
+    echo -ne "id=\"${id}\"" > "${tf}"
 }
 
 importcsv_zenity() {
-
-    local MAXID=$(maxid)
-    
-    local CSVF=$("${DIALOG}" --title="Select a csv file to import:" --file-selection)
-
-    if [[ -n ${CSVF} ]]; then
-	${CCM} ".import ${CSVF} ${ACT}" > ${TF}
-	if (( $? == 0 )); then
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="New account(/s)" \
-		--text=<<<$(${RCM} "select * from ${ACT} where rowid > '${MAXID}';")
-	else
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="Error" \
-		--text=<<<$(cat ${TF})
-	fi
-    fi
+    local errlvl csvf
+    "${DIALOG}" "--height=$W" "--width=$W" "--title=Select a csv file:" "--file-selection" > "${tf}"
+    errlvl=$?
+    (( errlvl != DIALOG_OK )) && return $errlvl
+    csvf="$(cat "${tf}")"
+    [[ -z "${csvf}" ]] && return 1
+    echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
 }
 
 exportcsv_zenity() {
-
-    local MAXID=$(maxid)
-    
-    local CSVF=$("${DIALOG}" --title="Select a csv file to import:" --file-selection)
-
-    if [[ -n ${CSVF} ]]; then
-	${CCM} ".import ${CSVF} ${ACT}" > ${TF}
-	if (( $? == 0 )); then
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="New account(/s)" \
-		--text=<<<$(${RCM} "select * from ${ACT} where rowid > '${MAXID}';")
-	else
-	    "${DIALOG}" --height=$H --width=$W --text-info --title="Error" \
-		--text=<<<$(cat ${TF})
-	fi
-    fi
+    importcsv_zenity
 }
 
 results_zenity(){
@@ -125,7 +85,7 @@ results_zenity(){
 }
 
 message_zenity(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
+    "${DIALOG}" "--info" "--no-wrap" "--title=${bngpgf}" "--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
 usage_zenity() {

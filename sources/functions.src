@@ -12,7 +12,7 @@ do_quit() {
     exit "${1:-0}"
 }
 
-display_feedback() {
+die() {
     local -r msg="${*}"
     local -r ttl="${sbn}: Error!"
     if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
@@ -31,40 +31,40 @@ display_feedback() {
 
 check_prereqs(){
     if [[ ! -t 0 ]]; then
-        display_feedback "You'll need to run ${0/*\/} in a terminal (or tty)!"
+        die "You'll need to run ${0/*\/} in a terminal (or tty)!"
     elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
-        display_feedback "You'll need bash major version no less than 4."
+        die "You'll need bash major version no less than 4."
     elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
-        display_feedback "You need SQLite3 installed."
+        die "You need SQLite3 installed."
     elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
-        display_feedback "You need GNU Privacy Guard v2 (gnupg) installed."
+        die "You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
 
 # No mutex or die.
 check_mutex() {
     if [[ -f "${mutex}" ]]; then
-	display_feedback "You can only have one instance of ${bngpgf}."
+	die "You can only have one instance of ${bngpgf}."
     fi
     # local -ar pids=( $(pgrep -U "${USER}" -f "${bngpgf}") )
     # if [[ "${#pids[*]}" -gt "1" ]]; then
-    # 	display_feedback "You can only have one instance of ${bngpgf}."
+    # 	die "You can only have one instance of ${bngpgf}."
     # fi
 }
 
 # Decrypt .sqlite, setup trap and mutex or die.
 check_decrypt() {
     if ! [[ "$(file -b "${gpgf}")" =~ ^PGP ]]; then
-        display_feedback "${bngpgf}, does not appear to be a valid PGP file."
+        die "${bngpgf}, does not appear to be a valid PGP file."
         return $?
     fi
     if ! "${gpgc[@]}" "${db}" "--decrypt" "${gpgf}"; then
-        display_feedback "Decryption failed."
+        die "Decryption failed."
         return $?
     else
 	# We do have an decrypted $db file so we might as well check it's validity.
         if ! [[ "$(file -b "${db}")" =~ ^SQLite ]]; then
-            display_feedback "${bndb}, does not appear to be a valid SQLite 3.x database file."
+            die "${bndb}, does not appear to be a valid SQLite 3.x database file."
             return $?
         fi
         touch "${mutex}"
@@ -74,8 +74,8 @@ check_decrypt() {
 
 # SQL or die.
 check_sql() {
-    if ! "${dcm[@]}" "SELECT * FROM ${act} ORDER BY ${idf} ASC;" &> /dev/null; then
-        display_feedback "Need a working db to function."
+    if ! "${dcm[@]}" "$(sql_check)" &> /dev/null; then
+        die "Need a working db to function."
     fi
 }
 
@@ -89,33 +89,36 @@ gpw() {
 
 # RowID'S
 rids() {
-    "${dcm[@]}" "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
+    "${dcm[@]}" "$(sql_rids)"
 }
 
 # -.-
 maxid() {
-    #shellcheck disable=SC2155
-    local maxid="$("${dcm[@]}" "SELECT MAX(${idf}) FROM ${act};")"
+    local maxid="$("${dcm[@]}" "$(sql_maxid)")"
     echo "${maxid:-0}" # check null values
 }
 
 # Row count
 rcount() {
-    "${dcm[@]}" "SELECT COUNT(${idf}) FROM ${act};"
+    "${dcm[@]}" "$(sql_rcount)"
 }
 
 # Build Row Lines (for (X)dialog check/radio lists)
 brl() {
     local dm em un rl
     for i in $(rids); do
-        dm=$("${dcm[@]}" "SELECT ${dmf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
-        em=$("${dcm[@]}" "SELECT ${emf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
-        un=$("${dcm[@]}" "SELECT ${unf} FROM ${act} WHERE ${idf} = '${i}';"|sed 's/ /-/g')
+        dm=$("${dcm[@]}" "$(sql_brl "${dmf}" "${i}")"|sed 's/ /-/g')
+        em=$("${dcm[@]}" "$(sql_brl "${emf}" "${i}")"|sed 's/ /-/g')
+        un=$("${dcm[@]}" "$(sql_brl "${unf}" "${i}")"|sed 's/ /-/g')
         rl+="${i} ${dm:-NULL}_${em:-NULL}_${un:-NULL} off "
     done
     echo "${rl[@]}"
 }
 
 brlzen(){
-    echo "$(sqlite3 -separator " " ${db} "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;")"
+    echo "$(sqlite3 -separator " " ${db} "$(sql_brlzen)")"
+}
+
+brlyad(){
+    echo "$(sqlite3 -separator " " ${db} "$(sql_brlyad)")"
 }

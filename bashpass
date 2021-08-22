@@ -82,8 +82,6 @@ else
     readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
 fi
 
-# table and field names
-readonly act="ACCOUNTS" idf="rowid" dmf="DM" emf="EM" unf="UN" pwf="PW" cmf="CM"
 # gpg & shred commands
 readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" )
 type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
@@ -101,8 +99,6 @@ source "${scsd}/sqlite3.src"
 
 source "${scsd}/functions.src"
 
-[[ "${usrintrfce}" == "yad" ]] && { display_feedback "For yad, check back SOON(tm)!";exit $?; }
-
 source "${scsd}/${usrintrfce}.src"
 
 create() {
@@ -116,7 +112,7 @@ create() {
 
     "${sql3[@]}" "$(insert_into "${dm}" "${em}" "${un}" "${pw}" "${cm}")"
 
-    "${rcm[@]}" "$(select_gt "${maxid}")" > "${tf}"
+    "${rcm[@]}" "$(select_newrecs "${maxid}")" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -129,16 +125,7 @@ retrieve() {
     source "${tf}"
 
     # Record Set
-    "${rcm[@]}" "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${dm}%';" > "${tf}"
-
-    if [[ -n "$(type -P xclip)" ]]; then
-        # Record Count
-        rc="$("${dcm[@]}" "SELECT count(${idf}) FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
-        if (( rc == 1 )); then
-            pw="$("${dcm[@]}" "SELECT ${pwf} FROM ${act} WHERE ${dmf} LIKE '%${dm}%';")"
-            echo "${pw}" | "xclip" "-r"
-        fi
-    fi
+    "${rcm[@]}" "$(select_dm_like "${dm}")" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -152,8 +139,8 @@ update() {
 
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
-    "${dcm[@]}" "UPDATE ${act} SET ${pwf} = '${pw}' WHERE ${idf} = '${id}';"
-    "${rcm[@]}" "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} = '${id}';" > "${tf}"
+    "${dcm[@]}" "$(update_pw "${pw}" "${id}")"
+    "${rcm[@]}" "$(select_id_eq "${id}")" > "${tf}"
 
     "results_${usrintrfce}"
 }
@@ -165,7 +152,7 @@ delete() {
 
     source "${tf}"
 
-    "${dcm[@]}" "DELETE FROM ${act} WHERE ${idf} = '${id}';"
+    "${dcm[@]}" "$(delete_id_eq "${id}")"
 
     "message_${usrintrfce}"
 }
@@ -178,21 +165,11 @@ importcsv() {
 
     source "${tf}"
     
-    "${icm[@]}" ".import ${csvf} ${act}" 
-    errlvl=$?
-    if (( errlvl != 0 )); then
-        if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Error" "--msgbox" "$(cat "${tf}")" "${L}" "${C}"
-        fi
-        echo "Error: $(cat "${tf}")"
-        return "${errlvl}"
-    fi
-     "${rcm[@]}" "SELECT ${dmf} AS ID,* FROM ${act} WHERE ${idf} > ${maxid};" > "${tf}"
-    if [[ "${DIALOG}" == "$(type -P Xdialog)" ]]; then
-        "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
-    else
-        "${PAGER}" "${tf}"
-    fi
+    "${icm[@]}" "$(importcsv_sql "${csvf}")"
+
+    "${rcm[@]}" "$(select_newrecs "${maxid}")" > "${tf}"
+
+    "results_${usrintrfce}"
 }
 
 exportcsv(){
@@ -202,18 +179,7 @@ exportcsv(){
 
     source "${tf}"
     
-    "${icm[@]}" "select ${idf} AS ID,* from ${act} order by ${idf} ASC;" > "${tf}"
-
-    errlvl=$?
-    if (( errlvl != 0 )); then
-        if [[ -n "${DIALOG}" ]]; then
-            "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Error" "--msgbox" "$(cat "${tf}")" "${L}" "${C}"
-        fi
-        echo "Error: $(cat "${tf}")"
-        return "${errlvl}"
-    fi
-
-    cat "${tf}" > "${csvf}"
+    "${icm[@]}" "$(select_all)" > "${csvf}"
 
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
@@ -230,7 +196,7 @@ usage() {
     "${FUNCNAME[0]}_${usrintrfce}"
 }
 
-main() {
+bashpass() {
 
     local OFS="${IFS}" errlvl=0 usrinpt=''
 
@@ -274,39 +240,20 @@ main() {
     gui_hmsg+=( "${tmp_hmsg}" )
 
     while :; do
-        if [[ "${DIALOG}" =~ dialog$ ]]; then # Xdialog, dialog menu
-            OFS="${IFS}" IFS=$'\|'
-            "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" \
-			"--item-help" "--cancel-label" "Quit" "--menu" "Menu:" \
-			"$L" "$C" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
-            errlvl=$?
-            IFS="${OFS}"
-	elif [[ "${DIALOG}" =~ zenity$ ]]; then # zenity
-	    OFS=$IFS IFS=$'\|'
-	    "${DIALOG}" "--height=$H" "--width=$W" "--list" \
-			"--title=Select action" "--hide-header" \
-			"--column=Option" "--column=Desc" \
-			"--column=Description" ${gui_menu} > "${tf}"
-            errlvl=$?
-            IFS="${OFS}"
-        else # Just terminal menu.
-            echo -ne " ${tui_menu[*]}"
-            read -r usrinpt
-            errlvl=$?
-            echo "${usrinpt}" > "${tf}"
-        fi
+	"${FUNCNAME[0]}_${usrintrfce}"
+        errlvl=$?
         case "${errlvl}" in
             "0"|"${DIALOG_OK}")
                 case "$(cat "${tf}")" in
-                    "${gui_ops[0]}"|"0") create ;;
-                    "${gui_ops[1]}"|"1") retrieve ;;
-                    "${gui_ops[2]}"|"2") update ;;
-                    "${gui_ops[3]}"|"3") delete ;;
-                    "${gui_ops[4]}"|"4") importcsv ;;
-                    "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") "${rcm[@]}" ;;
-                    "${gui_ops[7]}"|"7") usage ;;
-                    "${gui_ops[8]}"|"8") exit ;;
+                    "${gui_ops[0]}"*|"0") create ;;
+                    "${gui_ops[1]}"*|"1") retrieve ;;
+                    "${gui_ops[2]}"*|"2") update ;;
+                    "${gui_ops[3]}"*|"3") delete ;;
+                    "${gui_ops[4]}"*|"4") importcsv ;;
+                    "${gui_ops[5]}"*|"5") exportcsv ;;
+                    "${gui_ops[6]}"*|"6") "${sql3[@]}" ;;
+                    "${gui_ops[7]}"*|"7") usage ;;
+                    "${gui_ops[8]}"*|"8") exit ;;
                     *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;
@@ -316,4 +263,4 @@ main() {
     done
 }
 
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "${@}"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && "${sbn}" "${@}"
