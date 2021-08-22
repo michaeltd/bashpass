@@ -95,11 +95,21 @@ readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
 	 mutex="${dbsd}/.${bndb}.mutex"
 
-source "${scsd}/sqlite3.src"
+# source "${scsd}/sqlite3.src" || exit $?
+# source "${scsd}/functions.src" || exit $?
+# source "${scsd}/${usrintrfce}.src" || exit $?
 
-source "${scsd}/functions.src"
+readonly -a srcsfs=( 
+    "${scsd}/sqlite3.src" 
+    "${scsd}/functions.src" 
+    "${scsd}/${usrintrfce}.src"
+)
 
-source "${scsd}/${usrintrfce}.src"
+for i in ${srcsfs[@]}; do
+    source $i || exit $?
+done
+
+# [[ "${usrintrfce}" == "yad" ]] && { die "No yad avail yet, check back SOON(tm)!"; exit $?; }
 
 create() {
     local maxid="$(maxid)" dm em un pw cm
@@ -159,6 +169,7 @@ delete() {
 
 importcsv() {
     local maxid csvf errlvl
+
     maxid="$(maxid)"
 
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
@@ -203,7 +214,6 @@ bashpass() {
     check_prereqs || return $?
     check_mutex || return $?
     check_decrypt || return $?
-
     # Have password $DB, $tf and $mutex so from now on, instead
     # of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $?
@@ -245,15 +255,15 @@ bashpass() {
         case "${errlvl}" in
             "0"|"${DIALOG_OK}")
                 case "$(cat "${tf}")" in
-                    "${gui_ops[0]}"*|"0") create ;;
-                    "${gui_ops[1]}"*|"1") retrieve ;;
-                    "${gui_ops[2]}"*|"2") update ;;
-                    "${gui_ops[3]}"*|"3") delete ;;
-                    "${gui_ops[4]}"*|"4") importcsv ;;
-                    "${gui_ops[5]}"*|"5") exportcsv ;;
-                    "${gui_ops[6]}"*|"6") "${sql3[@]}" ;;
-                    "${gui_ops[7]}"*|"7") usage ;;
-                    "${gui_ops[8]}"*|"8") exit ;;
+                    "${gui_ops[0]}"|"0") create ;;
+                    "${gui_ops[1]}"|"1") retrieve ;;
+                    "${gui_ops[2]}"|"2") update ;;
+                    "${gui_ops[3]}"|"3") delete ;;
+                    "${gui_ops[4]}"|"4") importcsv ;;
+                    "${gui_ops[5]}"|"5") exportcsv ;;
+                    "${gui_ops[6]}"|"6") "${sql3[@]}" ;;
+                    "${gui_ops[7]}"|"7") usage ;;
+                    "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;

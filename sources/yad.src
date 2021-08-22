@@ -6,13 +6,51 @@
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
 
 bashpass_yad(){
+
+#     Response=$(yad --width=500 --height=400 \
+#                --center \
+#                --list \
+#                --title "Welcome to PINA" \
+#                --button="Help:yad --text-info \
+#                			  --center \
+#           			  --width=600 --height=400 \
+#           			  --title PINA Help \
+#           			  --text \nPress [Ok] when done\n \
+#           			  --text-align=center \
+#           			  --buttons-layout=center \
+#           			  --button=gtk-ok \
+#           			  --filename=hlp.mainmenu" \
+#                --text-align=center \
+#                --buttons-layout=center \
+#                --button=gtk-ok \
+#                --button=gtk-cancel \
+#                --text="\nPlease make your selection\n" --column "-" --column "Options" \
+#                1 "Check your list" \
+#                2 "Add items to your list" \
+#                3 "Delete items from your list" \
+#                4 "Save PINA files to a device" \
+#                5 "Update saved configuration files" \
+#                6 "Manually edit your list" \
+#                7 "Edit preferences" \
+#                8 "Run your PINA script in your new system")
+# exitstatus=$?
+# # Test all output - there are three possible values
+# echo "exit status = $exitstatus"                # 1) Exit status is numeric, 0 to 255 - 0 is Yes/Ok 1 is No/Cancel
+# Response=$(echo "$Selected" | cut -d'|' -f1)    # 2) Response is the menu item number selected
+# Result=$(echo "$Selected" | cut -d'|' -f2)      # 3) Result is the menu item description selected
+# echo -e "Response = $Response\Result = $Result" # Response and Result conform to my Listgen convention
+# read -p "Debug"                                 # Note that Response and Result will be empty if exitstatus is not 0
+    
     OFS=$IFS IFS=$'\|'
     "${DIALOG}" "--height=$H" "--width=$W" "--center" "--list" \
 		"--title=Select action" "--no-headers" \
 		"--column=Option" "--column=SDesc" \
 		"--column=LDesc" ${gui_menu} > "${tf}"
     errlvl=$?
+    local -a resp=( $(cat ${tf}) )
     IFS="${OFS}"
+    local selection="${resp[0]}"
+    echo "${selection}" > "${tf}"
     return $errlvl
 }
 
