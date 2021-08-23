@@ -91,13 +91,10 @@ readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
 	 rcm=( "sqlite3" "-line" "${db}" ) \
 	 icm=( "sqlite3" "-csv" "${db}" ) \
 	 sql3=( "sqlite3" "${db}" )
+
 # Temp files
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
 	 mutex="${dbsd}/.${bndb}.mutex"
-
-# source "${scsd}/sqlite3.src" || exit $?
-# source "${scsd}/functions.src" || exit $?
-# source "${scsd}/${usrintrfce}.src" || exit $?
 
 readonly -a srcsfs=( 
     "${scsd}/sqlite3.src" 
@@ -109,89 +106,58 @@ for i in ${srcsfs[@]}; do
     source $i || exit $?
 done
 
-# [[ "${usrintrfce}" == "yad" ]] && { die "No yad avail yet, check back SOON(tm)!"; exit $?; }
-
 create() {
     local maxid="$(maxid)" dm em un pw cm
-
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-
     source "${tf}"
-
     [[ -z "${pw}" ]] && pw="$(gpw "16")"
-
     "${sql3[@]}" "$(insert_into "${dm}" "${em}" "${un}" "${pw}" "${cm}")"
-
     "${rcm[@]}" "$(select_newrecs "${maxid}")" > "${tf}"
-
     "results_${usrintrfce}"
 }
 
 retrieve() {
     local dm rc pw
-
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-
     source "${tf}"
-
-    # Record Set
     "${rcm[@]}" "$(select_dm_like "${dm}")" > "${tf}"
-
     "results_${usrintrfce}"
 }
 
 update() {
     local id errlvl pw
-
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-
     source "${tf}"
-
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
     "${dcm[@]}" "$(update_pw "${pw}" "${id}")"
     "${rcm[@]}" "$(select_id_eq "${id}")" > "${tf}"
-
     "results_${usrintrfce}"
 }
 
 delete() {
     local errlvl id
-
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-
     source "${tf}"
-
     "${dcm[@]}" "$(delete_id_eq "${id}")"
-
     "message_${usrintrfce}"
 }
 
 importcsv() {
     local maxid csvf errlvl
-
     maxid="$(maxid)"
-
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-
     source "${tf}"
-    
     "${icm[@]}" "$(importcsv_sql "${csvf}")"
-
     "${rcm[@]}" "$(select_newrecs "${maxid}")" > "${tf}"
-
     "results_${usrintrfce}"
 }
 
 exportcsv(){
     local csvf errlvl
-
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-
     source "${tf}"
-    
     "${icm[@]}" "$(select_all)" > "${csvf}"
-
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
     elif [[ -x "$(type -P "${VISUAL}")"  ]]; then
@@ -208,15 +174,13 @@ usage() {
 }
 
 bashpass() {
-
     local OFS="${IFS}" errlvl=0 usrinpt=''
 
     check_prereqs || return $?
     check_mutex || return $?
     check_decrypt || return $?
-    # Have password $DB, $tf and $mutex so from now on, instead
-    # of exiting, we're do_quit and trap for propper housekeeping.
-    check_sql || do_quit $?
+    read_dbflds || do_quit $? # Have password $DB, $tf and $mutex so from now on, instead of exiting, we're do_quit and trap for propper housekeeping.
+    check_sql || do_quit $? 
 
     trap 'do_quit ${SIG_NONE}' "${SIG_NONE}"
     trap 'do_quit ${SIG_HUP}' "${SIG_HUP}"

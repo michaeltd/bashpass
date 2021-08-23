@@ -1,8 +1,15 @@
 --
 --
--- Initialize a demo SQLite3 db. usage: sqlite3 git.db3 < create.sql
+-- Initialize a demo SQLite3 db. usage: sqlite3 ../databases/sample < ./create.sql
 
-CREATE TABLE IF NOT EXISTS ACCOUNTS (DM NCHAR(100) NOT NULL, EM NCHAR(100) NOT NULL, UN NCHAR(100) NOT NULL, PW NCHAR(256) NOT NULL, CM NCHAR(100), PRIMARY KEY (DM, EM));
+CREATE TABLE IF NOT EXISTS ACCOUNTS (
+       DM NCHAR(100) NOT NULL,
+       EM NCHAR(100) NOT NULL,
+       UN NCHAR(100) NOT NULL,
+       PW NCHAR(256) NOT NULL,
+       CM NCHAR(100),
+       PRIMARY KEY (DM, EM)
+);
 
 INSERT OR REPLACE INTO ACCOUNTS VALUES('https://facebook.com/','adummy@email.com' ,'emanresu','o6vA\*2HSt4a_h!]','foobuzzbar');
 INSERT OR REPLACE INTO ACCOUNTS VALUES('https://www.google.com/','mail@gmail.com','googleuser','LL2Pto!vR&d!Y&I@','fizzbuzzbar');

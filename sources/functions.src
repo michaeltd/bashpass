@@ -3,15 +3,6 @@
 # Pick up right editor syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-do_quit() {
-    # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    "${sql3[@]}" "VACUUM;"
-    # Upon successfull encryption ONLY shred files
-    "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
-    read -rp "Return to continue ... "
-    exit "${1:-0}"
-}
-
 die() {
     local -r msg="${*}"
     local -r ttl="${sbn}: Error!"
@@ -27,6 +18,15 @@ die() {
         echo -ne "${ttl}\n${msg}\n" >&2
     fi
     return 1
+}
+
+do_quit() {
+    # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
+    "${sql3[@]}" "VACUUM;"
+    # Upon successfull encryption ONLY shred files
+    "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
+    read -rp "Return to continue ... "
+    exit "${1:-0}"
 }
 
 check_prereqs(){
@@ -117,8 +117,4 @@ brl() {
 
 brlzen(){
     echo "$(sqlite3 -separator " " ${db} "$(sql_brlzen)")"
-}
-
-brlyad(){
-    echo "$(sqlite3 -separator " " ${db} "$(sql_brlyad)")"
 }

@@ -18,21 +18,27 @@ bashpass_zenity(){
 
 create_zenity() {
     local errlvl cnt=0
-    "${DIALOG}" "--height=$H" "--width=$W" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-entry=Comment" > "${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" \
+		"--forms" "--separator=," \
+		"--add-entry=Domain" "--add-entry=Email" \
+		"--add-entry=Uname" "--add-password=Password" \
+		"--add-entry=Comment" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     local -r vals="$(cat "${tf}")"
-    OFS=$IFS IFS=,
+    OFS="${IFS}" IFS=,
     for i in $vals; do
 	arv[((cnt++))]="$i"
     done
-    IFS=$OFS
+    IFS="${OFS}"
     echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\ncm=\"${arv[4]}\"\n" > "${tf}"
 }
 
 retrieve_zenity() {
     local dm errlvl
-    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" \
+		"--text=Enter domain to look for (empty for All):" \
+		"--entry" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
     (( errlvl != DIALOG_OK )) && return "${errlvl}"
     echo -ne "dm=\"${dm}\"" > "${tf}"
@@ -40,13 +46,18 @@ retrieve_zenity() {
 
 update_zenity() {
     local id errlvl pw
-    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" \
+		"--text=Select an ID to update:" "--list" "--radiolist" \
+		"--column" "Update" "--column" "ID" "--column" "Domain" \
+		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
 
-    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" > "${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" \
+		"--text=Enter a password or a password length (8-64) or empty for auto (max length): " \
+		"--entry" > "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -57,7 +68,10 @@ update_zenity() {
 
 delete_zenity() {
     local id errlvl
-    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" \
+		"--text=Select an ID to delete:" "--list" "--radiolist" \
+		"--column" "Update" "--column" "ID" "--column" "Domain" \
+		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
@@ -67,7 +81,8 @@ delete_zenity() {
 
 importcsv_zenity() {
     local errlvl csvf
-    "${DIALOG}" "--height=$W" "--width=$W" "--title=Select a csv file:" "--file-selection" > "${tf}"
+    "${DIALOG}" "--height=$W" "--width=$W" "--title=Select a csv file:" \
+		"--file-selection" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     csvf="$(cat "${tf}")"
@@ -81,13 +96,16 @@ exportcsv_zenity() {
 
 results_zenity(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" "--height=$W" "--width=$W" "--text-info" "--title=${bngpgf}" "--filename=${tf}"
+    "${DIALOG}" "--height=$W" "--width=$W" "--text-info" \
+		"--title=${bngpgf}" "--filename=${tf}"
 }
 
 message_zenity(){
-    "${DIALOG}" "--info" "--no-wrap" "--title=${bngpgf}" "--text=Account #${id} deleted successfully.\nNo errors reported."
+    "${DIALOG}" "--info" "--no-wrap" "--title=${bngpgf}" \
+		"--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
 usage_zenity() {
-    "${DIALOG}" "--height=$H" "--width=$W" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--info" \
+		"--title=Help screen" "--text=${gui_hmsg[*]}"
 }

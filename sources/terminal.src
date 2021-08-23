@@ -66,7 +66,7 @@ update_terminal(){
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
 
-    echo -ne "Enter a password or a password length (8-64) or empty for auto (max length): "
+    echo -ne "Enter a password or password length (8-64) or empty for auto: "
     read -r pw || return $?
 
     echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"

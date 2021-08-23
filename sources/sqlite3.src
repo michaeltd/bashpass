@@ -1,28 +1,19 @@
 #!/bin/bash
 
-# table and field names
-declare idf="rowid" act="ACCOUNTS" dmf="DM" emf="EM" unf="UN" pwf="PW" cmf="CM"
-
-# reread_flds(){
-#     declare -a tbls=( $(sqlite3 "${db}" ".tables") )
-#     # echo "tables: ${tbls[@]}"
-#     declare schm="$(sqlite3 "${db}" ".schema ${tbls[0]}")"
-#     # echo "schema: ${schm}"
-#     declare -a brkdwn=("CREATE"	"TABLE"	"IF" "NOT" "NULL" "EXISTS" "NCHAR(100)" "NCHAR(256)" "PRIMARY" "KEY" "(" ")" "," ";")
-#     # echo "breakdown: ${brkdwn[@]}"
-#     flds="${schm}"
-#     for i in ${brkdwn[@]}; do
-# 	flds="${flds//${i}}"
-# 	flds="${flds//${i,,}}"
-# 	flds="${flds//${i,}}"
-# 	flds="${flds//${i^}}"
-#     done
-#     # echo "flds: ${flds}"
-#     declare -ar arrflds=( ${flds} )
-#     # echo "arrflds: ${arrflds[@]}"
-#     declare -x act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
-#     # echo "act=${arrflds[0]} dmf=${arrflds[1]} emf=${arrflds[2]} unf=${arrflds[3]}  pwf=${arrflds[4]} cmf=${arrflds[5]}"
-# }
+read_dbflds(){
+    declare -a tbls=($(sqlite3 "${db}" ".tables"))
+    declare schm="$(sqlite3 "${db}" ".schema ${tbls[0]}")"
+    declare -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
+    for i in ${brkdwn[@]}; do
+	schm="${schm//${i^^}}"
+	schm="${schm//${i^}}"
+	schm="${schm//${i,,}}"
+	schm="${schm//${i,}}"
+    done
+    declare -a arrflds=( ${schm} )
+    export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
+    unset tbls schm brkdwn arrflds
+}
 
 sql_check(){
     echo -ne "SELECT * FROM ${act} ORDER BY ${idf} ASC;"
@@ -45,10 +36,6 @@ sql_brl(){
 }
 
 sql_brlzen(){
-    echo -ne "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;"
-}
-
-sql_brlyad(){
     echo -ne "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;"
 }
 
@@ -81,5 +68,5 @@ importcsv_sql(){
 }
 
 select_all(){
-    echo -ne "SELECT ${idf} AS ID,* FROM ${act} ORDER BY ${idf} ASC;"
+    echo -ne "SELECT * FROM ${act} ORDER BY ${idf} ASC;"
 }

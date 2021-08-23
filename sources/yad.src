@@ -6,41 +6,6 @@
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
 
 bashpass_yad(){
-
-#     Response=$(yad --width=500 --height=400 \
-#                --center \
-#                --list \
-#                --title "Welcome to PINA" \
-#                --button="Help:yad --text-info \
-#                			  --center \
-#           			  --width=600 --height=400 \
-#           			  --title PINA Help \
-#           			  --text \nPress [Ok] when done\n \
-#           			  --text-align=center \
-#           			  --buttons-layout=center \
-#           			  --button=gtk-ok \
-#           			  --filename=hlp.mainmenu" \
-#                --text-align=center \
-#                --buttons-layout=center \
-#                --button=gtk-ok \
-#                --button=gtk-cancel \
-#                --text="\nPlease make your selection\n" --column "-" --column "Options" \
-#                1 "Check your list" \
-#                2 "Add items to your list" \
-#                3 "Delete items from your list" \
-#                4 "Save PINA files to a device" \
-#                5 "Update saved configuration files" \
-#                6 "Manually edit your list" \
-#                7 "Edit preferences" \
-#                8 "Run your PINA script in your new system")
-# exitstatus=$?
-# # Test all output - there are three possible values
-# echo "exit status = $exitstatus"                # 1) Exit status is numeric, 0 to 255 - 0 is Yes/Ok 1 is No/Cancel
-# Response=$(echo "$Selected" | cut -d'|' -f1)    # 2) Response is the menu item number selected
-# Result=$(echo "$Selected" | cut -d'|' -f2)      # 3) Result is the menu item description selected
-# echo -e "Response = $Response\Result = $Result" # Response and Result conform to my Listgen convention
-# read -p "Debug"                                 # Note that Response and Result will be empty if exitstatus is not 0
-    
     OFS=$IFS IFS=$'\|'
     "${DIALOG}" "--height=$H" "--width=$W" "--center" "--list" \
 		"--title=Select action" "--no-headers" \
@@ -58,35 +23,44 @@ create_yad() {
     local errlvl cnt=0
     "${DIALOG}" "--height=$H" "--width=$W" "--center" "--form" "--separator=," \
 		"--field=Domain" "--field=Email" "--field=Uname" \
- 		"--field=Password" "--field=Comment" > "${tf}"
+ 		"--field=Password:H" "--field=Comment" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     local -r vals="$(cat "${tf}")"
-    OFS=$IFS IFS=,
+    OFS="${IFS}" IFS=,
     for i in $vals; do
 	arv[((cnt++))]="$i"
     done
-    IFS=$OFS
+    IFS="${OFS}"
     echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\ncm=\"${arv[4]}\"\n" > "${tf}"
 }
 
 retrieve_yad() {
     local dm errlvl
-    "${DIALOG}" "--center" "--title=${bngpgf}" "--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
+    "${DIALOG}" "--center" "--title=${bngpgf}" \
+		"--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
     (( errlvl != DIALOG_OK )) && return "${errlvl}"
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_yad() {
-    local id errlvl pw
-    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlyad) > "${tf}"
-    errlvl=$? id="$(cat "${tf}")"
+    local id errlvl pw rs
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" \
+		"--title=${bngpgf}" "--text=Select an ID to update:" \
+		"--list" "--radiolist" \
+		"--column" "Update" "--column" "ID" "--column" "Domain" \
+		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    errlvl=$? OFS="${IFS}" IFS=$'\|'
+    local rs=( $(cat ${tf}) )
+    IFS="${OFS}" id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
 
-    "${DIALOG}" --height=$H --width=$W --title="${bngpgf}" --text="Enter a password or a password length (8-64) or empty for auto (max length): " --entry-text="" --entry > "${tf}"
+    "${DIALOG}" "--center" "--title=${bngpgf}" \
+		"--text=Enter a password or a password length (8-64) or empty for auto (max length): " \
+		--entry-text="" "--entry" > "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -96,18 +70,25 @@ update_yad() {
 }
 
 delete_yad() {
-    local id errlvl
-    "${DIALOG}" "--height=$H" "--width=$W" "--title=${bngpgf}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" $(brlyad) > "${tf}"
-    errlvl=$? id="$(cat "${tf}")"
+    local id errlvl rs
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" \
+		"--title=${bngpgf}" "--text=Select an ID to delete:" \
+		"--list" "--radiolist" \
+		"--column" "Update" "--column" "ID" "--column" "Domain" \
+		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    errlvl=$? OFS="${IFS}" IFS=$'\|'
+    local rs=( $(cat ${tf}) )
+    IFS="${OFS}" id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
     echo -ne "id=\"${id}\"" > "${tf}"
 }
 
-importcsv_yad() {
+csv_yad(){
     local errlvl csvf
-    "${DIALOG}" "--width=$W" "--height=$H" "--text-info" "--center" "--title" "Select a csv file:" "--text" "\nPress [Ok] to continue, or [Cancel] to return to menu\n" "--button=gtk-ok" "--button=gtk-cancel" "--editable" "--wrap" "--filename=ProcessList" > "${tf}"
+    "${DIALOG}" "--center" "--title" "Select a csv file:" \
+		"--file" "--file-name=${1:-${sdn}/examples}" "${2}" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     csvf="$(cat "${tf}")"
@@ -115,19 +96,25 @@ importcsv_yad() {
     echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
 }
 
+importcsv_yad() {
+    csv_yad "${sdn}/examples/import.csv"
+}
+
 exportcsv_yad() {
-    importcsv_yad
+    csv_yad "${sdn}/examples/export.csv" "--save"
 }
 
 results_yad(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--text-info" "--title=${bngpgf}" "--filename=${tf}"
+    "${DIALOG}" "--height=$H" "--width=$W" "--center" \
+		"--text-info" "--title=${bngpgf}" "--filename=${tf}"
 }
 
 message_yad(){
-    "${DIALOG}" "--center" "--info" "--title=${bngpgf}" "--text=Account #${id} deleted successfully.\nNo errors reported."
+    "${DIALOG}" "--center" "--info" "--title=${bngpgf}" \
+		"--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
 usage_yad() {
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
+    "${DIALOG}" "--center" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
 }

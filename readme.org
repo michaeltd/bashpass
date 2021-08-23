@@ -172,26 +172,24 @@ password generator, storage and reference for the terminal and/or X.
    Backup never hurt nobody [+.-]
 
 * TO-DOS [3/3] [100%]
-
-** ✔ Encryption
+** DONE ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
    Add pgp encryption
-
-** ✔ Clipboard
+** DONE ✔ Clipboard
    CLOSED: [2019-11-27 Wed 02:21]
    Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pasteable with middle mouse button), with it's trailing newline ('\n') removed.
-
-** ✔ Modular UI [2/2] [100%]
+** DONE ✔ Modular UI [3/3] [100%]
    CLOSED: [2019-08-22 Thu 01:43]
    Depending on the environment.
-
-*** ✔ GUI
+*** DONE ✔ GUI
     CLOSED: [2019-08-22 Thu 01:44]
     Based on availability
-
-*** ✔ GUI/TUI
+*** DONE ✔ GUI/TUI
     CLOSED: [2019-08-22 Thu 01:44]
     Based on X
+*** DONE ✔ zenity/yad support
+    CLOSED: [2021-08-22 Sun 01:45]
+    Done
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
   Typos, syntactic and grammar welcome, other than that all PR's will be reviewed.
