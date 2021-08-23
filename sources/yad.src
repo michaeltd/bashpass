@@ -15,12 +15,20 @@ declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
 	gct_ops=( ${geometry_ops[@]} "${center_op}" "${title_op}" ) \
 	ct_ops=( "${center_op}" "${title_op}" )
 
+declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-headers" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
+	create_ops=( "${gct_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password:H" "--field=Comment" ) \
+	retrieve_ops=( "${ct_ops[@]}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
+	update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
+	password_ops=( "${ct_ops[@]}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" "--hide-text" ) \
+	delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
+	csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" ) \
+	results_ops=( "${gct_ops[@]}" "--text-info" ) \
+	message_ops=( "${ct_ops[@]}" "--info"  ) \
+	usage_ops=( "${center_op}" "--info" "--title=Help screen" )
+
 bashpass_yad(){
     OFS=$IFS IFS=$'\|'
-    "${DIALOG}" "${gc_ops[@]}" "--list" \
-		"--title=Select action" "--no-headers" \
-		"--column=Option" "--column=SDesc" \
-		"--column=LDesc" ${gui_menu} > "${tf}"
+    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
     errlvl=$?
     local -a resp=( $(cat ${tf}) )
     IFS="${OFS}"
@@ -31,9 +39,7 @@ bashpass_yad(){
 
 create_yad() {
     local errlvl cnt=0
-    "${DIALOG}" "${gct_ops[@]}" "--form" "--separator=," \
-		"--field=Domain" "--field=Email" "--field=Uname" \
- 		"--field=Password:H" "--field=Comment" > "${tf}"
+    "${DIALOG}" "${create_ops[@]}" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     local -r vals="$(cat "${tf}")"
@@ -47,8 +53,7 @@ create_yad() {
 
 retrieve_yad() {
     local dm errlvl
-    "${DIALOG}" "${ct_ops[@]}" \
-		"--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
+    "${DIALOG}" "${retrieve_ops[@]}" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
     (( errlvl != DIALOG_OK )) && return "${errlvl}"
     echo -ne "dm=\"${dm}\"" > "${tf}"
@@ -56,10 +61,7 @@ retrieve_yad() {
 
 update_yad() {
     local id errlvl pw rs
-    "${DIALOG}" "${gct_ops[@]}" "--text=Select an ID to update:" \
-		"--list" "--radiolist" \
-		"--column" "Update" "--column" "ID" "--column" "Domain" \
-		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
     errlvl=$? OFS="${IFS}" IFS=$'\|'
     local rs=( $(cat ${tf}) )
     IFS="${OFS}" id="${rs[1]}"
@@ -67,7 +69,7 @@ update_yad() {
 	return 1
     fi
 
-    "${DIALOG}" "${ct_ops[@]}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" > "${tf}"
+    "${DIALOG}" "${password_ops[@]}" > "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -78,10 +80,7 @@ update_yad() {
 
 delete_yad() {
     local id errlvl rs
-    "${DIALOG}" "${gct_ops[@]}" "--text=Select an ID to delete:" \
-		"--list" "--radiolist" \
-		"--column" "Update" "--column" "ID" "--column" "Domain" \
-		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
+    "${DIALOG}" "${delete_ops[@]}" $(brlzen) > "${tf}"
     errlvl=$? OFS="${IFS}" IFS=$'\|'
     local rs=( $(cat ${tf}) )
     IFS="${OFS}" id="${rs[1]}"
@@ -93,8 +92,7 @@ delete_yad() {
 
 csv_yad(){
     local errlvl csvf
-    "${DIALOG}" "${center_op}" "--title" "Select a csv file:" \
-		"--file" "--file-name=${1:-${sdn}/examples}" "${2}" > "${tf}"
+    "${DIALOG}" "${csv_ops[@]}" "--file-name=${1:-${sdn}/examples}" "${2}" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     csvf="$(cat "${tf}")"
@@ -112,13 +110,13 @@ exportcsv_yad() {
 
 results_yad(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" "${gct_ops[@]}" "--text-info" "--filename=${tf}"
+    "${DIALOG}" "${results_ops[@]}" "--filename=${tf}"
 }
 
 message_yad(){
-    "${DIALOG}" "${ct_ops[@]}" "--info" "--text=Account #${id} deleted successfully.\nNo errors reported."
+    "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
 usage_yad() {
-    "${DIALOG}" "${center_op}" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
+    "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }
