@@ -3,11 +3,21 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+declare -rx center_op="--center" \
+	title_op="--title=${bngpgf}"
+
+declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
+	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+
+declare -arx geometry_ops=( "--height=$H" "--width=$W" )
+
+declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
+	gct_ops=( ${geometry_ops[@]} "${center_op}" "${title_op}" ) \
+	ct_ops=( "${center_op}" "${title_op}" )
 
 bashpass_yad(){
     OFS=$IFS IFS=$'\|'
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--list" \
+    "${DIALOG}" "${gc_ops[@]}" "--list" \
 		"--title=Select action" "--no-headers" \
 		"--column=Option" "--column=SDesc" \
 		"--column=LDesc" ${gui_menu} > "${tf}"
@@ -21,7 +31,7 @@ bashpass_yad(){
 
 create_yad() {
     local errlvl cnt=0
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" "--form" "--separator=," \
+    "${DIALOG}" "${gct_ops[@]}" "--form" "--separator=," \
 		"--field=Domain" "--field=Email" "--field=Uname" \
  		"--field=Password:H" "--field=Comment" > "${tf}"
     errlvl=$?
@@ -37,7 +47,7 @@ create_yad() {
 
 retrieve_yad() {
     local dm errlvl
-    "${DIALOG}" "--center" "--title=${bngpgf}" \
+    "${DIALOG}" "${ct_ops[@]}" \
 		"--text=Enter domain to look for (empty for All):" "--entry" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
     (( errlvl != DIALOG_OK )) && return "${errlvl}"
@@ -46,8 +56,7 @@ retrieve_yad() {
 
 update_yad() {
     local id errlvl pw rs
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" \
-		"--title=${bngpgf}" "--text=Select an ID to update:" \
+    "${DIALOG}" "${gct_ops[@]}" "--text=Select an ID to update:" \
 		"--list" "--radiolist" \
 		"--column" "Update" "--column" "ID" "--column" "Domain" \
 		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
@@ -58,9 +67,7 @@ update_yad() {
 	return 1
     fi
 
-    "${DIALOG}" "--center" "--title=${bngpgf}" \
-		"--text=Enter a password or a password length (8-64) or empty for auto (max length): " \
-		--entry-text="" "--entry" > "${tf}"
+    "${DIALOG}" "${ct_ops[@]}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" > "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -71,8 +78,7 @@ update_yad() {
 
 delete_yad() {
     local id errlvl rs
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" \
-		"--title=${bngpgf}" "--text=Select an ID to delete:" \
+    "${DIALOG}" "${gct_ops[@]}" "--text=Select an ID to delete:" \
 		"--list" "--radiolist" \
 		"--column" "Update" "--column" "ID" "--column" "Domain" \
 		"--column" "Email" "--column" "UName" $(brlzen) > "${tf}"
@@ -87,7 +93,7 @@ delete_yad() {
 
 csv_yad(){
     local errlvl csvf
-    "${DIALOG}" "--center" "--title" "Select a csv file:" \
+    "${DIALOG}" "${center_op}" "--title" "Select a csv file:" \
 		"--file" "--file-name=${1:-${sdn}/examples}" "${2}" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
@@ -106,15 +112,13 @@ exportcsv_yad() {
 
 results_yad(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" "--height=$H" "--width=$W" "--center" \
-		"--text-info" "--title=${bngpgf}" "--filename=${tf}"
+    "${DIALOG}" "${gct_ops[@]}" "--text-info" "--filename=${tf}"
 }
 
 message_yad(){
-    "${DIALOG}" "--center" "--info" "--title=${bngpgf}" \
-		"--text=Account #${id} deleted successfully.\nNo errors reported."
+    "${DIALOG}" "${ct_ops[@]}" "--info" "--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
 usage_yad() {
-    "${DIALOG}" "--center" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
+    "${DIALOG}" "${center_op}" "--info" "--title=Help screen" "--text=${gui_hmsg[*]}"
 }
