@@ -55,16 +55,16 @@ elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
 else # -z USERINTRFCE etc
     # ... or pick a default available UI
     if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
-	declare -xr DIALOG="$(type -P yad)" L="0" C="0"
+	declare -xr DIALOG="$(type -P yad)"
 	readonly usrintrfce="yad"
     elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
-	declare -xr DIALOG="$(type -P zenity)" L="0" C="0"
+	declare -xr DIALOG="$(type -P zenity)"
 	readonly usrintrfce="zenity"
     elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	declare -xr DIALOG="$(type -P Xdialog)" L="0" C="0"
+	declare -xr DIALOG="$(type -P Xdialog)"
 	readonly usrintrfce="Xdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-	declare -xr DIALOG="$(type -P dialog)" L="0" C="0"
+	declare -xr DIALOG="$(type -P dialog)"
 	readonly usrintrfce="dialog"
     else
 	unset DIALOG
@@ -82,11 +82,13 @@ else
     readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
 fi
 
-# gpg & shred commands
-readonly -a gpgc=( "gpg" "--batch" "--yes" "--default-recipient-self" "--output" )
+# gpg & shred commands (Thanks Dylan)
+type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
+type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
+readonly -a gpgc=( "${gpg}" "--batch" "--yes" "--default-recipient-self" "--output" )
 type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
 
-# SQLite
+# SQLite commands
 readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
 	 rcm=( "sqlite3" "-line" "${db}" ) \
 	 icm=( "sqlite3" "-csv" "${db}" ) \
@@ -96,6 +98,7 @@ readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
 	 mutex="${dbsd}/.${bndb}.mutex"
 
+# Sources to use
 readonly -a srcsfs=( 
     "${scsd}/sqlite3.src" 
     "${scsd}/functions.src" 
@@ -103,20 +106,25 @@ readonly -a srcsfs=(
 )
 
 for i in ${srcsfs[@]}; do
-    source $i || exit $?
+    source "${i}" || exit $?
 done
 
 create() {
-    local maxid="$(maxid)" dm em un pw cm
+    local maxid="$(maxid)" dm em un pw pw1 cm
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
-    [[ -z "${pw}" ]] && pw="$(gpw "16")"
+    if [[ "${pw}" != "${pw1}" ]]; then
+	die "Password missmatch"
+	return $?
+    fi
+    [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
+    [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw 16)"
     "${sql3[@]}" "$(insert_into "${dm}" "${em}" "${un}" "${pw}" "${cm}")"
     "${rcm[@]}" "$(select_newrecs "${maxid}")" > "${tf}"
     "results_${usrintrfce}"
 }
 
-retrieve() {
+search() {
     local dm rc pw
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
@@ -124,12 +132,20 @@ retrieve() {
     "results_${usrintrfce}"
 }
 
+preview(){
+    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+}
+
 update() {
-    local id errlvl pw
+    local id errlvl pw pw1
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
+    if [[ "${pw}" != "${pw1}" ]]; then
+	die "Password missmatch"
+	return $?
+    fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
-    [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw)"
+    [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(gpw 16)"
     "${dcm[@]}" "$(update_pw "${pw}" "${id}")"
     "${rcm[@]}" "$(select_id_eq "${id}")" > "${tf}"
     "results_${usrintrfce}"
@@ -174,14 +190,6 @@ usage() {
 }
 
 bashpass() {
-    local OFS="${IFS}" errlvl=0 usrinpt=''
-
-    check_prereqs || return $?
-    check_mutex || return $?
-    check_decrypt || return $?
-    read_dbflds || do_quit $? # Have password $DB, $tf and $mutex so from now on, instead of exiting, we're do_quit and trap for propper housekeeping.
-    check_sql || do_quit $? 
-
     trap 'do_quit ${SIG_NONE}' "${SIG_NONE}"
     trap 'do_quit ${SIG_HUP}' "${SIG_HUP}"
     trap 'do_quit ${SIG_INT}' "${SIG_INT}"
@@ -189,11 +197,19 @@ bashpass() {
     trap 'do_quit ${SIG_KILL}' "${SIG_KILL}"
     trap 'do_quit ${SIG_TERM}' "${SIG_TERM}"
     
+    local OFS="${IFS}" errlvl=0 usrinpt=''
+
+    check_prereqs || return $?
+    check_mutex || return $?
+    check_decrypt || return $?
+    read_dbflds || do_quit $? # Have password $db, $tf and $mutex so from now on, instead of exiting, we're do_quit and trap for propper housekeeping.
+    check_sql || do_quit $? 
+
     # Build menus and help messages.
-    local -a tui_ops=( "${red}Create${reset}" "${green}Retrieve${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
-    local -a gui_ops=( "Create" "Retrieve" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
-    local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
-    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "preview a csv file." "start an sqlite session against ${bndb}." "show this message" "terminate this script." )
+    local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "Preview" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
+    local -a gui_ops=( "Create" "Search" "Preview" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
+    local -a sdesc=( "New entry" "Find account" "Preview all" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
+    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "preview existing accounts." "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export and preview." "start an sqlite session against ${bndb}." "show this message" "terminate this script." )
 
     local -a tui_menu=( )
     local -a tui_hmsg=( "\n${bpusage[*]}\n\n" )
@@ -220,14 +236,15 @@ bashpass() {
             "0"|"${DIALOG_OK}")
                 case "$(cat "${tf}")" in
                     "${gui_ops[0]}"|"0") create ;;
-                    "${gui_ops[1]}"|"1") retrieve ;;
-                    "${gui_ops[2]}"|"2") update ;;
-                    "${gui_ops[3]}"|"3") delete ;;
-                    "${gui_ops[4]}"|"4") importcsv ;;
-                    "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") "${sql3[@]}" ;;
-                    "${gui_ops[7]}"|"7") usage ;;
-                    "${gui_ops[8]}"|"8") exit ;;
+                    "${gui_ops[1]}"|"1") search ;;
+                    "${gui_ops[2]}"|"2") preview ;;
+                    "${gui_ops[3]}"|"3") update ;;
+                    "${gui_ops[4]}"|"4") delete ;;
+                    "${gui_ops[5]}"|"5") importcsv ;;
+                    "${gui_ops[6]}"|"6") exportcsv ;;
+                    "${gui_ops[7]}"|"7") "${sql3[@]}" ;;
+                    "${gui_ops[8]}"|"8") usage ;;
+                    "${gui_ops[9]}"|"9") exit ;;
                     *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;

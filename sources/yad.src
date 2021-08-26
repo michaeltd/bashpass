@@ -16,10 +16,12 @@ declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
 	ct_ops=( "${center_op}" "${title_op}" )
 
 declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-headers" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
-	create_ops=( "${gct_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password:H" "--field=Comment" ) \
+	create_ops=( "${gct_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password!Insert pasword or length or empty for auto:H" "--field=Password2!Insert password again.:H" "--field=Comment" ) \
 	retrieve_ops=( "${ct_ops[@]}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
+	preview_ops=( "${gct_ops[@]}" "--text=All Records" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" "--column" "Password:HD" "--column" "Comment" ) \
 	update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	password_ops=( "${ct_ops[@]}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" "--hide-text" ) \
+	password_ops=( "${ct_ops[@]}" "--text=Enter password or length/empty for auto:" "--entry" "--hide-text" ) \
+	password1_ops=( "${ct_ops[@]}" "--text=Enter password again:" "--entry" "--hide-text" ) \
 	delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" ) \
 	results_ops=( "${gct_ops[@]}" "--text-info" ) \
@@ -48,10 +50,10 @@ create_yad() {
 	arv[((cnt++))]="$i"
     done
     IFS="${OFS}"
-    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\ncm=\"${arv[4]}\"\n" > "${tf}"
+    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
 }
 
-retrieve_yad() {
+search_yad() {
     local dm errlvl
     "${DIALOG}" "${retrieve_ops[@]}" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
@@ -59,10 +61,22 @@ retrieve_yad() {
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
-update_yad() {
-    local id errlvl pw rs
-    "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
+preview_yad(){
+    local errlvl rs pw
+    "${DIALOG}" "${preview_ops[@]}" $(blyad) > "${tf}"
     errlvl=$? OFS="${IFS}" IFS=$'\|'
+    local rs=( $(cat ${tf}) )
+    IFS="${OFS}" pw="${rs[4]}"
+    if (( errlvl != DIALOG_OK )) || [[ -z "${pw}" ]]; then
+	return 1
+    fi
+    "${DIALOG}" "${ct_ops[@]}" "--text=Selected Password:" "--entry" "--entry-text=${pw}"
+}
+
+update_yad() {
+    local id errlvl pw pw1 rs
+    "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
+    errlvl=$?    OFS="${IFS}" IFS=$'\|'
     local rs=( $(cat ${tf}) )
     IFS="${OFS}" id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
@@ -75,13 +89,20 @@ update_yad() {
 	return "${errlvl}"
     fi
 
-    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
+    "${DIALOG}" "${password1_ops[@]}" > "${tf}"
+    errlvl=$? pw1="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
+    
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
 }
 
 delete_yad() {
     local id errlvl rs
+
     "${DIALOG}" "${delete_ops[@]}" $(brlzen) > "${tf}"
-    errlvl=$? OFS="${IFS}" IFS=$'\|'
+    errlvl=$?     OFS="${IFS}" IFS=$'\|'
     local rs=( $(cat ${tf}) )
     IFS="${OFS}" id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then

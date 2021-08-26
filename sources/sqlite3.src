@@ -1,8 +1,8 @@
 #!/bin/bash
 
 read_dbflds(){
-    declare -a tbls=($(sqlite3 "${db}" ".tables"))
-    declare schm="$(sqlite3 "${db}" ".schema ${tbls[0]}")"
+    declare -a tbls=($("${sql3[@]}" ".tables"))
+    declare schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
     declare -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
     for i in ${brkdwn[@]}; do
 	schm="${schm//${i^^}}"
@@ -37,6 +37,10 @@ sql_brl(){
 
 sql_brlzen(){
     echo -ne "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;"
+}
+
+sql_blyad(){
+    echo -ne "SELECT ${idf},* FROM ${act} ORDER BY ${idf} asc;"
 }
 
 insert_into(){

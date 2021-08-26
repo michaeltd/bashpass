@@ -13,15 +13,16 @@ declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
 declare -arx menu_ops=( "${geometry_ops[@]}" "--list" "--title=Select action" "--hide-header" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
-	create_ops=( "${geometry_ops[@]}" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-entry=Comment" ) \
+	create_ops=( "${geometry_ops[@]}" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-password=Password1" "--add-entry=Comment" ) \
 	retrieve_ops=( "${title_op}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
 	update_ops=( "${gt_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	password_ops=( "--title=${bngpgf}" "--text=Enter a password or a password length (8-64) or empty for auto (max length): " "--entry" "--hide-text" ) \
+	password_ops=( "--title=${bngpgf}" "--text=Enter password or length/empty for auto: " "--entry" "--hide-text" ) \
+	password1_ops=( "--title=${bngpgf}" "--text=Enter a password again: " "--entry" "--hide-text" ) \
 	delete_ops=( "${gt_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" ) \
 	results_ops=( "${gt_ops[@]}" "--text-info" ) \
 	message_ops=( "${title_op}" "--info" "--no-wrap" ) \
-	usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" ) 
+	usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
 
 bashpass_zenity(){
     OFS=$IFS IFS=$'\|'
@@ -42,7 +43,7 @@ create_zenity() {
 	arv[((cnt++))]="$i"
     done
     IFS="${OFS}"
-    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\ncm=\"${arv[4]}\"\n" > "${tf}"
+    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
 }
 
 retrieve_zenity() {
@@ -54,7 +55,7 @@ retrieve_zenity() {
 }
 
 update_zenity() {
-    local id errlvl pw
+    local id errlvl pw pw1
     "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
@@ -67,7 +68,13 @@ update_zenity() {
 	return "${errlvl}"
     fi
 
-    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
+    "${DIALOG}" "${password1_ops[@]}" > "${tf}"
+    errlvl=$? pw1="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
+
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
 }
 
 delete_zenity() {

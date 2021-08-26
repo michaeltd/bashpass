@@ -30,8 +30,8 @@ bashpass_terminal(){
 }
 
 create_terminal() {
-    local dm em un pw cm
-    while [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${pw}" || -z "${cm}" ]]; do
+    local dm em un pw pw1 cm
+    while [[ -z "${dm}" || -z "${em}" || -z "${un}" || -z "${pw}" || -z "${pw1}" || -z "${cm}" ]]; do
         if [[ -z "${dm}" ]]; then
             echo -ne "Enter a domain: (Ctrl-D to cancel) "
             read -r dm || return $?
@@ -42,39 +42,45 @@ create_terminal() {
             echo -ne "Enter a username: (Ctrl-D to cancel) "
             read -r un || return $?
         elif [[ -z "${pw}" ]]; then
-            echo -ne "Enter a password: (alpha, numeric and punctuation characters ok. No quotes, pipes or commas! Ctrl-D to cancel) "
+            echo -ne "Enter password: (alpha-numeric-punctuation or length/empty for auto Ctrl-D to cancel) "
             read -r pw || return $?
+        elif [[ -z "${pw1}" ]]; then
+            echo -ne "Enter password again:"
+            read -r pw1 || return $?
         elif [[ -z "${cm}" ]]; then
             echo -ne "Enter comment: (Ctrl-D to cancel) "
             read -r cm || return $?
         fi
     done
 
-    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\ncm=\"${cm}\"\n" > "${tf}"
+    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm}\"\n" > "${tf}"
 }
 
 retrieve_terminal(){
     local dm
-    echo -ne "Enter domain to look for (empty for All): "
+    echo -ne "Enter domain (empty for All): "
     read -r dm || return $?
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_terminal(){
-    local id pw
-    echo -ne "Select an id to update (empty to cancel): "
+    local id pw pw1
+    echo -ne "Select id to update (empty to cancel): "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
 
-    echo -ne "Enter a password or password length (8-64) or empty for auto: "
+    echo -ne "Enter password: (alpha-numeric-punctuation or length/empty for auto. Ctrl-D to cancel) "
     read -r pw || return $?
 
-    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
+    echo -ne "Enter password again: "
+    read -r pw1 || return $?
+
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\n" > "${tf}"
 }
 
 delete_terminal(){
     local id
-    echo -ne "Select an id to delete (empty to cancel): "
+    echo -ne "Select id to delete (empty to cancel): "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
     echo -ne "id=\"${id}\"" > "${tf}"
@@ -82,7 +88,7 @@ delete_terminal(){
 
 importcsv_terminal(){
     local csvf
-    echo -ne "Enter a csv file (empty to cancel): "
+    echo -ne "Enter csv file (empty to cancel): "
     read -r csvf || return $?
     [[ -z "${csvf}" ]] && return 1
     echo -ne "csvf=\"${csvf}\"" > "${tf}"

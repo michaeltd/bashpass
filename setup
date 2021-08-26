@@ -15,10 +15,14 @@ elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
 elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
     echo -en "Fatal: You need SQLite3 installed.\n" >&2
     exit 1
-elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
+elif [[ -z "$(type -P gpg 2> /dev/null)" ]] && [[ -z "$(type -P gpg2 2> /dev/null)" ]]; then
     echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2
     exit 1
 fi
+
+type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
+type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
+readonly -a gpgc=( "${gpg}" "--default-recipient-self" "--output" )
 
 if [[ -z "${1}" ]]; then
     gpgf="sample.gpg"
@@ -41,7 +45,7 @@ echo -ne " This script will:\n \
 
 if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
     sqlite3 "${fpdb}" < "${sdn}/examples/create.sql" && \
-	gpg --default-recipient-self --output "${fpgpgf}" --encrypt "${fpdb}" && \
+	"${gpgc[@]}" "${fpgpgf}" "--encrypt" "${fpdb}" && \
 	"${sdn}/bashpass" "${gpgf}" && \
 	echo -ne "From now on you'll be able to start bashpass with: bashpass ${gpgf}\n" >&2
 fi

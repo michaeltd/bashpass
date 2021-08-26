@@ -7,11 +7,35 @@
 # L=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) C=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 )) 
 declare -rx L="0" C="0"
 
+declare -arx geometry_ops=( "$L" "$C" )
+
+declare -arx bt_ops=( "--backtitle" "${bngpgf}" )
+
+declare -arx menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${geometry_ops[@]}" ) \
+	create_ops=( "${bt_ops[@]}" "--title" "Set details" "--ok-label" "Submit" "--form" "Create Form" "${geometry_ops[@]}" 0
+		     "Domain:" 1 1 "$dm" 1 10 40 0
+		     "Email:" 2 1 "$em" 2 10 40 0
+		     "User:" 3 1 "$un" 3 10 40 0
+		     "Password:" 4 1 "$pw" 4 10 40 0
+		     "Pword1:" 5 1 "$pw1" 5 10 40 0 
+		     "Comments:" 6 1 "$cm" 6 10 40 0 ) \
+	csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file:" "--fselect" "${sdn}/examples/" "${geometry_ops[@]}" )
+
+make_rlist(){
+    echo -ne "${bt_ops[@]} --title ${1^} --radiolist SelectID2${1^} ${geometry_ops[@]} 5"
+}
+
+make_msg(){
+    echo -ne "${bt_ops[@]} --title ${1^}"
+}
+
+make_box(){
+    echo -ne "${bt_ops[@]} --default-button OK --title ${2^} --${1}box ${2} ${geometry_ops[@]}"
+}
+
 bashpass_dialog(){
     OFS="${IFS}" IFS=$'\|'
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" \
-		"--item-help" "--cancel-label" "Quit" "--menu" "Menu:" \
-		"$L" "$C" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
+    "${DIALOG}" "${menu_ops[@]}" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
     errlvl=$?
     IFS="${OFS}"
     return $errlvl
@@ -22,48 +46,40 @@ bashpass_Xdialog(){
 }
 
 create_dialog() {
-    local dm em un pw cm
+    local dm em un pw pw1 cm
 
     exec 3>&1
     # Store data to $VALUES variable
-    local -a vals=($("${DIALOG}" --ok-label "Submit" \
-				--backtitle "${bngpgf}" \
-				--title "Set details" \
-				--form "Create Form" \
-				15 50 0 \
-				"Domain:"   1 1	"$dm" 	1 10 40 0 \
-				"Email:"    2 1	"$em"  	2 10 40 0 \
-				"User:"     3 1	"$un"  	3 10 40 0 \
-				"Passwd:"   4 1	"$pw" 	4 10 40 0 \
-				"Comments:" 5 1	"$cm" 	5 10 40 0 \
-				2>&1 1>&3))
+    local -a vals=($("${DIALOG}" "${create_ops[@]}" 2>&1 1>&3))
     # close fd
     exec 3>&-
 
-    echo -ne "dm=\"${vals[*]:0:1}\"\nem=\"${vals[*]:1:1}\"\nun=\"${vals[*]:2:1}\"\npw=\"${vals[*]:3:1}\"\ncm=\"${vals[*]:4}\"\n" > "${tf}"
+    echo -ne "dm=\"${vals[*]:0:1}\"\nem=\"${vals[*]:1:1}\"\nun=\"${vals[*]:2:1}\"\npw=\"${vals[*]:3:1}\"\npw1=\"${vals[*]:4:1}\"\ncm=\"${vals[*]:5}\"\n" > "${tf}"
 }
 
 create_Xdialog() {
     # --2inputsbox <text> <height> <width> <label1> <init1> <label2> <init2>
-    # --3inputsbox <text> <height> <width> <label1> <init1> <label2> <init2> <label3> <init3> 
-    local dm em un pw cm
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "domain" "--inputbox" "Enter a domain:" "${L}" "${C}" 2> "${tf}"
+    # --3inputsbox <text> <height> <width> <label1> <init1> <label2> <init2> <label3> <init3>
+    local dm em un pw pw1 cm
+    "${DIALOG}" $(make_box input domain) 2> "${tf}"
     (( $? == DIALOG_OK )) && dm=$(cat "${tf}") || return $?
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "email" "--inputbox" "Enter an email:" "${L}" "${C}" 2> "${tf}"
+    "${DIALOG}" $(make_box input email) 2> "${tf}"
     (( $? == DIALOG_OK )) && em=$(cat "${tf}") || return $?
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "username" "--inputbox" "Enter a username:" "${L}" "${C}" 2> "${tf}"
+    "${DIALOG}" $(make_box input UserName) 2> "${tf}"
     (( $? == DIALOG_OK )) && un=$(cat "${tf}") || return $?
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--passwordbox" "Enter a password: (alpha, numeric and punctuation characters ok. No single/double-quotes, pipes or commas!)" "${L}" "${C}" 2> "${tf}"
+    "${DIALOG}" $(make_box password password) 2> "${tf}"
     (( $? == DIALOG_OK )) && pw=$(cat "${tf}") || return $?
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "comment" "--inputbox" "Enter comments:" "${L}" "${C}" 2> "${tf}"
+    "${DIALOG}" $(make_box password password_again) 2> "${tf}"
+    (( $? == DIALOG_OK )) && pw1=$(cat "${tf}") || return $?
+    "${DIALOG}" $(make_box input comment) 2> "${tf}"
     (( $? == DIALOG_OK )) && cm=$(cat "${tf}") || return $?
 
-    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\ncm=\"${cm}\"\n" > "${tf}"
+    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm}\"\n" > "${tf}"
 }
 
 retrieve_dialog(){
     local dm errlvl
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "domain" "--inputbox" "Enter domain to look for (empty for All): " "${L}" "${C}" 2> "${tf}"
+    "${DIALOG}" $(make_box input Domain) 2> "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -76,21 +92,27 @@ retrieve_Xdialog(){
 }
 
 update_dialog(){
-    local id errlvl pw
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "update accout:" "--radiolist" "Select an id to update: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
+    local id errlvl pw pw1
+    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(brl) 2> "${tf}"
     errlvl=$? id="$(cat "${tf}")"
 
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
-    
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "password" "--inputbox" "Enter a password or a password length (8-64) or empty for auto (max length): " "${L}" "${C}" 2> "${tf}"
+
+    "${DIALOG}" $(make_box password password) 2> "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
     fi
 
-    echo -ne "id=\"${id}\"\npw=\"${pw}\"" > "${tf}"
+    "${DIALOG}" $(make_box password password_again) 2> "${tf}"
+    errlvl=$? pw1="$(cat "${tf}")"
+    if (( errlvl != DIALOG_OK )); then
+	return "${errlvl}"
+    fi
+
+    echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
 }
 
 update_Xdialog(){
@@ -98,7 +120,8 @@ update_Xdialog(){
 }
 
 delete_dialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "delete account:" "--radiolist" "Select an id to delete: " "${L}" "${C}" 5 $(brl) 2> "${tf}"
+    local id errlvl
+    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(brl) 2> "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
@@ -112,7 +135,7 @@ delete_Xdialog(){
 
 importcsv_dialog(){
     local errlvl csvf
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Enter a csv file:" "--fselect" "${HOME}/" "${L}" "${C}" 2> "${tf}"
+    "${DIALOG}" "${csv_ops[@]}" 2> "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     csvf="$(cat "${tf}")"
@@ -139,11 +162,11 @@ results_dialog(){
 
 results_Xdialog(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "results" "--editbox" "${tf}" "${L}" "${C}" 2> /dev/null
+    "${DIALOG}" $(make_msg "results") "--editbox" "${tf}" "${geometry_ops[@]}" 2> /dev/null
 }
 
 message_dialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "dialog" "--msgbox" "Account ID: #${id} deleted." "${L}" "${C}"
+    "${DIALOG}" $(make_msg "message") "--msgbox" "Account ID: #${id} deleted." "${geometry_ops[@]}"
 }
 
 message_Xdialog(){
@@ -151,9 +174,9 @@ message_Xdialog(){
 }
 
 usage_dialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--msgbox" "${gui_hmsg[*]}" "${L}" "${C}"
+    "${DIALOG}" $(make_msg "Help") "--msgbox" "${gui_hmsg[*]}" "${geometry_ops[@]}"
 }
 
 usage_Xdialog(){
-    "${DIALOG}" "--backtitle" "${bngpgf}" "--title" "Help" "--left" "--msgbox" "${gui_hmsg[*]}" "${L}" "${C}"
+    "${DIALOG}" $(make_msg "Help") "--left" "--msgbox" "${gui_hmsg[*]}" "${geometry_ops[@]}"
 }

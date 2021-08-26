@@ -24,7 +24,15 @@ do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
     "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
-    "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
+    # "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
+    if ! "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}"; then
+	die "Something smells fishy!"
+	exit $?
+    fi
+    local -ar f2d=( "${db}" "${tf}" "${mutex}" )
+    for i in ${f2d[@]}; do
+	${shrc[@]} "${i}";
+    done
     read -rp "Return to continue ... "
     exit "${1:-0}"
 }
@@ -36,7 +44,7 @@ check_prereqs(){
         die "You'll need bash major version no less than 4."
     elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
         die "You need SQLite3 installed."
-    elif [[ -z "$(type -P gpg 2> /dev/null)" ]]; then
+    elif [[ -z "$(type -P gpg 2> /dev/null)" ]] && [[ -z "$(type -P gpg2 2> /dev/null)" ]]; then
         die "You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
@@ -116,5 +124,11 @@ brl() {
 }
 
 brlzen(){
-    echo "$(sqlite3 -separator " " ${db} "$(sql_brlzen)")"
+    # echo "$("${sql3[@]}" "$(sql_brlzen)")"
+    echo "$(sqlite3 -separator " " $db $(sql_blzen))"
+}
+
+blyad(){
+    # echo "$("${sql3[@]}" "$(sql_blyad)")"
+    echo "$(sqlite3 -separator " " $db $(sql_blyad))"
 }
