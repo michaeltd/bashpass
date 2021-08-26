@@ -76,7 +76,7 @@ preview_yad(){
 update_yad() {
     local id errlvl pw pw1 rs
     "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
-    errlvl=$?    OFS="${IFS}" IFS=$'\|'
+    errlvl=$? OFS="${IFS}" IFS=$'\|'
     local rs=( $(cat ${tf}) )
     IFS="${OFS}" id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then

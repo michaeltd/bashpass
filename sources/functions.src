@@ -125,7 +125,7 @@ brl() {
 
 brlzen(){
     # echo "$("${sql3[@]}" "$(sql_brlzen)")"
-    echo "$(sqlite3 -separator " " $db $(sql_blzen))"
+    echo "$(sqlite3 -separator " " $db $(sql_brlzen))"
 }
 
 blyad(){

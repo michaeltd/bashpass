@@ -36,7 +36,7 @@ sql_brl(){
 }
 
 sql_brlzen(){
-    echo -ne "SELECT 'FALSE' AS STATE, ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN FROM ${act} ORDER BY ${idf} asc;"
+    echo -ne "SELECT 'FALSE' AS STATE, ${idf}, ${dmf}, ${emf}, ${unf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 sql_blyad(){

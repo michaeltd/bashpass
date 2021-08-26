@@ -206,10 +206,10 @@ bashpass() {
     check_sql || do_quit $? 
 
     # Build menus and help messages.
-    local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "Preview" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
-    local -a gui_ops=( "Create" "Search" "Preview" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
-    local -a sdesc=( "New entry" "Find account" "Preview all" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
-    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "preview existing accounts." "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export and preview." "start an sqlite session against ${bndb}." "show this message" "terminate this script." )
+    local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
+    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
+    local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
+    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export and preview." "start an sqlite session against ${bndb}." "show this message" "terminate this script." )
 
     local -a tui_menu=( )
     local -a tui_hmsg=( "\n${bpusage[*]}\n\n" )
@@ -237,14 +237,13 @@ bashpass() {
                 case "$(cat "${tf}")" in
                     "${gui_ops[0]}"|"0") create ;;
                     "${gui_ops[1]}"|"1") search ;;
-                    "${gui_ops[2]}"|"2") preview ;;
-                    "${gui_ops[3]}"|"3") update ;;
-                    "${gui_ops[4]}"|"4") delete ;;
-                    "${gui_ops[5]}"|"5") importcsv ;;
-                    "${gui_ops[6]}"|"6") exportcsv ;;
-                    "${gui_ops[7]}"|"7") "${sql3[@]}" ;;
-                    "${gui_ops[8]}"|"8") usage ;;
-                    "${gui_ops[9]}"|"9") exit ;;
+                    "${gui_ops[2]}"|"2") update ;;
+                    "${gui_ops[3]}"|"3") delete ;;
+                    "${gui_ops[4]}"|"4") importcsv ;;
+                    "${gui_ops[5]}"|"5") exportcsv ;;
+                    "${gui_ops[6]}"|"6") "${sql3[@]}" ;;
+                    "${gui_ops[7]}"|"7") usage ;;
+                    "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;
