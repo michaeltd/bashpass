@@ -41,6 +41,10 @@ bashpass_dialog(){
     return $errlvl
 }
 
+bashpass_cdialog(){
+    bashpass_dialog
+}
+
 bashpass_Xdialog(){
     bashpass_dialog
 }
@@ -55,6 +59,10 @@ create_dialog() {
     exec 3>&-
 
     echo -ne "dm=\"${vals[*]:0:1}\"\nem=\"${vals[*]:1:1}\"\nun=\"${vals[*]:2:1}\"\npw=\"${vals[*]:3:1}\"\npw1=\"${vals[*]:4:1}\"\ncm=\"${vals[*]:5}\"\n" > "${tf}"
+}
+
+create_cdialog(){
+    create_dialog
 }
 
 create_Xdialog() {
@@ -87,6 +95,10 @@ retrieve_dialog(){
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
+retrieve_cdialog(){
+    retrieve_dialog
+}
+
 retrieve_Xdialog(){
     retrieve_dialog
 }
@@ -115,6 +127,10 @@ update_dialog(){
     echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
 }
 
+update_cdialog(){
+    update_dialog
+}
+
 update_Xdialog(){
     update_dialog
 }
@@ -127,6 +143,10 @@ delete_dialog(){
 	return 1
     fi
     echo -ne "id=\"${id}\"" > "${tf}"
+}
+
+delete_cdialog(){
+    delete_dialog
 }
 
 delete_Xdialog(){
@@ -143,12 +163,20 @@ importcsv_dialog(){
     echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
 }
 
+importcsv_cdialog(){
+    importcsv_dialog
+}
+
 importcsv_Xdialog(){
     importcsv_dialog
 }
 
 exportcsv_dialog(){
     importcsv_dialog
+}
+
+exportcsv_cdialog(){
+    exportcsv_dialog
 }
 
 exportcsv_Xdialog(){
@@ -160,6 +188,10 @@ results_dialog(){
     "${PAGER}" "${tf}"
 }
 
+results_cdialog(){
+    results_dialog
+}
+
 results_Xdialog(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     "${DIALOG}" $(make_msg "results") "--editbox" "${tf}" "${geometry_ops[@]}" 2> /dev/null
@@ -167,6 +199,10 @@ results_Xdialog(){
 
 message_dialog(){
     "${DIALOG}" $(make_msg "message") "--msgbox" "Account ID: #${id} deleted." "${geometry_ops[@]}"
+}
+
+message_cdialog(){
+    message_dialog
 }
 
 message_Xdialog(){
@@ -177,6 +213,11 @@ usage_dialog(){
     "${DIALOG}" $(make_msg "Help") "--msgbox" "${gui_hmsg[*]}" "${geometry_ops[@]}"
 }
 
+usage_cdialog(){
+    usage_dialog
+}
+
 usage_Xdialog(){
     "${DIALOG}" $(make_msg "Help") "--left" "--msgbox" "${gui_hmsg[*]}" "${geometry_ops[@]}"
 }
+

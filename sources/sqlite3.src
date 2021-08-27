@@ -5,10 +5,10 @@ read_dbflds(){
     declare schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
     declare -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
     for i in ${brkdwn[@]}; do
-	schm="${schm//${i^^}}"
-	schm="${schm//${i^}}"
-	schm="${schm//${i,,}}"
-	schm="${schm//${i,}}"
+	schm="${schm//${i^^}/$' '}"
+	schm="${schm//${i^}/$' '}"
+	schm="${schm//${i,,}/$' '}"
+	schm="${schm//${i,}/$' '}"
     done
     declare -a arrflds=( ${schm} )
     export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
@@ -53,6 +53,10 @@ select_newrecs(){
 
 select_dm_like(){
     echo -ne "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${1}%';"
+}
+
+select_dmemun_like(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
 }
 
 update_pw(){

@@ -25,7 +25,8 @@ declare -r dbsd="${sdn}/databases" \
 
 declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|dialog|terminal] [--debug] [--help]"
+# declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|kdialog|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 
 declare gpgf db bngpgf bndb usrintrfce
 
@@ -33,7 +34,8 @@ declare gpgf db bngpgf bndb usrintrfce
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
-        yad|zenity|Xdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        # gtkdialog|yad|zenity|kdialog|Xdialog|whiptail|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        yad|zenity|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
         -d|--debug) set -x;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
@@ -42,29 +44,49 @@ while [[ -n "${1}" ]]; do
 done
 
 # Try to accommodate optional preference...
+# if [[ "${usrintrfce}" == "gtkdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
+#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
+# elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
+    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+# elif [[ "${usrintrfce}" == "whiptail" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for whiptail
+#     declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+elif [[ "${usrintrfce}" == "cdialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for cdialog
+    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
 elif [[ "${usrintrfce}" == "dialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for dialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
+    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
 elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 else # -z USERINTRFCE etc
     # ... or pick a default available UI
+    # if [[ -x "$(type -P gtkdialog)" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
+    # 	declare -xr DIALOG="$(type -P gtkdialog)"
+    # 	readonly usrintrfce="gtkdialog"
     if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
 	declare -xr DIALOG="$(type -P yad)"
 	readonly usrintrfce="yad"
     elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
 	declare -xr DIALOG="$(type -P zenity)"
 	readonly usrintrfce="zenity"
+    # elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+    # 	declare -xr DIALOG="$(type -P kdialog)"
+    # 	readonly usrintrfce="kdialog"
     elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	declare -xr DIALOG="$(type -P Xdialog)"
+	declare -xr DIALOG="$(type -P Xdialog)" L="0" C="0"
 	readonly usrintrfce="Xdialog"
+    # elif [[ -x "$(type -P whiptail)" ]]; then # Check for whiptail
+    # 	declare -xr DIALOG="$(type -P whiptail)" L="0" C="0"
+    # 	readonly usrintrfce="whiptail"
+    elif [[ -x "$(type -P cdialog)" ]]; then # Check for cdialog
+	declare -xr DIALOG="$(type -P cdialog)" L="0" C="0"
+	readonly usrintrfce="cdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-	declare -xr DIALOG="$(type -P dialog)"
+	declare -xr DIALOG="$(type -P dialog)" L="0" C="0"
 	readonly usrintrfce="dialog"
     else
 	unset DIALOG
@@ -124,16 +146,14 @@ create() {
     "results_${usrintrfce}"
 }
 
-search() {
+retrieve() {
     local dm rc pw
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     "${rcm[@]}" "$(select_dm_like "${dm}")" > "${tf}"
+    # "sqlite3" "-separator" ' ' "${db}" "$(select_dmemun_like "${dm}")" > "${tf}"
     "results_${usrintrfce}"
-}
-
-preview(){
-    "${FUNCNAME[0]}_${usrintrfce}" || return $?
+    # "preview_${usrintrfce}"
 }
 
 update() {
@@ -202,14 +222,14 @@ bashpass() {
     check_prereqs || return $?
     check_mutex || return $?
     check_decrypt || return $?
-    read_dbflds || do_quit $? # Have password $db, $tf and $mutex so from now on, instead of exiting, we're do_quit and trap for propper housekeeping.
+    read_dbflds || do_quit $? # Have $db, $tf and $mutex so from now on, instead of exiting, we're do_quit and trap for propper housekeeping.
     check_sql || do_quit $? 
 
     # Build menus and help messages.
     local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
     local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
     local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
-    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export and preview." "start an sqlite session against ${bndb}." "show this message" "terminate this script." )
+    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
 
     local -a tui_menu=( )
     local -a tui_hmsg=( "\n${bpusage[*]}\n\n" )
@@ -236,7 +256,7 @@ bashpass() {
             "0"|"${DIALOG_OK}")
                 case "$(cat "${tf}")" in
                     "${gui_ops[0]}"|"0") create ;;
-                    "${gui_ops[1]}"|"1") search ;;
+                    "${gui_ops[1]}"|"1") retrieve ;;
                     "${gui_ops[2]}"|"2") update ;;
                     "${gui_ops[3]}"|"3") delete ;;
                     "${gui_ops[4]}"|"4") importcsv ;;
@@ -244,7 +264,7 @@ bashpass() {
                     "${gui_ops[6]}"|"6") "${sql3[@]}" ;;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
-                    *) echo -ne "Invalid responce: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
+                    *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;
             [2-4]|"${DIALOG_HELP}"|"${DIALOG_EXTRA}"|"${DIALOG_ITEM_HELP}") usage ;;

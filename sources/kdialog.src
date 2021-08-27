@@ -3,32 +3,29 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-declare -rx center_op="--center" \
-	title_op="--title=${bngpgf}"
+declare -rx title_op="--title=${bngpgf}"
 
-declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
-	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+declare -rx W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 )) \
+	H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 ))	
 
-declare -arx geometry_ops=( "--height=$H" "--width=$W" )
+declare -arx geometry_ops=( "--geometry" "${W}x${H}" )
 
-declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
-	gct_ops=( ${geometry_ops[@]} "${center_op}" "${title_op}" ) \
-	ct_ops=( "${center_op}" "${title_op}" )
+declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
-declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-headers" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
-	create_ops=( "${gct_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password!Insert pasword or length or empty for auto:H" "--field=Password2!Insert password again.:H" "--field=Comment" ) \
-	retrieve_ops=( "${ct_ops[@]}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
-	preview_ops=( "${gct_ops[@]}" "--text=Records Found" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" "--column" "Password:HD" "--column" "Comment" "--separator= " ) \
-	update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	password_ops=( "${ct_ops[@]}" "--text=Enter password or length/empty for auto:" "--entry" "--hide-text" ) \
-	password1_ops=( "${ct_ops[@]}" "--text=Enter password again:" "--entry" "--hide-text" ) \
-	delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" ) \
-	results_ops=( "${gct_ops[@]}" "--text-info" ) \
-	message_ops=( "${ct_ops[@]}" "--info"  ) \
-	usage_ops=( "${gc_ops[@]}" "--info" "--title=Help screen" )
+declare -arx menu_ops=( "${geometry_ops[@]}" "--title" "Select action" "--menu" ) \
+	create_ops=( "${gt_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password!Insert pasword or length or empty for auto:H" "--field=Password2!Insert password again.:H" "--field=Comment" ) \
+	retrieve_ops=( "${title_op[@]}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
+	preview_ops=( "${gt_ops[@]}" "--text=Records Found" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" "--column" "Password:HD" "--column" "Comment" "--separator= " ) \
+	update_ops=( "${gt_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
+	password_ops=( "${title_op[@]}" "--text=Enter password or length/empty for auto:" "--entry" "--hide-text" ) \
+	password1_ops=( "${title_op[@]}" "--text=Enter password again:" "--entry" "--hide-text" ) \
+	delete_ops=( "${gt_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
+	csv_ops=( "--title" "Select a csv file:" ) \
+	results_ops=( "${gt_ops[@]}" "--text-info" ) \
+	message_ops=( "${title_op[@]}" "--info"  ) \
+	usage_ops=( "--info" "--title=Help screen" )
 
-bashpass_yad(){
+bashpass_kdialog(){
     OFS=$IFS IFS=$'\|'
     "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
     errlvl=$?
@@ -39,7 +36,7 @@ bashpass_yad(){
     return $errlvl
 }
 
-create_yad() {
+create_kdialog() {
     local errlvl cnt=0
     "${DIALOG}" "${create_ops[@]}" > "${tf}"
     errlvl=$?
@@ -53,7 +50,7 @@ create_yad() {
     echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
 }
 
-retrieve_yad() {
+retrieve_kdialog() {
     local dm errlvl
     "${DIALOG}" "${retrieve_ops[@]}" > "${tf}"
     errlvl=$? dm="$(cat "${tf}")"
@@ -61,7 +58,7 @@ retrieve_yad() {
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
-preview_yad(){
+preview_kdialog(){
     local errlvl rs pw
     "${DIALOG}" "${preview_ops[@]}" $(cat ${tf}) > "${tf}"
     errlvl=$? 
@@ -73,7 +70,7 @@ preview_yad(){
     "${DIALOG}" "${ct_ops[@]}" "--text=Selected Password:" "--entry" "--entry-text=${pw}" > /dev/null
 }
 
-update_yad() {
+update_kdialog() {
     local id errlvl pw pw1 rs
     "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
     errlvl=$? OFS="${IFS}" IFS=$'\|'
@@ -98,7 +95,7 @@ update_yad() {
     echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
 }
 
-delete_yad() {
+delete_kdialog() {
     local id errlvl rs
 
     "${DIALOG}" "${delete_ops[@]}" $(brlzen) > "${tf}"
@@ -111,9 +108,9 @@ delete_yad() {
     echo -ne "id=\"${id}\"" > "${tf}"
 }
 
-csv_yad(){
+csv_kdialog(){
     local errlvl csvf
-    "${DIALOG}" "${csv_ops[@]}" "--file-name=${1:-${sdn}/examples}" "${2}" > "${tf}"
+    "${DIALOG}" "${csv_ops[@]}" "${@}" > "${tf}"
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     csvf="$(cat "${tf}")"
@@ -121,23 +118,23 @@ csv_yad(){
     echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
 }
 
-importcsv_yad() {
-    csv_yad "${sdn}/examples/import.csv"
+importcsv_kdialog() {
+    csv_kdialog "--getopenfilename" "${sdn}/examples/" "*.csv" 
 }
 
-exportcsv_yad() {
-    csv_yad "${sdn}/examples/export.csv" "--save"
+exportcsv_kdialog() {
+    csv_kdialog "--getsavefilename" "${sdn}/examples/" "*.csv" 
 }
 
-results_yad(){
+results_kdialog(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     "${DIALOG}" "${results_ops[@]}" "--filename=${tf}"
 }
 
-message_yad(){
+message_kdialog(){
     "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted successfully.\nNo errors reported."
 }
 
-usage_yad() {
+usage_kdialog() {
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }

@@ -20,13 +20,21 @@ password generator, storage and reference for the terminal and/or X.
 
 #+html: <p align="center"><img src="assets/bp.png"/></p>
 
-** Using [[file:assets/dp.png][dialog]]
+** Using [[file:assets/dp.png][dialog]], cdialog
 
 #+html: <p align="center"><img src="assets/dp.png"/></p>
 
 ** Using [[file:assets/xp.png][Xdialog]]
 
 #+html: <p align="center"><img src="assets/xp.png"/></p>
+
+** Using [[file:assets/zn.png][zenity]]
+
+#+html: <p align="center"><img src="assets/zn.png"/></p>
+
+** Using [[file:assets/yd.png][yad]]
+
+#+html: <p align="center"><img src="assets/yd.png"/></p>
 
 * Files
   1. [[file:bashpass]]
@@ -35,7 +43,8 @@ password generator, storage and reference for the terminal and/or X.
 
      1) [[file:sources/]]
 
-       Accompanied functions
+       Accompanied functions.
+       Namely sqlite3, general and UI specific
 
   2. [[file:setup]]
 
@@ -53,7 +62,7 @@ password generator, storage and reference for the terminal and/or X.
 
         Accounts import example format
 
-  4. [[file:bashpass.bats]]
+  4. [[file:tests.bats]]
 
      Bats tests file.
 
@@ -83,9 +92,9 @@ password generator, storage and reference for the terminal and/or X.
 
   4. Optionally...
 
-     1. Xdialog for an X client.
+     1. yad,zenity,kdialog,Xdialog for an X client.
 
-     2. dialog for a tty TUI.
+     2. whiptail,cdialog,dialog for a tty TUI.
 
      3. finally, xclip for some middle click password pasting functionality.
 
@@ -105,7 +114,7 @@ password generator, storage and reference for the terminal and/or X.
 
    2. ~./setup [sample.gpg]~
 
-   3. ~./bashpass [sample.gpg] [Xdialog|dialog|terminal] [--debug] [--help]~
+   3. ~./bashpass [sample.gpg] [yad|zenity|kdialog|Xdialog|cdialog|dialog|terminal] [--debug] [--help]~
 
 ** In detail
 
@@ -139,7 +148,7 @@ password generator, storage and reference for the terminal and/or X.
 
 ** Optional command line arguments
 
-   - If you'd like to test other UI options try: ~bashpass [Xdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
+   - If you'd like to test other UI options try: ~bashpass [yad|zenity|kdialog|Xdialog|whiptail|cdialog|dialog]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
 
    - You can provide an SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
 
