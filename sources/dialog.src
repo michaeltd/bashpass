@@ -5,9 +5,9 @@
 
 # L="" C="0"
 # L=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) C=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 )) 
-declare -rx L="0" C="0"
+# declare -rx L="0" C="0"
 
-declare -arx geometry_ops=( "$L" "$C" )
+declare -arx geometry_ops=( "${L}" "${C}" )
 
 declare -arx bt_ops=( "--backtitle" "${bngpgf}" )
 
@@ -58,6 +58,8 @@ create_dialog() {
     # close fd
     exec 3>&-
 
+    [[ -z "${vals[@]}" ]] && return 1
+    
     echo -ne "dm=\"${vals[*]:0:1}\"\nem=\"${vals[*]:1:1}\"\nun=\"${vals[*]:2:1}\"\npw=\"${vals[*]:3:1}\"\npw1=\"${vals[*]:4:1}\"\ncm=\"${vals[*]:5}\"\n" > "${tf}"
 }
 
@@ -107,7 +109,6 @@ update_dialog(){
     local id errlvl pw pw1
     "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(brl) 2> "${tf}"
     errlvl=$? id="$(cat "${tf}")"
-
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
@@ -198,7 +199,7 @@ results_Xdialog(){
 }
 
 message_dialog(){
-    "${DIALOG}" $(make_msg "message") "--msgbox" "Account ID: #${id} deleted." "${geometry_ops[@]}"
+    "${DIALOG}" $(make_msg "message") "--msgbox" "Account ID: #${id} deleted. No errors reported." "${geometry_ops[@]}"
 }
 
 message_cdialog(){

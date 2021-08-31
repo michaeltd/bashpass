@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 #shellcheck shell=bash source=/dev/null disable=SC1008,SC2096,SC2155,SC1090,SC2068,SC2086,SC2141,SC2046,SC2015
 #
-# bashpass Xdialog/dialog/terminal assisted password management.
+# bashpass gtkdialog/yad/zenity/kdialog/Xdialog/whiptail/cdialog/dialog/terminal assisted password management.
+
+# Strict permissions
+umask 0077
 
 # Timeout settings for Xdialog, Xmessage
 # xmessage timeout is in seconds...
@@ -25,7 +28,7 @@ declare -r dbsd="${sdn}/databases" \
 
 declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
-# declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|kdialog|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+# declare -r bpusage="Usage: ${sbn} [sample.gpg] [gtkdialog|yad|zenity|kdialog|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 
 declare gpgf db bngpgf bndb usrintrfce
@@ -151,9 +154,7 @@ retrieve() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     "${rcm[@]}" "$(select_dm_like "${dm}")" > "${tf}"
-    # "sqlite3" "-separator" ' ' "${db}" "$(select_dmemun_like "${dm}")" > "${tf}"
     "results_${usrintrfce}"
-    # "preview_${usrintrfce}"
 }
 
 update() {
@@ -227,13 +228,14 @@ bashpass() {
 
     # Build menus and help messages.
     local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
-    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
+    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import_CSV" "Export_CSV" "SQLite3" "Help" "Quit" )
     local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
     local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
 
     local -a tui_menu=( )
     local -a tui_hmsg=( "\n${bpusage[*]}\n\n" )
     local gui_menu=""
+    local kdg_menu=""
     local -a gui_hmsg=( "\n${bpusage[*]}\n\n" )
 
     for (( x = 0; x < ${#tui_ops[@]}; x++ )); do
@@ -241,6 +243,7 @@ bashpass() {
 	(( ( x + 1 ) % 4 == 0 )) && tui_menu+=( "\n" ) || tui_menu+=( "\t" )
         tui_hmsg+=( "Use ${x}, for ${tui_ops[x]}, which will ${desc[x]}\n" )
         gui_menu+="${gui_ops[x]}|${sdesc[x]}|${desc[x]}|"
+        kdg_menu+="${x} ${gui_ops[x]} "
         gui_hmsg+=( "Use ${gui_ops[x]}, to ${desc[x]}\n" )
     done
 

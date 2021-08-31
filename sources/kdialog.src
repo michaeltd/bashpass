@@ -12,7 +12,7 @@ declare -arx geometry_ops=( "--geometry" "${W}x${H}" )
 
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
-declare -arx menu_ops=( "${geometry_ops[@]}" "--title" "Select action" "--menu" ) \
+declare -arx menu_ops=( "--menu" "Select action" ) \
 	create_ops=( "${gt_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password!Insert pasword or length or empty for auto:H" "--field=Password2!Insert password again.:H" "--field=Comment" ) \
 	retrieve_ops=( "${title_op[@]}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
 	preview_ops=( "${gt_ops[@]}" "--text=Records Found" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" "--column" "Password:HD" "--column" "Comment" "--separator= " ) \
@@ -26,14 +26,7 @@ declare -arx menu_ops=( "${geometry_ops[@]}" "--title" "Select action" "--menu" 
 	usage_ops=( "--info" "--title=Help screen" )
 
 bashpass_kdialog(){
-    OFS=$IFS IFS=$'\|'
-    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
-    errlvl=$?
-    local -a resp=( $(cat ${tf}) )
-    IFS="${OFS}"
-    local selection="${resp[0]}"
-    echo "${selection}" > "${tf}"
-    return $errlvl
+    "${DIALOG}" "${menu_ops[@]}" ${kdg_menu} > "${tf}" || return $?
 }
 
 create_kdialog() {

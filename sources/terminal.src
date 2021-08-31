@@ -103,7 +103,7 @@ results_terminal(){
 }
 
 message_terminal(){
-    echo -ne "Account ID: #${id} deleted.\nNo errors reported!\n"
+    echo -ne "Account ID: #${id} deleted. No errors reported!\n"
 }
 
 usage_terminal(){

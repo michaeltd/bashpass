@@ -20,7 +20,7 @@ declare -arx menu_ops=( "${geometry_ops[@]}" "--list" "--title=Select action" "-
 	password1_ops=( "--title=${bngpgf}" "--text=Enter a password again: " "--entry" "--hide-text" ) \
 	delete_ops=( "${gt_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" ) \
-	results_ops=( "${gt_ops[@]}" "--text-info" ) \
+	results_ops=( "${gt_ops[@]}" "--text-info" "--no-markup" ) \
 	message_ops=( "${title_op}" "--info" "--no-wrap" ) \
 	usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
 
@@ -107,7 +107,7 @@ results_zenity(){
 }
 
 message_zenity(){
-    "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted successfully.\nNo errors reported."
+    "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted. No errors reported."
 }
 
 usage_zenity() {

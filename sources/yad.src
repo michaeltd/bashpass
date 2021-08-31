@@ -135,7 +135,7 @@ results_yad(){
 }
 
 message_yad(){
-    "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted successfully.\nNo errors reported."
+    "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted. No errors reported."
 }
 
 usage_yad() {
