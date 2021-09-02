@@ -1,15 +1,15 @@
 #!/bin/bash
 
 read_dbflds(){
-    # ADHOC db table fileds extractor just for the lolz factor.
-    declare -a tbls=($("${sql3[@]}" ".tables"))
-    declare schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
+    # ADHOC db table fields extractor just for the lolz factor.
+    local -a tbls=($("${sql3[@]}" ".tables"))
+    local schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
     schm="${schm^^}" # sqlite is case insensitive
-    declare -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
+    local -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
     for i in ${brkdwn[@]}; do
 	schm="${schm//${i}/$' '}"
     done
-    declare -a arrflds=( ${schm} )
+    local -a arrflds=( ${schm} )
     export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
     unset tbls schm brkdwn arrflds
 }

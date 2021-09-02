@@ -3,15 +3,10 @@
 # Pick up right editor syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-die() {
-    local -r msg="${*}"
-    local -r ttl="${sbn}: Error!"
+show_msg() {
+    local -r ttl="${sbn}: Error!" msg="${FUNCNAME[1]}: ${*}"
     if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
         "$(type -P notify-send)" "-i" "${sdn}/assets/gpa.png" "-c" "notification" "-t" "${XDTO}" "${ttl}" "${msg}"
-    elif [[ -n "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then
-        "$(type -P Xdialog)" "--title" "${ttl}" "--msgbox" "${msg}" "0" "0"
-    elif [[ -n "$(type -P xmessage)" && -n "${DISPLAY}" ]]; then
-        "$(type -P xmessage)" "-nearmouse" "-timeout" "${XMTO}" "${ttl} ${msg}"
     elif [[ -n "$(type -P dialog)" && -z "${DISPLAY}" ]]; then
         "$(type -P dialog)" "--title" "${ttl}" "--msgbox" "${msg}" "0" "0"
     else
@@ -26,64 +21,62 @@ do_quit() {
     # Upon successfull encryption ONLY shred files
     # "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
     if ! "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}"; then
-	die "Something smells fishy!"
-	exit $?
+	show_msg "Something smells fishy!"
+	exit "${?}"
+    else
+	local -ar f2d=( "${db}" "${tf}" "${mutex}" )
+	for i in ${f2d[@]}; do
+	    ${shrc[@]} "${i}";
+	done
+	read -rp "Return to continue ... "
+	exit "${1:-0}"
     fi
-    local -ar f2d=( "${db}" "${tf}" "${mutex}" )
-    for i in ${f2d[@]}; do
-	${shrc[@]} "${i}";
-    done
-    read -rp "Return to continue ... "
-    exit "${1:-0}"
 }
 
 check_prereqs(){
     if [[ ! -t 0 ]]; then
-        die "You'll need to run ${0/*\/} in a terminal (or tty)!"
+        show_msg "You'll need to run ${0/*\/} in a terminal (or tty)!"
     elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
-        die "You'll need bash major version no less than 4."
+        show_msg "You'll need bash major version no less than 4."
     elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
-        die "You need SQLite3 installed."
+        show_msg "You need SQLite3 installed."
     elif [[ -z "$(type -P gpg 2> /dev/null)" ]] && [[ -z "$(type -P gpg2 2> /dev/null)" ]]; then
-        die "You need GNU Privacy Guard v2 (gnupg) installed."
+        show_msg "You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
 
-# No mutex or die.
+# No mutex or show_msg.
 check_mutex() {
-    if [[ -f "${mutex}" ]]; then
-	die "You can only have one instance of ${bngpgf}."
-    fi
     # local -ar pids=( $(pgrep -U "${USER}" -f "${bngpgf}") )
     # if [[ "${#pids[*]}" -gt "1" ]]; then
-    # 	die "You can only have one instance of ${bngpgf}."
+    # 	show_msg "You can only have one instance of ${bngpgf}."
     # fi
+    if [[ -f "${mutex}" ]]; then
+	show_msg "You can only have one instance of ${bngpgf}."
+    fi
 }
 
-# Decrypt .sqlite, setup trap and mutex or die.
+# Decrypt .sqlite, setup temp and mutex or show_msg.
 check_decrypt() {
     if ! [[ "$(file -b "${gpgf}")" =~ ^PGP ]]; then
-        die "${bngpgf}, does not appear to be a valid PGP file."
+        show_msg "${bngpgf}, does not appear to be a valid PGP file."
         return $?
-    fi
-    if ! "${gpgc[@]}" "${db}" "--decrypt" "${gpgf}"; then
-        die "Decryption failed."
+    elif ! "${gpgc[@]}" "${db}" "--decrypt" "${gpgf}"; then
+        show_msg "Decryption failed."
+        return $?
+    elif ! [[ "$(file -b "${db}")" =~ ^SQLite ]]; then
+	# We do have an decrypted $db file so we might as well check it's validity.
+        show_msg "${bndb}, does not appear to be a valid SQLite 3.x database file."
         return $?
     else
-	# We do have an decrypted $db file so we might as well check it's validity.
-        if ! [[ "$(file -b "${db}")" =~ ^SQLite ]]; then
-            die "${bndb}, does not appear to be a valid SQLite 3.x database file."
-            return $?
-        fi
-        touch "${mutex}"
-        touch "${tf}"
+        touch {"${mutex}","${tf}"}
     fi
 }
 
-# SQL or die.
+# SQL or show_msg.
 check_sql() {
     if ! "${dcm[@]}" "$(sql_check)" &> /dev/null; then
-        die "Need a working db to function."
+        show_msg "Need a working db to function."
     fi
 }
 
@@ -115,9 +108,9 @@ rcount() {
 brl() {
     local dm em un rl
     for i in $(rids); do
-        dm=$("${dcm[@]}" "$(sql_brl "${dmf}" "${i}")"|sed 's/ /-/g')
-        em=$("${dcm[@]}" "$(sql_brl "${emf}" "${i}")"|sed 's/ /-/g')
-        un=$("${dcm[@]}" "$(sql_brl "${unf}" "${i}")"|sed 's/ /-/g')
+        dm="$("${dcm[@]}" "$(sql_brl "${dmf}" "${i}")"|sed 's/ /-/g')"
+        em="$("${dcm[@]}" "$(sql_brl "${emf}" "${i}")"|sed 's/ /-/g')"
+        un="$("${dcm[@]}" "$(sql_brl "${unf}" "${i}")"|sed 's/ /-/g')"
         rl+="${i} ${dm:-NULL}_${em:-NULL}_${un:-NULL} off "
     done
     echo "${rl[@]}"

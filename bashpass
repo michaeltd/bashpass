@@ -3,7 +3,7 @@
 #
 # bashpass gtkdialog/yad/zenity/kdialog/Xdialog/whiptail/cdialog/dialog/terminal assisted password management.
 
-# Strict permissions
+# Restrict permissions
 umask 0077
 
 # Timeout settings for Xdialog, Xmessage
@@ -56,13 +56,13 @@ elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${
 # elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 # elif [[ "${usrintrfce}" == "whiptail" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for whiptail
-#     declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "cdialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for cdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "dialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for dialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")" L="0" C="0"
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
     unset DIALOG
 else # -z USERINTRFCE etc
@@ -80,16 +80,16 @@ else # -z USERINTRFCE etc
     # 	declare -xr DIALOG="$(type -P kdialog)"
     # 	readonly usrintrfce="kdialog"
     elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	declare -xr DIALOG="$(type -P Xdialog)" L="0" C="0"
+	declare -xr DIALOG="$(type -P Xdialog)"
 	readonly usrintrfce="Xdialog"
     # elif [[ -x "$(type -P whiptail)" ]]; then # Check for whiptail
-    # 	declare -xr DIALOG="$(type -P whiptail)" L="0" C="0"
+    # 	declare -xr DIALOG="$(type -P whiptail)"
     # 	readonly usrintrfce="whiptail"
     elif [[ -x "$(type -P cdialog)" ]]; then # Check for cdialog
-	declare -xr DIALOG="$(type -P cdialog)" L="0" C="0"
+	declare -xr DIALOG="$(type -P cdialog)"
 	readonly usrintrfce="cdialog"
     elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-	declare -xr DIALOG="$(type -P dialog)" L="0" C="0"
+	declare -xr DIALOG="$(type -P dialog)"
 	readonly usrintrfce="dialog"
     else
 	unset DIALOG
@@ -110,7 +110,8 @@ fi
 # gpg & shred commands (Thanks Dylan)
 type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
 type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
-readonly -a gpgc=( "${gpg}" "--batch" "--yes" "--default-recipient-self" "--output" )
+# readonly -a gpgc=( "${gpg}" "--batch" "--yes" "--default-recipient-self" "--output" )
+readonly -a gpgc=( "${gpg}" "--yes" "--default-recipient-self" "--output" )
 type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
 
 # SQLite commands
@@ -139,7 +140,7 @@ create() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     if [[ "${pw}" != "${pw1}" ]]; then
-	die "Password missmatch"
+	show_msg "Password missmatch"
 	return $?
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
@@ -162,7 +163,7 @@ update() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     if [[ "${pw}" != "${pw1}" ]]; then
-	die "Password missmatch"
+	show_msg "Password missmatch"
 	return $?
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(gpw "${pw}")"
@@ -211,6 +212,14 @@ usage() {
 }
 
 bashpass() {
+    local OFS="${IFS}" errlvl=0 usrinpt=''
+
+    check_prereqs || return $?
+    check_mutex || return $?
+    check_decrypt || return $?
+    read_dbflds || do_quit $? # Have $db, $tf and $mutex so from now on we're do_quit and trap for propper housekeeping.
+    check_sql || do_quit $?
+    
     trap 'do_quit ${SIG_NONE}' "${SIG_NONE}"
     trap 'do_quit ${SIG_HUP}' "${SIG_HUP}"
     trap 'do_quit ${SIG_INT}' "${SIG_INT}"
@@ -218,14 +227,6 @@ bashpass() {
     trap 'do_quit ${SIG_KILL}' "${SIG_KILL}"
     trap 'do_quit ${SIG_TERM}' "${SIG_TERM}"
     
-    local OFS="${IFS}" errlvl=0 usrinpt=''
-
-    check_prereqs || return $?
-    check_mutex || return $?
-    check_decrypt || return $?
-    read_dbflds || do_quit $? # Have $db, $tf and $mutex so from now on, instead of exiting, we're do_quit and trap for propper housekeeping.
-    check_sql || do_quit $? 
-
     # Build menus and help messages.
     local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
     local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import_CSV" "Export_CSV" "SQLite3" "Help" "Quit" )
