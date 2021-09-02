@@ -29,7 +29,7 @@ declare -r dbsd="${sdn}/databases" \
 declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
 # declare -r bpusage="Usage: ${sbn} [sample.gpg] [gtkdialog|yad|zenity|kdialog|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 
 declare gpgf db bngpgf bndb usrintrfce
 
@@ -38,7 +38,7 @@ while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
         # gtkdialog|yad|zenity|kdialog|Xdialog|whiptail|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
-        yad|zenity|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        zenity|yad|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
         -d|--debug) set -x;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
@@ -49,9 +49,9 @@ done
 # Try to accommodate optional preference...
 # if [[ "${usrintrfce}" == "gtkdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
+if [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+elif [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 # elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
@@ -70,12 +70,12 @@ else # -z USERINTRFCE etc
     # if [[ -x "$(type -P gtkdialog)" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
     # 	declare -xr DIALOG="$(type -P gtkdialog)"
     # 	readonly usrintrfce="gtkdialog"
-    if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
-	declare -xr DIALOG="$(type -P yad)"
-	readonly usrintrfce="yad"
-    elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+    if [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
 	declare -xr DIALOG="$(type -P zenity)"
 	readonly usrintrfce="zenity"
+    elif [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
+	declare -xr DIALOG="$(type -P yad)"
+	readonly usrintrfce="yad"
     # elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
     # 	declare -xr DIALOG="$(type -P kdialog)"
     # 	readonly usrintrfce="kdialog"
@@ -118,6 +118,7 @@ type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) |
 readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
 	 rcm=( "sqlite3" "-line" "${db}" ) \
 	 icm=( "sqlite3" "-csv" "${db}" ) \
+	 scm=( "sqlite3" "-separator" " " "${db}" ) \
 	 sql3=( "sqlite3" "${db}" )
 
 # Temp files

@@ -55,7 +55,7 @@ retrieve_zenity() {
 }
 
 update_zenity() {
-    local id errlvl pw pw1
+    local id errlvl pw pw1 IFS=$'\|\t\n'
     "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
@@ -73,12 +73,11 @@ update_zenity() {
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
     fi
-
     echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
 }
 
 delete_zenity() {
-    local id errlvl
+    local id errlvl IFS=$'\|\t\n'
     "${DIALOG}" "${delete_ops[@]}" $(brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then

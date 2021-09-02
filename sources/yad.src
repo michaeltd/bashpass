@@ -18,7 +18,6 @@ declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
 declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-headers" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
 	create_ops=( "${gct_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password!Insert pasword or length or empty for auto:H" "--field=Password2!Insert password again.:H" "--field=Comment" ) \
 	retrieve_ops=( "${ct_ops[@]}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
-	preview_ops=( "${gct_ops[@]}" "--text=Records Found" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" "--column" "Password:HD" "--column" "Comment" "--separator= " ) \
 	update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	password_ops=( "${ct_ops[@]}" "--text=Enter password or length/empty for auto:" "--entry" "--hide-text" ) \
 	password1_ops=( "${ct_ops[@]}" "--text=Enter password again:" "--entry" "--hide-text" ) \
@@ -61,24 +60,12 @@ retrieve_yad() {
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
-preview_yad(){
-    local errlvl rs pw
-    "${DIALOG}" "${preview_ops[@]}" $(cat ${tf}) > "${tf}"
-    errlvl=$? 
-    local rs=( $(cat ${tf}) )
-    pw="${rs[4]}"
-    if (( errlvl != DIALOG_OK )) || [[ -z "${pw}" ]]; then
-	return 1
-    fi
-    "${DIALOG}" "${ct_ops[@]}" "--text=Selected Password:" "--entry" "--entry-text=${pw}" > /dev/null
-}
-
 update_yad() {
-    local id errlvl pw pw1 rs
+    local id errlvl pw pw1 rs IFS=$'\|\t\n'
     "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
-    errlvl=$? OFS="${IFS}" IFS=$'\|'
+    errlvl=$?
     local rs=( $(cat ${tf}) )
-    IFS="${OFS}" id="${rs[1]}"
+    id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
@@ -99,12 +86,11 @@ update_yad() {
 }
 
 delete_yad() {
-    local id errlvl rs
-
+    local id errlvl rs IFS=$'\|\t\n'
     "${DIALOG}" "${delete_ops[@]}" $(brlzen) > "${tf}"
-    errlvl=$?     OFS="${IFS}" IFS=$'\|'
+    errlvl=$?
     local rs=( $(cat ${tf}) )
-    IFS="${OFS}" id="${rs[1]}"
+    id="${rs[1]}"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
     fi
