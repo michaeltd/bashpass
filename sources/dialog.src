@@ -182,9 +182,18 @@ exportcsv_Xdialog(){
 }
 
 results_dialog(){
-    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    # "${PAGER}" "${tf}"
-    "${PAGER}" <<<"$("${ccm[@]}" "${1}")"
+    # [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    # "${PAGER}" <<<"$("${ccm[@]}" "${1}")"
+    local id=0 pw
+    while [[ -n "${id}" ]]; do
+	"${ccm[@]}" "${1}"
+	echo -ne "Select ID to preview password: (empty to cancel) "
+	read -r id || return $?
+	[[ -z "${id}" ]] && return 1
+	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+	echo "Account: ${id}, Password: ${pw}"
+	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    done
 }
 
 results_cdialog(){
@@ -195,7 +204,7 @@ results_Xdialog(){
     # local IFS=$'\|\t\n'
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     # "${DIALOG}" $(make_msg "results") "--editbox" "${tf}" "${geops[@]}" 2> /dev/null
-    "${DIALOG}" $(make_msg "message") "--no-wrap" "--msgbox" "$("${ccm[@]}" "${1}")" "${geops[@]}" 2> /dev/null 
+    "${DIALOG}" $(make_msg "message") "--no-wrap" "--msgbox" "$("${ccm[@]}" "${1}")" "${geops[@]}" 2> /dev/null
 }
 
 message_dialog(){

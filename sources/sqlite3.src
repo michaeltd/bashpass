@@ -33,7 +33,7 @@ sl3_select_dm_like(){
 }
 
 sl3_select_dmemun_like(){
-    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
 }
 
 sl3_update_pw(){
