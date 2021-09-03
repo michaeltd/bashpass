@@ -132,5 +132,4 @@ func_brl() {
 
 func_brlzen(){
     echo "$("${sql3[@]}" "$(sl3_brlzen)")"
-    # echo "$(sqlite3 -separator " " "${db}" "$(sl3_brlzen)")"
 }

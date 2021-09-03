@@ -24,7 +24,8 @@ declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-he
 	delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" ) \
 	results_ops=( "${gct_ops[@]}" "--text-info" ) \
-	preview_ops=( "${gct_ops[@]}" "--text=Results:" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" ) \
+	preview_ops=( "${gct_ops[@]}" "--text=Results. Select account to preview:" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" ) \
+	showpw_ops=( "${ct_ops[@]}" "--text=Password selected:" "--entry" ) \
 	message_ops=( "${ct_ops[@]}" "--info"  ) \
 	usage_ops=( "${gc_ops[@]}" "--info" "--title=Help screen" )
 
@@ -115,10 +116,14 @@ exportcsv_yad() {
 }
 
 results_yad(){
-    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    # "${DIALOG}" "${results_ops[@]}" "--filename=${tf}"
-    local IFS=$'\|\t\n'
-    "${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") > /dev/null
+    local IFS=$'\|\t\n' id="0"
+    while [[ "${id}" != "255" ]]; do
+	local -a id=( $("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "255") )
+	[[ "${id[0]}" == "255" ]] && return
+	local pw="$("${sql3[@]}" "$(sl3_showpw "${id[0]}")")"
+	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null
+	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    done
 }
 
 message_yad(){

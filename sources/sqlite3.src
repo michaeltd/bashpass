@@ -59,3 +59,7 @@ sl3_select_all(){
 sl3_select_preview(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
+
+sl3_showpw(){
+    echo -ne "SELECT ${pwf} FROM ${act} WHERE ${idf} = '${1}';"
+}
