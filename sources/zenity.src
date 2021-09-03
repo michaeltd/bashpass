@@ -21,7 +21,8 @@ declare -arx menu_ops=( "${gt_ops[@]}" "--list" "--text=Select Action" "--hide-h
 	delete_ops=( "${gt_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" ) \
 	results_ops=( "${gt_ops[@]}" "--text-info" "--no-markup" ) \
-	preview_ops=( "${gt_ops[@]}" "--text=Results:" "--list" "--column=ID" "--column=Domain" "--column=Email" "--column=UName" "--column=Comments" ) \
+	preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview password:" "--list" "--column=ID" "--column=Domain" "--column=Email" "--column=UName" "--column=Comments" ) \
+	showpw_ops=( "${title_op}" "--text=Password selected:" "--entry" ) \
 	message_ops=( "${title_op}" "--info" "--no-wrap" ) \
 	usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
 
@@ -98,10 +99,14 @@ exportcsv_zenity() {
 }
 
 results_zenity(){
-    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    # "${DIALOG}" "${results_ops[@]}" "--filename=${tf}"
-    local IFS=$'\|\t\n'
-    "${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") > /dev/null
+    local IFS=$'\|\t\n' id="0"
+    while [[ "${id}" != "255" ]]; do
+	local -a id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "255")"
+	[[ "${id}" == "255" ]] && return 255
+	local pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null
+	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    done
 }
 
 message_zenity(){
