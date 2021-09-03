@@ -34,11 +34,8 @@ make_box(){
 }
 
 bashpass_dialog(){
-    OFS="${IFS}" IFS=$'\|'
+    local IFS=$'\|\t\n'
     "${DIALOG}" "${menu_ops[@]}" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
-    errlvl=$?
-    IFS="${OFS}"
-    return $errlvl
 }
 
 bashpass_cdialog(){
@@ -107,7 +104,7 @@ retrieve_Xdialog(){
 
 update_dialog(){
     local id errlvl pw pw1
-    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(brl) 2> "${tf}"
+    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(func_brl) 2> "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
@@ -138,7 +135,7 @@ update_Xdialog(){
 
 delete_dialog(){
     local id errlvl
-    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(brl) 2> "${tf}"
+    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(func_brl) 2> "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
@@ -186,7 +183,8 @@ exportcsv_Xdialog(){
 
 results_dialog(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${PAGER}" "${tf}"
+    # "${PAGER}" "${tf}"
+    "${PAGER}" <<<"$("${ccm[@]}" "${1}")"
 }
 
 results_cdialog(){
@@ -194,8 +192,10 @@ results_cdialog(){
 }
 
 results_Xdialog(){
+    # local IFS=$'\|\t\n'
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" $(make_msg "results") "--editbox" "${tf}" "${geops[@]}" 2> /dev/null
+    # "${DIALOG}" $(make_msg "results") "--editbox" "${tf}" "${geops[@]}" 2> /dev/null
+    "${DIALOG}" $(make_msg "message") "--no-wrap" "--msgbox" "$("${ccm[@]}" "${1}")" "${geops[@]}" 2> /dev/null 
 }
 
 message_dialog(){
@@ -221,4 +221,3 @@ usage_cdialog(){
 usage_Xdialog(){
     "${DIALOG}" $(make_msg "Help") "--left" "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
 }
-

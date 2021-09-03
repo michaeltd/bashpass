@@ -3,33 +3,31 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-declare -rx title_op="--title=${bngpgf}"
-
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+
+declare -rx title_op="--title=${bngpgf}"
 
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
-declare -arx menu_ops=( "${geometry_ops[@]}" "--list" "--title=Select action" "--hide-header" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
+declare -arx menu_ops=( "${gt_ops[@]}" "--list" "--text=Select Action" "--hide-header" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
 	create_ops=( "${geometry_ops[@]}" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-password=Password1" "--add-entry=Comment" ) \
-	retrieve_ops=( "${title_op}" "--text=Enter domain to look for (empty for All):" "--entry" ) \
+	retrieve_ops=( "${title_op}" "--text=Enter search term to look for (empty for All):" "--entry" ) \
 	update_ops=( "${gt_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	password_ops=( "--title=${bngpgf}" "--text=Enter password or length/empty for auto: " "--entry" "--hide-text" ) \
 	password1_ops=( "--title=${bngpgf}" "--text=Enter a password again: " "--entry" "--hide-text" ) \
 	delete_ops=( "${gt_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" ) \
 	results_ops=( "${gt_ops[@]}" "--text-info" "--no-markup" ) \
+	preview_ops=( "${gt_ops[@]}" "--text=Results:" "--list" "--column=ID" "--column=Domain" "--column=Email" "--column=UName" "--column=Comments" ) \
 	message_ops=( "${title_op}" "--info" "--no-wrap" ) \
 	usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
 
 bashpass_zenity(){
-    OFS=$IFS IFS=$'\|'
+    local IFS=$'\|\t\n'
     "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
-    errlvl=$?
-    IFS="${OFS}"
-    return $errlvl
 }
 
 create_zenity() {
@@ -38,11 +36,10 @@ create_zenity() {
     errlvl=$?
     (( errlvl != DIALOG_OK )) && return $errlvl
     local -r vals="$(cat "${tf}")"
-    OFS="${IFS}" IFS=,
+    local IFS=,
     for i in $vals; do
 	arv[((cnt++))]="$i"
     done
-    IFS="${OFS}"
     echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
 }
 
@@ -56,7 +53,7 @@ retrieve_zenity() {
 
 update_zenity() {
     local id errlvl pw pw1 IFS=$'\|\t\n'
-    "${DIALOG}" "${update_ops[@]}" $(brlzen) > "${tf}"
+    "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
@@ -78,7 +75,7 @@ update_zenity() {
 
 delete_zenity() {
     local id errlvl IFS=$'\|\t\n'
-    "${DIALOG}" "${delete_ops[@]}" $(brlzen) > "${tf}"
+    "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}"
     errlvl=$? id="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
 	return 1
@@ -102,7 +99,9 @@ exportcsv_zenity() {
 
 results_zenity(){
     [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    "${DIALOG}" "${results_ops[@]}" "--filename=${tf}"
+    # "${DIALOG}" "${results_ops[@]}" "--filename=${tf}"
+    local IFS=$'\|\t\n'
+    "${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") > /dev/null
 }
 
 message_zenity(){

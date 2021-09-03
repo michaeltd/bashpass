@@ -42,10 +42,10 @@ create_terminal() {
             echo -ne "Enter a username: (Ctrl-D to cancel) "
             read -r un || return $?
         elif [[ -z "${pw}" ]]; then
-            echo -ne "Enter password: (alpha-numeric-punctuation or length/empty for auto Ctrl-D to cancel) "
+            echo -ne "Enter password: (alpha/numeric/punctuation or length/empty for auto) "
             read -r pw || return $?
         elif [[ -z "${pw1}" ]]; then
-            echo -ne "Enter password again:"
+            echo -ne "Enter password again: (Ctrl-D to cancel) "
             read -r pw1 || return $?
         elif [[ -z "${cm}" ]]; then
             echo -ne "Enter comment: (Ctrl-D to cancel) "
@@ -58,18 +58,19 @@ create_terminal() {
 
 retrieve_terminal(){
     local dm
-    echo -ne "Enter domain (empty for All): "
+    echo -ne "Enter search term to look for: (empty for All) "
     read -r dm || return $?
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_terminal(){
     local id pw pw1
-    echo -ne "Select id to update (empty to cancel): "
+    "${ccm[@]}" "$(sl3_select_preview)"
+    echo -ne "Select ID to update: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
 
-    echo -ne "Enter password: (alpha/numeric/punctuation or length/empty for auto. Ctrl-D to cancel) "
+    echo -ne "Enter password: (alpha/numeric/punctuation or length/empty for auto) "
     read -r pw || return $?
 
     echo -ne "Enter password again: "
@@ -80,7 +81,8 @@ update_terminal(){
 
 delete_terminal(){
     local id
-    echo -ne "Select id to delete (empty to cancel): "
+    "${ccm[@]}" "$(sl3_select_preview)"
+    echo -ne "Select ID to delete: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
     echo -ne "id=\"${id}\"" > "${tf}"
@@ -88,7 +90,7 @@ delete_terminal(){
 
 importcsv_terminal(){
     local csvf
-    echo -ne "Enter csv file (empty to cancel): "
+    echo -ne "Enter csv file: (empty to cancel) "
     read -r csvf || return $?
     [[ -z "${csvf}" ]] && return 1
     echo -ne "csvf=\"${csvf}\"" > "${tf}"
@@ -99,7 +101,7 @@ exportcsv_terminal(){
 }
 
 results_terminal(){
-    "${PAGER}" "${tf}"
+    "${PAGER}" <<<"$("${ccm[@]}" "${1}")"
 }
 
 message_terminal(){

@@ -1,4 +1,4 @@
--- Export to KeePassXC like so: sqlite3 db < x2keepassxc.sql
+-- Export to KeePassXC like so: sqlite3 ${db} < x2keepassxc.sql
 
 .mode csv
 .header on

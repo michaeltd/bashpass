@@ -1,76 +1,61 @@
 #!/bin/bash
 
-read_dbflds(){
-    # ADHOC db table fields extractor just for the lolz factor.
-    local -a tbls=($("${sql3[@]}" ".tables"))
-    local schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
-    schm="${schm^^}" # sqlite is case insensitive
-    local -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
-    for i in ${brkdwn[@]}; do
-	schm="${schm//${i}/$' '}"
-    done
-    local -a arrflds=( ${schm} )
-    export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
-    unset tbls schm brkdwn arrflds
-}
-
-sql_check(){
-    echo -ne "SELECT * FROM ${act} ORDER BY ${idf} ASC;"
-}
-
-sql_rids(){
+sl3_rids(){
     echo -ne "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
-sql_maxid(){
+sl3_maxid(){
     echo -ne "SELECT MAX(${idf}) FROM ${act};"
 }
 
-sql_rcount(){
+sl3_rcount(){
     echo -ne "SELECT COUNT(${idf}) FROM ${act};"
 }
 
-sql_brl(){
+sl3_brl(){
     echo -ne "SELECT ${1} FROM ${act} WHERE ${idf} = '${2}';"
 }
 
-sql_brlzen(){
+sl3_brlzen(){
     echo -ne "SELECT 'FALSE' AS STATE, ${idf}, ${dmf}, ${emf}, ${unf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
-insert_into(){
+sl3_insert_into(){
     echo -ne "INSERT INTO ${act} VALUES('${1//:/\:}', '${2}', '${3}', '${4}', '${5}');"
 }
 
-select_newrecs(){
-    echo -ne "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} > ${1};"
+sl3_select_newrecs(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
 }
 
-select_dm_like(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${1}%';"
+sl3_select_dm_like(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%';"
 }
 
-select_dmemun_like(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf} AS DM, ${emf} AS EM, ${unf} AS UN, ${pwf} AS PW, ${cmf} AS CM FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
+sl3_select_dmemun_like(){
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
 }
 
-update_pw(){
+sl3_update_pw(){
     echo -ne "UPDATE ${act} SET ${pwf} = '${1}' WHERE ${idf} = '${2}';"
 }
 
-select_id_eq(){
-    echo -ne "SELECT ${idf} AS ID,* FROM ${act} WHERE ${idf} = '${1}';"
+sl3_select_id_eq(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
-delete_id_eq(){
+sl3_delete_id_eq(){
     echo -ne "DELETE FROM ${act} WHERE ${idf} = '${1}';"
 }
 
-importcsv_sql(){
+sl3_importcsv_sql(){
     echo -ne  ".import ${1} ${act}\n"
 }
 
-select_all(){
-    echo -ne "SELECT * FROM ${act} ORDER BY ${idf} ASC;"
+sl3_select_all(){
+    echo -ne "SELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
 }
 
+sl3_select_preview(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+}
