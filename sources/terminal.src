@@ -70,10 +70,13 @@ update_terminal(){
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
 
-    echo -ne "Enter password: (alpha/numeric/punctuation or length/empty for auto) "
+    pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+    pw1="${pw}"
+
+    echo -ne "Enter password: (alpha/numeric/punctuation or length/empty for auto.) ( Last: '${pw}' ) "
     read -r pw || return $?
 
-    echo -ne "Enter password again: "
+    echo -ne "Enter password again: ( Last: '${pw1}' )"
     read -r pw1 || return $?
 
     echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\n" > "${tf}"

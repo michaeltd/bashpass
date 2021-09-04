@@ -70,13 +70,16 @@ update_yad() {
 	return 1
     fi
 
-    "${DIALOG}" "${password_ops[@]}" > "${tf}"
+    pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+    pw1="${pw}"
+    
+    "${DIALOG}" "${password_ops[@]}" "--entry-text" "${pw}" > "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
     fi
 
-    "${DIALOG}" "${password1_ops[@]}" > "${tf}"
+    "${DIALOG}" "${password1_ops[@]}" "--entry-text" "${pw1}" > "${tf}"
     errlvl=$? pw1="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -117,9 +120,9 @@ exportcsv_yad() {
 
 results_yad(){
     local IFS=$'\|\t\n' id="0"
-    while [[ "${id}" != "255" ]]; do
-	local -a id=( $("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "255") )
-	[[ "${id[0]}" == "255" ]] && return 255
+    while [[ "${id}" != "-1" ]]; do
+	local -a id=( $("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "-1") )
+	[[ "${id[0]}" == "-1" ]] && return 255
 	local pw="$("${sql3[@]}" "$(sl3_showpw "${id[0]}")")"
 	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"

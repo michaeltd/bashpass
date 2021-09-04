@@ -3,22 +3,13 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-# L="" C="0"
-# L=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) C=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 )) 
 declare -rx L="0" C="0"
 
 declare -arx geops=( "${L}" "${C}" )
 
 declare -arx bt_ops=( "--backtitle" "${bngpgf}" )
 
-declare -arx menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${geops[@]}" ) \
-	create_ops=( "${bt_ops[@]}" "--title" "Set details" "--ok-label" "Submit" "--form" "Create Form" "${geops[@]}" 0
-		     "Domain:" 1 1 "$dm" 1 10 40 0
-		     "Email:" 2 1 "$em" 2 10 40 0
-		     "User:" 3 1 "$un" 3 10 40 0
-		     "Password:" 4 1 "$pw" 4 10 40 0
-		     "Pword1:" 5 1 "$pw1" 5 10 40 0 
-		     "Comments:" 6 1 "$cm" 6 10 40 0 ) \
+declare -ax menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${geops[@]}" ) \
 	csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file:" "--fselect" "${sdn}/examples/" "${geops[@]}" )
 
 make_rlist(){
@@ -46,9 +37,22 @@ bashpass_Xdialog(){
     bashpass_dialog
 }
 
-create_dialog() {
-    local dm em un pw pw1 cm
+bashpass_gdialog(){
+    bashpass_Xdialog
+}
 
+create_dialog() {
+    local dm em un pw="$(func_gpw 16)" cm
+    local pw1="${pw}"
+
+    local -arx create_ops=( "${bt_ops[@]}" "--title" "Set details" "--ok-label" "Submit" "--form" "Create Form" "${geops[@]}" 0
+			     "Domain:" 1 1 "$dm" 1 10 40 0
+			     "Email:" 2 1 "$em" 2 10 40 0
+			     "User:" 3 1 "$un" 3 10 40 0
+			     "Password:" 4 1 "$pw" 4 10 40 0
+			     "Pword1:" 5 1 "$pw1" 5 10 40 0 
+			     "Comments:" 6 1 "$cm" 6 10 40 0 )
+    
     exec 3>&1
     # Store data to $VALUES variable
     local -a vals=($("${DIALOG}" "${create_ops[@]}" 2>&1 1>&3))
@@ -67,21 +71,27 @@ create_cdialog(){
 create_Xdialog() {
     # --2inputsbox <text> <height> <width> <label1> <init1> <label2> <init2>
     # --3inputsbox <text> <height> <width> <label1> <init1> <label2> <init2> <label3> <init3>
-    local dm em un pw pw1 cm
+    local dm em un pw="$(func_gpw 16)" cm
+    local pw1="${pw}"
+
     "${DIALOG}" $(make_box input domain) 2> "${tf}"
     (( $? == DIALOG_OK )) && dm=$(cat "${tf}") || return $?
     "${DIALOG}" $(make_box input email) 2> "${tf}"
     (( $? == DIALOG_OK )) && em=$(cat "${tf}") || return $?
     "${DIALOG}" $(make_box input UserName) 2> "${tf}"
     (( $? == DIALOG_OK )) && un=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box password password) 2> "${tf}"
+    "${DIALOG}" $(make_box password password) "${pw}" 2> "${tf}"
     (( $? == DIALOG_OK )) && pw=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box password password_again) 2> "${tf}"
+    "${DIALOG}" $(make_box password password_again) "${pw1}" 2> "${tf}"
     (( $? == DIALOG_OK )) && pw1=$(cat "${tf}") || return $?
     "${DIALOG}" $(make_box input comment) 2> "${tf}"
     (( $? == DIALOG_OK )) && cm=$(cat "${tf}") || return $?
 
     echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm}\"\n" > "${tf}"
+}
+
+create_gdialog(){
+    create_Xdialog
 }
 
 retrieve_dialog(){
@@ -102,6 +112,10 @@ retrieve_Xdialog(){
     retrieve_dialog
 }
 
+retrieve_gdialog(){
+    retrieve_Xdialog
+}
+
 update_dialog(){
     local id errlvl pw pw1
     "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(func_brl) 2> "${tf}"
@@ -110,13 +124,16 @@ update_dialog(){
 	return 1
     fi
 
-    "${DIALOG}" $(make_box password password) 2> "${tf}"
+    pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+    pw1="${pw}"
+
+    "${DIALOG}" $(make_box password password) "${pw}" 2> "${tf}"
     errlvl=$? pw="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
     fi
 
-    "${DIALOG}" $(make_box password password_again) 2> "${tf}"
+    "${DIALOG}" $(make_box password password_again) "${pw1}" 2> "${tf}"
     errlvl=$? pw1="$(cat "${tf}")"
     if (( errlvl != DIALOG_OK )); then
 	return "${errlvl}"
@@ -131,6 +148,10 @@ update_cdialog(){
 
 update_Xdialog(){
     update_dialog
+}
+
+update_gdialog(){
+    update_Xdialog
 }
 
 delete_dialog(){
@@ -151,6 +172,10 @@ delete_Xdialog(){
     delete_dialog
 }
 
+delete_gdialog(){
+    delete_Xdialog
+}
+
 importcsv_dialog(){
     local errlvl csvf
     "${DIALOG}" "${csv_ops[@]}" 2> "${tf}"
@@ -169,6 +194,10 @@ importcsv_Xdialog(){
     importcsv_dialog
 }
 
+importcsv_gdialog(){
+    importcsv_Xdialog
+}
+
 exportcsv_dialog(){
     importcsv_dialog
 }
@@ -181,30 +210,34 @@ exportcsv_Xdialog(){
     exportcsv_dialog
 }
 
+exportcsv_gdialog(){
+    exportcsv_Xdialog
+}
+
 results_dialog(){
-    # [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    # "${PAGER}" <<<"$("${ccm[@]}" "${1}")"
-    local id=0 pw
+    local errlvl id=0 pw pw1
     while [[ -n "${id}" ]]; do
-	"${ccm[@]}" "${1}"
-	echo -ne "Select ID to preview password: (empty to cancel) "
-	read -r id || return $?
-	[[ -z "${id}" ]] && return 1
+	"${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(func_brl "${1}") 2> "${tf}"
+	errlvl=$? id="$(cat "${tf}")"
+	if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
+	    return 1
+	fi
 	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-	echo "Account: ${id}, Password: ${pw}"
+	"${DIALOG}" $(make_box password "${id}PasswordIs:") "${pw}" 2> /dev/null
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
 
 results_cdialog(){
-    results_dialog
+    results_dialog "${1}"
 }
 
 results_Xdialog(){
-    # local IFS=$'\|\t\n'
-    [[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
-    # "${DIALOG}" $(make_msg "results") "--editbox" "${tf}" "${geops[@]}" 2> /dev/null
-    "${DIALOG}" $(make_msg "message") "--no-wrap" "--msgbox" "$("${ccm[@]}" "${1}")" "${geops[@]}" 2> /dev/null
+    results_dialog "${1}"
+}
+
+results_gdialog(){
+    results_Xdialog "${1}"
 }
 
 message_dialog(){
@@ -219,6 +252,10 @@ message_Xdialog(){
     message_dialog
 }
 
+message_gdialog(){
+    message_Xdialog
+}
+
 usage_dialog(){
     "${DIALOG}" $(make_msg "Help") "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
 }
@@ -229,4 +266,8 @@ usage_cdialog(){
 
 usage_Xdialog(){
     "${DIALOG}" $(make_msg "Help") "--left" "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
+}
+
+usage_gdialog(){
+    usage_Xdialog
 }

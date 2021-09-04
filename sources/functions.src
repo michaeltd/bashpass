@@ -103,9 +103,9 @@ func_gpw() {
 }
 
 # RowID'S
-func_rids() {
-    "${dcm[@]}" "$(sl3_rids)"
-}
+# func_rids() {
+#     "${dcm[@]}" "$(sl3_rids)"
+# }
 
 # -.-
 func_maxid() {
@@ -120,14 +120,14 @@ func_rcount() {
 
 # Build Row Lines (for (X)dialog check/radio lists)
 func_brl() {
-    local dm em un rl
-    for i in $(func_rids); do
-        dm="$("${dcm[@]}" "$(sl3_brl "${dmf}" "${i}")"|sed 's/ /-/g')"
-        em="$("${dcm[@]}" "$(sl3_brl "${emf}" "${i}")"|sed 's/ /-/g')"
-        un="$("${dcm[@]}" "$(sl3_brl "${unf}" "${i}")"|sed 's/ /-/g')"
-        rl+="${i} ${dm:-NULL}_${em:-NULL}_${un:-NULL} off "
+    local IFS=$'\n'
+    local -a rs=( $("${sql3[@]}" "${1:-"$(sl3_brl)"}") )
+    for i in ${rs[@]}; do
+	local IFS=$'\|'
+	local -a rec=( ${i[@]} )
+        local rl+="${rec[0]} ${rec[1]:-NULL}:${rec[2]:-NULL}:${rec[3]:-NULL}:${rec[4]:-NULL} off\n"
     done
-    echo "${rl[@]}"
+    [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 NoRecordsFound ON"
 }
 
 func_brlzen(){

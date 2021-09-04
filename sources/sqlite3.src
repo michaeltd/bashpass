@@ -1,8 +1,8 @@
 #!/bin/bash
 
-sl3_rids(){
-    echo -ne "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
-}
+# sl3_rids(){
+#     echo -ne "SELECT ${idf} FROM ${act} ORDER BY ${idf} ASC;"
+# }
 
 sl3_maxid(){
     echo -ne "SELECT MAX(${idf}) FROM ${act};"
@@ -12,9 +12,17 @@ sl3_rcount(){
     echo -ne "SELECT COUNT(${idf}) FROM ${act};"
 }
 
+# sl3_brl(){
+#     echo -ne "SELECT ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ROWID = '${1}';"
+# }
+
 sl3_brl(){
-    echo -ne "SELECT ${1} FROM ${act} WHERE ${idf} = '${2}';"
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ID ASC;"
 }
+
+# sl3_brl_cust(){
+#     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf} FROM ${act} WHERE ROWID = '${1}';"
+# }
 
 sl3_brlzen(){
     echo -ne "SELECT 'FALSE' AS STATE, ${idf}, ${dmf}, ${emf}, ${unf} FROM ${act} ORDER BY ${idf} ASC;"

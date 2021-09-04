@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #shellcheck shell=bash source=/dev/null disable=SC1008,SC2096,SC2155,SC1090,SC2068,SC2086,SC2141,SC2046,SC2015
 #
-# bashpass gtkdialog/yad/zenity/kdialog/Xdialog/whiptail/cdialog/dialog/terminal assisted password management.
+# bashpass gtkdialog/yad/zenity/kdialog/Xdialog/gdialog/whiptail/cdialog/dialog/terminal assisted password management.
 
 # Restrict permissions
 umask 0077
@@ -28,8 +28,7 @@ declare -r dbsd="${sdn}/databases" \
 
 declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
-# declare -r bpusage="Usage: ${sbn} [sample.gpg] [gtkdialog|yad|zenity|kdialog|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
 
 declare gpgf db bngpgf bndb usrintrfce
 
@@ -37,8 +36,7 @@ declare gpgf db bngpgf bndb usrintrfce
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
-        # gtkdialog|yad|zenity|kdialog|Xdialog|whiptail|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
-        zenity|yad|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
         -d|--debug) set -x;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
@@ -56,6 +54,8 @@ elif [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DIS
 # elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+    declare -xr DIALOG="$(type -P "${usrintrfce}")"
+elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 # elif [[ "${usrintrfce}" == "whiptail" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for whiptail
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
@@ -82,6 +82,9 @@ else # -z USERINTRFCE etc
     elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
 	declare -xr DIALOG="$(type -P Xdialog)"
 	readonly usrintrfce="Xdialog"
+    elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+	declare -xr DIALOG="$(type -P gdialog)"
+	readonly usrintrfce="gdialog"
     # elif [[ -x "$(type -P whiptail)" ]]; then # Check for whiptail
     # 	declare -xr DIALOG="$(type -P whiptail)"
     # 	readonly usrintrfce="whiptail"
@@ -142,7 +145,7 @@ create() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     if [[ "${pw}" != "${pw1}" ]]; then
-	func_show_msg "Password missmatch"
+	func_show_msg "Password missmatch!"
 	return $?
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
@@ -164,7 +167,7 @@ update() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     if [[ "${pw}" != "${pw1}" ]]; then
-	func_show_msg "Password missmatch"
+	func_show_msg "Password missmatch!"
 	return $?
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"

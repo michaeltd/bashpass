@@ -2,50 +2,42 @@
 #
 # bashpass/setup - prep bashpass
 
-declare sdn sbn gpgf db
-sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
+declare sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
+	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")" gpgf db
 
-if [[ ! -t 0 ]]; then
-    echo -en "Fatal: You'll need to run ${sbn} in a terminal (or tty)!\n" >&2
-    exit 1
-elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
-    echo -en "Fatal: You'll need bash major version no less than 4.\n" >&2
-    exit 1
-elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
-    echo -en "Fatal: You need SQLite3 installed.\n" >&2
-    exit 1
-elif [[ -z "$(type -P gpg 2> /dev/null)" ]] && [[ -z "$(type -P gpg2 2> /dev/null)" ]]; then
-    echo -en "Fatal: You need GNU Privacy Guard v2 (gnupg) installed.\n" >&2
-    exit 1
-fi
+setup() {
+    source "${sdn}/sources/functions.src" || return $?
 
-type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
-type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
-readonly -a gpgc=( "${gpg}" "--default-recipient-self" "--output" )
+    func_check_prereqs || return $?
 
-if [[ -z "${1}" ]]; then
-    gpgf="sample.gpg"
-    db="${gpgf%%.gpg}"
-elif [[ "${1}" =~ .gpg$ ]]; then
-    gpgf="${1}"
-    db="${gpgf%%.gpg}"
-else
-    gpgf="${1}.gpg"
-    db="${gpgf%%.gpg}"
-fi
+    type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
+    type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
+    readonly -a gpgc=( "${gpg}" "--default-recipient-self" "--output" )
 
-fpgpgf="${sdn}/databases/${gpgf}"
-fpdb="${sdn}/databases/${db}"
+    if [[ -z "${1}" ]]; then
+	gpgf="sample.gpg"
+	db="${gpgf%%.gpg}"
+    elif [[ "${1}" =~ .gpg$ ]]; then
+	gpgf="${1}"
+	db="${gpgf%%.gpg}"
+    else
+	gpgf="${1}.gpg"
+	db="${gpgf%%.gpg}"
+    fi
 
-echo -ne " This script will:\n \
- 1. Make a ${db} SQLite3 file ... \n \
- 2. encrypt it to ${gpgf} \n \
- 3. Execute bashpass ${gpgf} \n"
+    fpgpgf="${sdn}/databases/${gpgf}" fpdb="${sdn}/databases/${db}"
 
-if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
-    sqlite3 "${fpdb}" < "${sdn}/examples/create.sql" && \
-	"${gpgc[@]}" "${fpgpgf}" "--encrypt" "${fpdb}" && \
-	"${sdn}/bashpass" "${gpgf}" && \
-	echo -ne "From now on you'll be able to start bashpass with: bashpass ${gpgf}\n" >&2
-fi
+    echo -ne " This script will:\n \
+    1. Make a ${db} SQLite3 file ... \n \
+    2. encrypt it to ${gpgf} ... \n \
+    3. Execute bashpass ${gpgf} \n"
+
+    if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
+	sqlite3 "${fpdb}" < "${sdn}/examples/create.sql" && \
+	    "${gpgc[@]}" "${fpgpgf}" "--encrypt" "${fpdb}" && \
+	    "${sdn}/bashpass" "${gpgf}" && \
+	    echo -ne "From now on you'll be able to start bashpass with: bashpass ${gpgf}\n" >&2
+    fi
+}
+
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && "${sbn}" "${@}"
