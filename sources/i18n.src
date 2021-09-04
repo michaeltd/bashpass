@@ -1,0 +1,35 @@
+#!/bin/bash
+
+mylang="${LANG:-en_US.UTF-8}"
+export mylang="${mylang//[.-]/_}"
+
+export en_US_UTF_8_bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
+export en_US_UTF_8_msg_pm="Password missmatch!"
+export -a en_US_UTF_8_tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
+export -a en_US_UTF_8_gui_ops=( "Create" "Search" "Update" "Delete" "Import_CSV" "Export_CSV" "SQLite3" "Help" "Quit" )
+export -a en_US_UTF_8_sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
+export -a en_US_UTF_8_desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
+export -a en_US_UTF_8_tui_menu=( )
+export -a en_US_UTF_8_tui_hmsg=( "\n${bpusage[*]}\n\n" )
+export en_US_UTF_8_gui_menu=""
+export en_US_UTF_8_kdg_menu=""
+export -a en_US_UTF_8_gui_hmsg=( "\n${bpusage[*]}\n\n" )
+
+export_menus(){
+    for (( x = 0; x < ${#en_US_UTF_8_tui_ops[@]}; x++ )); do
+	en_US_UTF_8_tui_menu+=( "${x}:${tui_ops[x]}" )
+	(( ( x + 1 ) % 4 == 0 )) && en_US_UTF_8_tui_menu+=( "\n" ) || en_US_UTF_8_tui_menu+=( "\t" )
+	en_US_UTF_8_tui_hmsg+=( "Use ${x}, for ${tui_ops[x]}, which will ${desc[x]}\n" )
+	en_US_UTF_8_gui_menu+="${gui_ops[x]}|${sdesc[x]}|${desc[x]}|"
+	en_US_UTF_8_kdg_menu+="${x} ${gui_ops[x]} "
+	en_US_UTF_8_gui_hmsg+=( "Use ${gui_ops[x]}, to ${desc[x]}\n" )
+    done
+    
+    en_US_UTF_8_tmp_hmsg="\naccounts table format is as follows:\n$("${sql3[@]}" ".schema ${act}")\n\n"
+
+    export en_US_UTF_8_tui_menu+=( "\nChoose[0-$((${#tui_ops[*]}-1))]:" )
+    export en_US_UTF_8_tui_hmsg+=( "${tmp_hmsg}" )
+    export en_US_UTF_8_gui_menu
+    export en_US_UTF_8_gui_hmsg+=( "${tmp_hmsg}" )
+    export en_US_UTF_8_kdg_menu
+}

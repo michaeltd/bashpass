@@ -126,6 +126,7 @@ func_brl() {
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
         local rl+="${rec[0]} ${rec[1]:-NULL}:${rec[2]:-NULL}:${rec[3]:-NULL}:${rec[4]:-NULL} off\n"
+        # local rl+="${rec[0]} ${rec[1]:-NULL}|${rec[2]:-NULL}|${rec[3]:-NULL}|${rec[4]:-NULL} off\n"
     done
     [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 NoRecordsFound ON"
 }
