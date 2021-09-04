@@ -13,8 +13,8 @@ declare -ax menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" 
 	csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file:" "--fselect" "${sdn}/examples/" "${geops[@]}" )
 
 make_rlist(){
-    echo -ne "${bt_ops[@]} --title ${1^} --radiolist SelectID2${1^} ${geops[@]} 5"
-    # echo -ne "${bt_ops[@]} --title ${1^} --radiolist SelectID2${1^} --column-separator $'|' ${geops[@]} 5"
+    # echo -ne "${bt_ops[@]} --title ${1^} --radiolist SelectID2${1^} ${geops[@]} 5"
+    echo -ne "${bt_ops[@]} --title ${1^} --column-separator , --radiolist SelectID2${1^} ${geops[@]} 5"
 }
 
 make_msg(){
