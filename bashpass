@@ -5,6 +5,7 @@
 
 # Restrict permissions
 umask 0077
+set +x -f # Set debug off (unless specified by user option) and disable globbing.
 
 # Timeout settings for Xdialog, Xmessage
 # xmessage timeout is in seconds...
@@ -108,12 +109,30 @@ else
     readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
 fi
 
-# gpg & shred commands (Thanks Dylan)
+# gpg commands
 type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
 type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
-# readonly -a gpgc=( "${gpg}" "--batch" "--yes" "--default-recipient-self" "--output" )
-readonly -a gpgc=( "${gpg}" "--yes" "--default-recipient-self" "--output" )
-type -P shred &> /dev/null && readonly -a shrc=( "shred" "--zero" "--remove" ) || readonly -a shrc=( "rm" "-f" )
+# readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--default-recipient-self" "--output" )
+# [[ -n "${BP_KEY}" ]] && \
+#     readonly -a gpgc=( "${gpg}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" ) || \
+# 	readonly -a gpgc=( "${gpg}" "--symmetric" "--output" )
+# readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY:-tsouchlarakis@gmail.com}" "--output" )
+
+readonly gpgc="${gpg}"
+
+
+if [[ -n "${BP_KEY}" ]]; then
+else
+    readonly -a gpgdc=("${gpgc}" "-o" "${db}" "-d" "${gpgf}")
+    readonly -a gpgec=("${gpgc}" "-o" "${pgpf}" "-ce" "${db}")
+fi
+
+
+    
+# Shred commands
+type -P shred &> /dev/null && \
+    readonly -a shrc=( "shred" "--zero" "--remove" ) || \
+	readonly -a shrc=( "rm" "-P" "-f" )
 
 # SQLite commands
 readonly -a dcm=( "sqlite3" "-list" "${db}" ) \

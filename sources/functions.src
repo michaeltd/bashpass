@@ -20,16 +20,18 @@ func_do_quit() {
     "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     # "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
-    if ! "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}"; then
+    # if ! "${gpgc[@]}" "--symmetric" "--encrypt" "${db}" "--output" "${gpgf}"; then
+    if ! "${gpgc[@]}" "-o" "${gpgf}" "-ce" "${db}"; then
+	# "-o" "${db}" "-cd" "${gpgf}" ; then
 	func_show_msg "Something smells fishy!"
-	exit "${?}"
+	return "${?}"
     else
 	local -ar f2d=( "${db}" "${tf}" "${mutex}" )
 	for i in ${f2d[@]}; do
 	    ${shrc[@]} "${i}";
 	done
 	read -rp "Return to continue ... "
-	exit "${1:-0}"
+        return "${1:-0}"
     fi
 }
 
@@ -61,8 +63,10 @@ func_check_decrypt() {
     if ! [[ "$(file -b "${gpgf}")" =~ ^PGP ]]; then
         func_show_msg "${bngpgf}, does not appear to be a valid PGP file."
         return $?
-    elif ! "${gpgc[@]}" "${db}" "--decrypt" "${gpgf}"; then
-        func_show_msg "Decryption failed."
+    # elif ! "${gpgc[@]}" "--symmetric" "--decrypt" "${gpgf}" "--output" "${db}"; then
+    elif ! "${gpgc[@]}" "-o" "${db}" "-d" "${gpgf}" ; then
+	# "-o" "${fpgpgf}" "-ce" "${fpdb}"  && \
+        func_show_msg "${bngpgf} decryption failed."
         return $?
     elif ! [[ "$(file -b "${db}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
         func_show_msg "${bndb}, does not appear to be a valid SQLite 3.x database file."
@@ -71,7 +75,6 @@ func_check_decrypt() {
         touch {"${mutex}","${tf}"}
     fi
 }
-
 
 # SQL or func_show_msg.
 func_check_sql() {
@@ -94,12 +97,30 @@ func_read_dbflds(){
     unset tbls schm brkdwn arrflds
 }
 
+func_regex_allow(){
+    # Allowable char classes: [:graph:]==[:alnum:][:punct:]
+    echo -ne "[:graph:]" 
+}
+
+func_regex_forbid(){
+    # Returns a regex string with all forbidden chars to check against user input
+    # echo -ne "\`\"'|,\$"
+    # echo -ne "[=\`=][=\"=][='=][=|=][=,=][=\$=]"
+    # echo -ne "$'\`'$'\"'$'\''$'|'$','$'\$'$'\'$' '"
+    echo -ne "\ \`\"'|,\$"
+}
+
+func_chkinpt(){
+    [[ "${1}" =~ [$(func_regex_forbid)] ]]
+}
+
 # Generate PassWord
 func_gpw() {
-    LC_ALL=C tr -dc [:graph:] < /dev/urandom | \
-	tr -d "\"\'\|\,\\" | \
-	dd ibs=1 obs=1 count="${1:-64}" 2>/dev/null
-    echo
+    local pw="$(
+        LC_ALL=C tr -dc [$(func_regex_allow)] < /dev/urandom | \
+		 tr -d "$(func_regex_forbid)" | \
+		 dd ibs=1 obs=1 count="${1:-64}" 2>/dev/null)"
+    echo "${pw//\\//}"
 }
 
 # RowID'S

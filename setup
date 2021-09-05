@@ -10,22 +10,28 @@ setup() {
 
     func_check_prereqs || return $?
 
-    type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
-    type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
-    readonly -a gpgc=( "${gpg}" "--default-recipient-self" "--output" )
-
+    # gpg commands
+    type -P gpg  &>/dev/null && local gpg="$(type -P gpg)"
+    type -P gpg2 &>/dev/null && local gpg="$(type -P gpg2)"
+    # readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--default-recipient-self" "--output" )
+    # [[ -n "${BP_KEY}" ]] && \
+	# local -ra gpgc=( "${gpg}" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" ) || \
+	# local -ra gpgc=( "${gpg}" "--symmetric" "--output" )
+    # local -ra gpgc=( "${gpg}" "--trust-model" "always" "--recipient" "${BP_KEY:-tsouchlarakis@gmail.com}" "--output" )
+    local -ra gpgc=( "${gpg}" )
+    
     if [[ -z "${1}" ]]; then
-	gpgf="sample.gpg"
-	db="${gpgf%%.gpg}"
+	local gpgf="sample.gpg"
+	local db="${gpgf%%.gpg}"
     elif [[ "${1}" =~ .gpg$ ]]; then
-	gpgf="${1}"
-	db="${gpgf%%.gpg}"
+	local gpgf="${1}"
+	local db="${gpgf%%.gpg}"
     else
-	gpgf="${1}.gpg"
-	db="${gpgf%%.gpg}"
+	local gpgf="${1}.gpg"
+	local db="${gpgf%%.gpg}"
     fi
 
-    fpgpgf="${sdn}/databases/${gpgf}" fpdb="${sdn}/databases/${db}"
+    local fpgpgf="${sdn}/databases/${gpgf}" fpdb="${sdn}/databases/${db}"
 
     echo -ne " This script will:\n \
     1. Make a ${db} SQLite3 file ... \n \
@@ -34,7 +40,7 @@ setup() {
 
     if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	sqlite3 "${fpdb}" < "${sdn}/examples/create.sql" && \
-	    "${gpgc[@]}" "${fpgpgf}" "--encrypt" "${fpdb}" && \
+	    "${gpgc[@]}" "-o" "${fpgpgf}" "-ce" "${fpdb}"  && \
 	    "${sdn}/bashpass" "${gpgf}" && \
 	    echo -ne "From now on you'll be able to start bashpass with: bashpass ${gpgf}\n" >&2
     fi

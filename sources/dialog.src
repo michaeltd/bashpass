@@ -13,7 +13,6 @@ declare -ax menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" 
 	csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file:" "--fselect" "${sdn}/examples/" "${geops[@]}" )
 
 make_rlist(){
-    # echo -ne "${bt_ops[@]} --title ${1^} --radiolist SelectID2${1^} ${geops[@]} 5"
     echo -ne "${bt_ops[@]} --title ${1^} --column-separator , --radiolist SelectID2${1^} ${geops[@]} 5"
 }
 
@@ -43,31 +42,8 @@ bashpass_gdialog(){
 }
 
 create_dialog() {
-    # local dm em un pw="$(func_gpw 16)" cm
-    # local pw1="${pw}"
-
-    # local -arx create_ops=( "${bt_ops[@]}" "--title" "Set details" "--ok-label" "Submit" "--form" "Create Form" "${geops[@]}" 0
-    # 			     "Domain:" 1 1 "$dm" 1 10 40 0
-    # 			     "Email:" 2 1 "$em" 2 10 40 0
-    # 			     "User:" 3 1 "$un" 3 10 40 0
-    # 			     "Password:" 4 1 "$pw" 4 10 40 0
-    # 			     "Pword1:" 5 1 "$pw1" 5 10 40 0 
-    # 			     "Comments:" 6 1 "$cm" 6 10 40 0 )
-    
-    # exec 3>&1
-    # # Store data to $VALUES variable
-    # local -a vals=($("${DIALOG}" "${create_ops[@]}" 2>&1 1>&3))
-    # # close fd
-    # exec 3>&-
-
-    # [[ -z "${vals[@]}" ]] && return 1
-    
-    # echo -ne "dm=\"${vals[*]:0:1}\"\nem=\"${vals[*]:1:1}\"\nun=\"${vals[*]:2:1}\"\npw=\"${vals[*]:3:1}\"\npw1=\"${vals[*]:4:1}\"\ncm=\"${vals[*]:5}\"\n" > "${tf}"
-
-    local errlvl cnt=0
-    local dm em un pw="$(func_gpw 16)" cm
+    local dm em un pw="$(func_gpw 16)" cm errlvl cnt=0 
     local pw1="${pw}"
-
     local -arx create_ops=( "${bt_ops[@]}" "--title" "Set details" "--ok-label" "Submit" "--separator" $',' "--form" "Create Form" "${geops[@]}" 0
 			     "Domain:" 1 1 "$dm" 1 10 40 0
 			     "Email:" 2 1 "$em" 2 10 40 0
@@ -75,24 +51,16 @@ create_dialog() {
 			     "Password:" 4 1 "$pw" 4 10 40 0
 			     "Pword1:" 5 1 "$pw1" 5 10 40 0 
 			     "Comments:" 6 1 "$cm" 6 10 40 0 )
-    
     # Store data to $VALUES variable
     "${DIALOG}" "${create_ops[@]}" 2> "${tf}"
-
     errlvl=$?
-
     (( errlvl != DIALOG_OK )) && return $errlvl
-
     local -r vals="$(cat "${tf}")"
-
     local IFS=$','
-
     for i in $vals; do
 	arv[((cnt++))]="$i"
     done
-
     echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
-
 }
 
 create_cdialog(){
