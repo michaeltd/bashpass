@@ -41,7 +41,7 @@ password generator, storage and reference for the terminal and/or X.
 
      main script
 
-     1) [[file:sources/]]
+     1) [[file:srcs/]
 
        Accompanied functions.
        Namely sqlite3, general and ?UI specific
@@ -106,6 +106,10 @@ password generator, storage and reference for the terminal and/or X.
 
    This project is nothing more than a UI/CRUD/SQL/PGP playground!
 
+   Not tested for production use at any load or capacity!
+
+   Backup never hurt nobody [+.-]
+
    So with that out of the way and If you're still around, let's move along ...
 
 ** tl;dr
@@ -130,13 +134,13 @@ password generator, storage and reference for the terminal and/or X.
 
       Run ~setup [sample.gpg]~ from [[file:bashpass][bashpass]]'s directory.
 
-      It'll create ~databases/sample~ SQLite3 and encrypt it as ~databases/sample.gpg~ to your personal keyring
+      It'll create ~dbs/sample~ SQLite3 and encrypt it as ~dbs/sample.gpg~ to your personal keyring
 
 ***** The hard way:
 
-      You'll need to build ~sample~ like so: ~sqlite3 databases/sample < examples/create.sql~ from this directory
+      You'll need to build ~sample~ like so: ~sqlite3 dbs/sample < examples/create.sql~ from this directory
 
-      and encrypt it like so: ~gpg --default-recipient-self --output databases/sample.gpg --encrypt databases/sample~,
+      and encrypt it like so: ~gpg --default-recipient-self --output dbs/sample.gpg --encrypt dbs/sample~,
 
       Reason being SQLite3 ~sample~ file you'll work with, needs to be encrypted to your own keyring.
 
@@ -152,11 +156,9 @@ password generator, storage and reference for the terminal and/or X.
 
    - You can provide an SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
 
-   - The ~debug~ option will ~set -x~ to ~bashpass~, enabling it to echo commands in the terminal. To say the least: It's noisy!
+   - The ~debug~ option will ~set -vx~ to ~bashpass~, enabling it to echo commands in the terminal. To say the least: It's noisy!
 
    - Help will print out Usage and exit.
-
-   - The order of arguments is irrelevant. ie: ~bashpass sample.gpg terminal~ == ~bashpass terminal sample.gpg~)
 
 * Notes
 
@@ -170,15 +172,11 @@ password generator, storage and reference for the terminal and/or X.
 
   5. After <2019-11-27 Wed> depending on xclip availability, if on Xdialog mode and on single record Create, Retrieve or Update operations, you'll be able to paste affected password via middle-click.
 
-  6. Again... Not tested for production use at any load or capacity!
-
 ** Security concerns
 
    This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
    ~sample~ SQLite files used by this application get shredded upon quitting (if ~shred~ is available in system), otherwise a file recovery tool could recover unencrypted versions of them.
-
-   Backup never hurt nobody [+.-]
 
 * TO-DOS [3/5] [60%]
 ** DONE ✔ Encryption
