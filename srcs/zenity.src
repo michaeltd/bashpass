@@ -47,7 +47,7 @@ create_zenity() {
     for i in $vals; do
 	arv[((cnt++))]="$i"
     done
-    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
+    echo -ne "dm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
 }
 
 retrieve_zenity() {
@@ -113,7 +113,7 @@ results_zenity(){
 	local -a id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "-1")"
 	[[ "${id}" == "-1" ]] && return 255
 	local pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null
+	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }

@@ -1,13 +1,10 @@
 *
 !assets/*
-!databases/.keep
-!examples/*
-!sources/*
-!tests/*
-!.gitignore
 !bashpass
-!tests.bats
-!tests.bats
+!dbs/.keep
+!examples/*
 !license
 !readme.org
 !setup
+!srcs/*
+!tests.bats

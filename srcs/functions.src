@@ -19,14 +19,11 @@ func_do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
     "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
-    # "${gpgc[@]}" "${gpgf}" "--encrypt" "${db}" && "${shrc[@]}" {"${db}","${tf}","${mutex}"}
-    # if ! "${gpgc[@]}" "--symmetric" "--encrypt" "${db}" "--output" "${gpgf}"; then
-    if ! "${gpgc[@]}" "-o" "${gpgf}" "-ce" "${db}"; then
-	# "-o" "${db}" "-cd" "${gpgf}" ; then
+    if ! "${gpgec[@]}"; then
 	func_show_msg "Something smells fishy!"
 	return "${?}"
     else
-	local -ar f2d=( "${db}" "${tf}" "${mutex}" )
+	local -ar f2d=( "${rpdb}" "${tf}" "${mutex}" )
 	for i in ${f2d[@]}; do
 	    ${shrc[@]} "${i}";
 	done
@@ -60,15 +57,13 @@ func_check_mutex() {
 
 # Decrypt .sqlite, setup temp and mutex or func_show_msg.
 func_check_decrypt() {
-    if ! [[ "$(file -b "${gpgf}")" =~ ^PGP ]]; then
+    if ! [[ "$(file -b "${rpgpgf}")" =~ ^PGP ]]; then
         func_show_msg "${bngpgf}, does not appear to be a valid PGP file."
         return $?
-    # elif ! "${gpgc[@]}" "--symmetric" "--decrypt" "${gpgf}" "--output" "${db}"; then
-    elif ! "${gpgc[@]}" "-o" "${db}" "-d" "${gpgf}" ; then
-	# "-o" "${fpgpgf}" "-ce" "${fpdb}"  && \
+    elif ! "${gpgdc[@]}"; then
         func_show_msg "${bngpgf} decryption failed."
         return $?
-    elif ! [[ "$(file -b "${db}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
+    elif ! [[ "$(file -b "${rpdb}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
         func_show_msg "${bndb}, does not appear to be a valid SQLite 3.x database file."
         return $?
     else
@@ -111,6 +106,7 @@ func_regex_forbid(){
 }
 
 func_chkinpt(){
+    # Returns true (0) on match false (1) otherwise
     [[ "${1}" =~ [$(func_regex_forbid)] ]]
 }
 

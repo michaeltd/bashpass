@@ -55,7 +55,7 @@ create_yad() {
     for i in $vals; do
 	arv[((cnt++))]="$i"
     done
-    echo -ne "dm=\"${arv[0]}\"\nem=\"${arv[1]}\"\nun=\"${arv[2]}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]}\"\n" > "${tf}"
+    echo -ne "dm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
 }
 
 retrieve_yad() {

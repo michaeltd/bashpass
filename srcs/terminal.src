@@ -53,7 +53,7 @@ create_terminal() {
         fi
     done
 
-    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm}\"\n" > "${tf}"
+    echo -ne "dm=\"${dm:-NULL}\"\nem=\"${em:-NULL}\"\nun=\"${un:-NULL}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm:-NULL}\"\n" > "${tf}"
 }
 
 retrieve_terminal(){

@@ -4,45 +4,53 @@
 # bashpass gtkdialog/yad/zenity/kdialog/Xdialog/gdialog/whiptail/cdialog/dialog/terminal assisted password management.
 
 # Restrict permissions
-umask 0077
-set +x -f # Set debug off (unless specified by user option) and disable globbing.
-
+umask 077
+# Set verbose xtrace off (unless specified by user option) and disable globbing.
+set +vx -f
 # Timeout settings for Xdialog, Xmessage
 # xmessage timeout is in seconds...
 declare -rx XMTO="30"
 declare -rx XDTO="$((XMTO * 1000))" # Xdialog/dialog is in milliseconds
-
 # Xdialog/dialog
 declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
 	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
-
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
-
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
 declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
-declare -r dbsd="${sdn}/databases" \
-	scsd="${sdn}/sources"
+declare -r dbsd="dbs" \
+	scsd="srcs"
+
+cd "${sdn}" || { echo "Something's not quite right..." >&2; exit 1; }
 
 declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
 
-declare gpgf db bngpgf bndb usrintrfce
-
+declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
         zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
-        -d|--debug) set -x;;
+        -d|--debug) set -vx;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
     esac
     shift
 done
-
+# GPG file, db file related vars
+if [[ -z "${gpgf}" ]]; then
+    readonly gpgf="sample.gpg"
+fi
+readonly db="${gpgf%%.gpg}"
+readonly bngpgf="${gpgf}"
+readonly bndb="${db}"
+readonly rpgpgf="${dbsd}/${gpgf}"
+readonly rpdb="${dbsd}/${db}"
+readonly fpgpgf="${sdn}/${rpgpgf}"
+readonly fpdb="${sdn}/${rpdb}"
 # Try to accommodate optional preference...
 # if [[ "${usrintrfce}" == "gtkdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
@@ -99,49 +107,28 @@ else # -z USERINTRFCE etc
     fi
 fi
 
-if [[ -n "${gpgf}" ]]; then
-    readonly gpgf="${dbsd}/${gpgf}"
-    readonly db="${gpgf%%.gpg}"
-    readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
-else
-    readonly gpgf="${dbsd}/sample.gpg"
-    readonly db="${gpgf%%.gpg}"
-    readonly bngpgf="${gpgf/*\/}" bndb="${db/*\/}"
-fi
-
 # gpg commands
-type -P gpg  &>/dev/null && gpg="$(type -P gpg)"
-type -P gpg2 &>/dev/null && gpg="$(type -P gpg2)"
+type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
+type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
 # readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--default-recipient-self" "--output" )
-# [[ -n "${BP_KEY}" ]] && \
-#     readonly -a gpgc=( "${gpg}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" ) || \
-# 	readonly -a gpgc=( "${gpg}" "--symmetric" "--output" )
-# readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY:-tsouchlarakis@gmail.com}" "--output" )
-
-readonly gpgc="${gpg}"
-
-
 if [[ -n "${BP_KEY}" ]]; then
+    readonly -a gpgdc=( "${gpgc}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpdb}" "--decrypt" "${rpgpgf}") \
+	     gpgec=( "${gpgc}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
 else
-    readonly -a gpgdc=("${gpgc}" "-o" "${db}" "-d" "${gpgf}")
-    readonly -a gpgec=("${gpgc}" "-o" "${pgpf}" "-ce" "${db}")
+    readonly -a gpgdc=("${gpgc}" "--quiet" "--batch" "--yes" "--output" "${rpdb}" "--decrypt" "${rpgpgf}") \
+	     gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
 fi
-
-
-    
 # Shred commands
 type -P shred &> /dev/null && \
     readonly -a shrc=( "shred" "--zero" "--remove" ) || \
 	readonly -a shrc=( "rm" "-P" "-f" )
-
 # SQLite commands
-readonly -a dcm=( "sqlite3" "-list" "${db}" ) \
-	 rcm=( "sqlite3" "-line" "${db}" ) \
-	 icm=( "sqlite3" "-csv" "${db}" ) \
-	 ccm=( "sqlite3" "-column" "-header" "${db}" ) \
-	 scm=( "sqlite3" "-separator" " " "${db}" ) \
-	 sql3=( "sqlite3" "${db}" )
-
+readonly -a dcm=( "sqlite3" "-list" "${rpdb}" ) \
+	 rcm=( "sqlite3" "-line" "${rpdb}" ) \
+	 icm=( "sqlite3" "-csv" "${rpdb}" ) \
+	 ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
+	 scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
+	 sql3=( "sqlite3" "${rpdb}" )
 # Temp files
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
 	 mutex="${dbsd}/.${bndb}.mutex"

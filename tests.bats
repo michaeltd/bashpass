@@ -25,17 +25,17 @@
 }
 
 @test "Can we create a ${BATS_TEST_FILENAME##*/} SQLite3 database?" {
-    run sqlite3 "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.sqlite3" < "${BATS_TEST_DIRNAME}/examples/create.sql"
+    run sqlite3 "${BATS_TEST_DIRNAME}/dbs/${BATS_TEST_FILENAME##*/}.sl3" < "${BATS_TEST_DIRNAME}/examples/create.sql"
     [ "$status" -eq 0 ]
 }
 
 @test "Can we encrypt ${BATS_TEST_FILENAME##*/}'s SQLite3 to gpg (have default keyring)?" {
-    run gpg --default-recipient-self --output "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.gpg" --encrypt "${BATS_TEST_DIRNAME}/databases/${BATS_TEST_FILENAME##*/}.sqlite3"
+    run gpg --default-recipient-self --output "${BATS_TEST_DIRNAME}/dbs/${BATS_TEST_FILENAME##*/}.gpg" --encrypt "${BATS_TEST_DIRNAME}/dbs/${BATS_TEST_FILENAME##*/}.sl3"
     [ "$status" -eq 0 ]
 }
 
-@test "Can we shred ${BATS_TEST_FILENAME##*/}'s .sqlite3 .gpg files?" {
-    run shred --zero --remove ${BATS_TEST_DIRNAME}/databases/{${BATS_TEST_FILENAME##*/}.gpg,${BATS_TEST_FILENAME##*/}.sqlite3}
+@test "Can we shred ${BATS_TEST_FILENAME##*/}'s .sl3 .gpg files?" {
+    run shred --zero --remove ${BATS_TEST_DIRNAME}/dbs/{${BATS_TEST_FILENAME##*/}.gpg,${BATS_TEST_FILENAME##*/}.sl3}
     [ "$status" -eq 0 ]
 }
 
@@ -44,6 +44,6 @@
     [ "$status" -eq 0 ]
     run shellcheck setup
     [ "$status" -eq 0 ]
-    run shellcheck sources/*.src
+    run shellcheck srcs/*.src
     [ "$status" -eq 0 ]
 }

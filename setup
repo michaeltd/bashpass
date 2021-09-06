@@ -2,46 +2,53 @@
 #
 # bashpass/setup - prep bashpass
 
+umask 077
+
 declare sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
-	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")" gpgf db
+	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 
 setup() {
-    source "${sdn}/sources/functions.src" || return $?
+
+    cd "${sdn}" || { echo "Something's not quite right..." >&2; exit 1; }
+    
+    source "srcs/functions.src" || return $?
 
     func_check_prereqs || return $?
 
-    # gpg commands
-    type -P gpg  &>/dev/null && local gpg="$(type -P gpg)"
-    type -P gpg2 &>/dev/null && local gpg="$(type -P gpg2)"
-    # readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--default-recipient-self" "--output" )
-    # [[ -n "${BP_KEY}" ]] && \
-	# local -ra gpgc=( "${gpg}" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" ) || \
-	# local -ra gpgc=( "${gpg}" "--symmetric" "--output" )
-    # local -ra gpgc=( "${gpg}" "--trust-model" "always" "--recipient" "${BP_KEY:-tsouchlarakis@gmail.com}" "--output" )
-    local -ra gpgc=( "${gpg}" )
+    local dbsd="dbs"
     
     if [[ -z "${1}" ]]; then
 	local gpgf="sample.gpg"
-	local db="${gpgf%%.gpg}"
     elif [[ "${1}" =~ .gpg$ ]]; then
 	local gpgf="${1}"
-	local db="${gpgf%%.gpg}"
     else
 	local gpgf="${1}.gpg"
-	local db="${gpgf%%.gpg}"
     fi
 
-    local fpgpgf="${sdn}/databases/${gpgf}" fpdb="${sdn}/databases/${db}"
+    local db="${gpgf%%.gpg}"
+    local rpgpgf="${dbsd}/${gpgf}"
+    local rpdb="${dbsd}/${db}"
+    local fpgpgf="${sdn}/${rpgpgf}"
+    local fpdb="${sdn}/${rpdb}"
+    
+    # gpg commands
+    type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
+    type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
+    if [[ -n "${BP_KEY}" ]]; then
+	local -a gpgec=("${gpgc}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
+    else
+	local -a gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
+    fi
 
     echo -ne " This script will:\n \
-    1. Make a ${db} SQLite3 file ... \n \
-    2. encrypt it to ${gpgf} ... \n \
+    1. Make a ${rpdb} SQLite3 file ... \n \
+    2. encrypt it to ${rpgpgf} ... \n \
     3. Execute bashpass ${gpgf} \n"
 
     if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
-	sqlite3 "${fpdb}" < "${sdn}/examples/create.sql" && \
-	    "${gpgc[@]}" "-o" "${fpgpgf}" "-ce" "${fpdb}"  && \
-	    "${sdn}/bashpass" "${gpgf}" && \
+	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" && \
+	    "${gpgec[@]}" && \
+	    "./bashpass" "${gpgf}" && \
 	    echo -ne "From now on you'll be able to start bashpass with: bashpass ${gpgf}\n" >&2
     fi
 }
