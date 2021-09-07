@@ -25,7 +25,7 @@ password generator, storage and reference for the terminal and/or X.
 ** Using [[file:assets/yd.png][yad]]
 #+html: <p align="center"><img src="assets/yd.png"/></p>
 ** Using [[file:assets/zn.png][zenity]]
-#+html: <p align="center"><img src="assets/zn.png
+#+html: <p align="center"><img src="assets/zn.png"/></p>
 
 * Files
   1. [[file:bashpass][bashpass]]
