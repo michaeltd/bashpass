@@ -3,7 +3,24 @@
 # Pick up right editor syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
-func_show_msg() {
+func_setup(){
+    # setup - prep bashpass
+    echo -ne " ${rpgpgf} Not found or unusable.\n
+    So now ${sbn} will try to:\n \
+    1. Make a ${rpdb} SQLite3 file ... \n \
+    2. encrypt it to ${rpgpgf} ... \n \
+    3. Execute bashpass ${gpgf} \n"
+    if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
+	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" && \
+	    "${gpgec[@]}" && \
+	    "${sdn}/bashpass" "${gpgf}" && \
+	    return 1 # If we get here, always return false to have user restart the script witch correct options.
+    else
+	return 1 # ALWAYS return false!
+    fi
+}
+
+func_show_err() {
     local -r ttl="${sbn}: Error!" msg="${FUNCNAME[1]}: ${*}"
     if [[ -n "$(type -P notify-send)" && -n "${DISPLAY}" ]]; then
         "$(type -P notify-send)" "-i" "${sdn}/assets/gpa.png" "-c" "notification" "-t" "${XDTO}" "${ttl}" "${msg}"
@@ -20,7 +37,7 @@ func_do_quit() {
     "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     if ! "${gpgec[@]}"; then
-	func_show_msg "Something smells fishy!"
+	func_show_err "Something smells fishy!"
 	return "${?}"
     else
 	local -ar f2d=( "${rpdb}" "${tf}" "${mutex}" )
@@ -34,47 +51,47 @@ func_do_quit() {
 
 func_check_prereqs(){
     if [[ ! -t 0 ]]; then
-        func_show_msg "You'll need to run ${0/*\/} in a terminal (or tty)!"
+        func_show_err "You'll need to run ${0/*\/} in a terminal (or tty)!"
     elif [[ "${BASH_VERSINFO[0]}" -lt "4" ]]; then
-        func_show_msg "You'll need bash major version no less than 4."
+        func_show_err "You'll need bash major version no less than 4."
     elif [[ -z "$(type -P sqlite3 2> /dev/null)" ]]; then
-        func_show_msg "You need SQLite3 installed."
+        func_show_err "You need SQLite3 installed."
     elif [[ -z "$(type -P gpg 2> /dev/null)" ]] && [[ -z "$(type -P gpg2 2> /dev/null)" ]]; then
-        func_show_msg "You need GNU Privacy Guard v2 (gnupg) installed."
+        func_show_err "You need GNU Privacy Guard v2 (gnupg) installed."
     fi
 }
 
-# No mutex or func_show_msg.
+# No mutex or func_show_err.
 func_check_mutex() {
     # local -ar pids=( $(pgrep -U "${USER}" -f "${bngpgf}") )
     # if [[ "${#pids[*]}" -gt "1" ]]; then
-    # 	func_show_msg "You can only have one instance of ${bngpgf}."
+    # 	func_show_err "You can only have one instance of ${bngpgf}."
     # fi
     if [[ -f "${mutex}" ]]; then
-	func_show_msg "You can only have one instance of ${bngpgf}."
+	func_show_err "You can only have one instance of ${bngpgf}."
     fi
 }
 
-# Decrypt .sqlite, setup temp and mutex or func_show_msg.
+# Decrypt .sqlite, setup temp and mutex or func_show_err.
 func_check_decrypt() {
     if ! [[ "$(file -b "${rpgpgf}")" =~ ^PGP ]]; then
-        func_show_msg "${bngpgf}, does not appear to be a valid PGP file."
+        func_show_err "${bngpgf}, does not appear to be a valid PGP file."
         return $?
     elif ! "${gpgdc[@]}"; then
-        func_show_msg "${bngpgf} decryption failed."
+        func_show_err "${bngpgf} decryption failed."
         return $?
     elif ! [[ "$(file -b "${rpdb}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
-        func_show_msg "${bndb}, does not appear to be a valid SQLite 3.x database file."
+        func_show_err "${bndb}, does not appear to be a valid SQLite 3.x database file."
         return $?
     else
         touch {"${mutex}","${tf}"}
     fi
 }
 
-# SQL or func_show_msg.
+# SQL or func_show_err.
 func_check_sql() {
     if ! "${dcm[@]}" "$(sl3_select_all)" &> /dev/null; then
-        func_show_msg "Need a working db to function."
+        func_show_err "Need a working db to function."
     fi
 }
 
@@ -83,7 +100,16 @@ func_read_dbflds(){
     local -a tbls=($("${sql3[@]}" ".tables"))
     local schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
     schm="${schm^^}" # sqlite is case insensitive
-    local -a brkdwn=("CREATE" "TABLE" "IF" "NOT" "NULL" "EXISTS" "NCHAR" "100" "256" "PRIMARY" "KEY" "(" ")" "," ";")
+    local -a brkdwn=(
+	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT" "EXISTS" "NCHAR"
+	"100" "256" "PRIMARY" "KEY" "INTEGER" "REAL" "TEXT" "BLOB"
+	"TEXT" "NUMERIC" "INTEGER" "REAL" "NONE" "INT" "INTEGER" "TINYINT"
+	"SMALLINT" "MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT" "INT2" "INT8"
+	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
+	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
+	"DECIMAL" "BOOLEAN" "DATE" "DATETIME" "(" ")" "," ";" "\""
+    )
+
     for i in ${brkdwn[@]}; do
 	schm="${schm//${i}/$' '}"
     done
@@ -142,7 +168,6 @@ func_brl() {
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
-        # local rl+="${rec[0]} ${rec[1]:-NULL}:${rec[2]:-NULL}:${rec[3]:-NULL}:${rec[4]:-NULL} off\n"
         local rl+="${rec[0]} ${rec[1]:-NULL},${rec[2]:-NULL},${rec[3]:-NULL},${rec[4]:-NULL} off\n"
     done
     [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 NoRecordsFound ON"

@@ -1,10 +1,10 @@
 *
+!.bashpass.rc.example
 !assets/*
 !bashpass
 !dbs/.keep
 !examples/*
 !license
 !readme.org
-!setup
 !srcs/*
 !tests.bats

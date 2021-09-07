@@ -39,11 +39,11 @@
     [ "$status" -eq 0 ]
 }
 
-@test "Does shellcheck approve bashpass, setup and source files?" {
+@test "Does shellcheck approve bashpass and source files?" {
     run shellcheck bashpass
     [ "$status" -eq 0 ]
-    run shellcheck setup
-    [ "$status" -eq 0 ]
+    # run shellcheck setup
+    # [ "$status" -eq 0 ]
     run shellcheck srcs/*.src
     [ "$status" -eq 0 ]
 }

@@ -12,8 +12,10 @@ set +vx -f
 declare -rx XMTO="30"
 declare -rx XDTO="$((XMTO * 1000))" # Xdialog/dialog is in milliseconds
 # Xdialog/dialog
-declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
-	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
+declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
+	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
+	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
+	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
@@ -21,13 +23,9 @@ declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 declare -r dbsd="dbs" \
 	scsd="srcs"
-
 cd "${sdn}" || { echo "Something's not quite right..." >&2; exit 1; }
-
 declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
-
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
 # Process optional arguments
 while [[ -n "${1}" ]]; do
@@ -44,7 +42,7 @@ done
 if [[ -z "${gpgf}" ]]; then
     readonly gpgf="sample.gpg"
 fi
-readonly db="${gpgf%%.gpg}"
+readonly db="${gpgf//.gpg/.sl3}"
 readonly bngpgf="${gpgf}"
 readonly bndb="${db}"
 readonly rpgpgf="${dbsd}/${gpgf}"
@@ -106,18 +104,19 @@ else # -z USERINTRFCE etc
 	readonly usrintrfce="terminal"
     fi
 fi
-
 # gpg commands
 type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
 type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
-# readonly -a gpgc=( "${gpg}" "--batch" "--quiet" "--yes" "--default-recipient-self" "--output" )
+[[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc"
 if [[ -n "${BP_KEY}" ]]; then
-    readonly -a gpgdc=( "${gpgc}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpdb}" "--decrypt" "${rpgpgf}") \
-	     gpgec=( "${gpgc}" "--quiet" "--batch" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
+    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
+elif [[ -n "${BP_EML}" ]]; then
+    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_EML}" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
 else
-    readonly -a gpgdc=("${gpgc}" "--quiet" "--batch" "--yes" "--output" "${rpdb}" "--decrypt" "${rpgpgf}") \
-	     gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
+    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
 fi
+readonly -a gpgdc=("${gpgc}" "--quiet" "--yes" "--output" "${rpdb}" "--decrypt" "${rpgpgf}")
+	 
 # Shred commands
 type -P shred &> /dev/null && \
     readonly -a shrc=( "shred" "--zero" "--remove" ) || \
@@ -132,14 +131,12 @@ readonly -a dcm=( "sqlite3" "-list" "${rpdb}" ) \
 # Temp files
 readonly tf="${dbsd}/.${bndb}.${$}.tf" \
 	 mutex="${dbsd}/.${bndb}.mutex"
-
 # Sources to use
 readonly -a srcsfs=( 
     "${scsd}/sqlite3.src"
     "${scsd}/functions.src"
     "${scsd}/${usrintrfce}.src"
 )
-
 for i in ${srcsfs[@]}; do
     source "${i}" || exit $?
 done
@@ -149,7 +146,7 @@ create() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     if [[ "${pw}" != "${pw1}" ]]; then
-	func_show_msg "Password missmatch!"
+	func_show_err "Password missmatch!"
 	return $?
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
@@ -171,7 +168,7 @@ update() {
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
     if [[ "${pw}" != "${pw1}" ]]; then
-	func_show_msg "Password missmatch!"
+	func_show_err "Password missmatch!"
 	return $?
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
@@ -224,10 +221,12 @@ bashpass() {
 
     func_check_prereqs || return $?
     func_check_mutex || return $?
-    func_check_decrypt || return $?
+    if ! func_check_decrypt; then
+	func_setup || return $? # func_setup always returns false.
+    fi
     func_read_dbflds || func_do_quit $? # Have $db, $tf and $mutex so from now on we're do_quit and trap for propper housekeeping.
     func_check_sql || func_do_quit $?
-    
+    # From now on any exit, normal or erratic is a do_quit $?
     trap 'func_do_quit ${SIG_NONE}' "${SIG_NONE}"
     trap 'func_do_quit ${SIG_HUP}' "${SIG_HUP}"
     trap 'func_do_quit ${SIG_INT}' "${SIG_INT}"

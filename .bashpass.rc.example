@@ -1,0 +1,3 @@
+# Uncomment accordingly 
+# BP_KEY="my@email.com" # gpg2 public/private key encryption
+# BP_EML="my@email.com" # gpg2 symmetric algorithm encryption

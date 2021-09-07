@@ -17,168 +17,89 @@ password generator, storage and reference for the terminal and/or X.
   6. \slash \slash export a csv file
 
 ** Using [[file:assets/bp.png][terminal]]
-
 #+html: <p align="center"><img src="assets/bp.png"/></p>
-
 ** Using [[file:assets/dp.png][dialog]], cdialog
-
 #+html: <p align="center"><img src="assets/dp.png"/></p>
-
 ** Using [[file:assets/xp.png][Xdialog]]
-
 #+html: <p align="center"><img src="assets/xp.png"/></p>
-
-** Using [[file:assets/zn.png][zenity]]
-
-#+html: <p align="center"><img src="assets/zn.png"/></p>
-
 ** Using [[file:assets/yd.png][yad]]
-
 #+html: <p align="center"><img src="assets/yd.png"/></p>
+** Using [[file:assets/zn.png][zenity]]
+#+html: <p align="center"><img src="assets/zn.png
 
 * Files
-  1. [[file:bashpass]]
-
+  1. [[file:bashpass][bashpass]]
      main script
-
-     1) [[file:srcs/]
-
+     1) [[file:srcs/][srcs]]
        Accompanied functions.
        Namely sqlite3, general and ?UI specific
-
-  2. [[file:setup]]
-
-     Setup script with first time run only commands
-
-  3. [[file:examples/][examples]]
-     
+  2. [[file:examples/][examples]]
      Create DB script and import example files.
-
      1) [[file:examples/create.sql][create.sql]]
-
         SQLite database create example script
-
      2) [[file:examples/import.csv][import.csv]]
-
         Accounts import example format
-
-  4. [[file:tests.bats]]
-
+  3. [[file:tests.bats][test.bats]]
      Bats tests file.
-
      Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
-
-  5. [[file:readme.org]]
-
+  4. [[file:readme.org][readme.org]]
      This file
-
-  6. [[file:license]]
-
+  5. [[file:license][license]]
      A License
 
 * Dependencies
-
-  1. GNU Privacy Guard
-
-     You need gnupg installed, ~gpg2~ or ~gpg~ executable readily available in ~${PATH}.~
-
-  2. SQLite v3
-
-     SQLite3 installed and ~sqlite3~ available in ~${PATH}.~
-
-  3. BASH v4
-
+  
+  1. GNU/BSD based distro
+  2. BASH v4
      A recent Bash installation with a major version no less than 4.
-
-  4. Optionally...
-
-     1. yad,zenity,kdialog,Xdialog,gdialog for an X client.
-
+  3. SQLite v3
+     SQLite3 installed and ~sqlite3~ available in ~${PATH}.~
+  4. GNU Privacy Guard
+     You need gnupg installed, ~gpg2~ or ~gpg~ executable readily available in ~${PATH}.~
+  5. Optionally...
+     1. zenity,yad,kdialog,Xdialog,gdialog for an X client.
      2. whiptail,cdialog,dialog for a tty TUI.
-
      3. finally, xclip for some middle click password pasting functionality.
 
 * Usage
 
 ** Disclaimer - Use at your own risk!!!
 
-   This author makes no claims, guarantees or promises of any kind!
+   * This author makes no claims, guarantees or promises of any kind!
+   * This project is nothing more than a UI/CRUD/SQL/PGP playground!
+   * Not tested for production use at any load or capacity!
+   * This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
+   * ~sample.sl3~ SQLite files used by this script get shredded upon quitting.
+   * Backup never hurt nobody [+.-]
+   * So with that out of the way and If you're still around, let's move along ...
 
-   This project is nothing more than a UI/CRUD/SQL/PGP playground!
+** [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]]
 
-   Not tested for production use at any load or capacity!
+   If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]].
 
-   Backup never hurt nobody [+.-]
-
-   So with that out of the way and If you're still around, let's move along ...
-
-** tl;dr
-
-   1. ~git clone https://github.com/michaeltd/bashpass && cd bashpass~
-
-   2. ~./setup [sample.gpg]~
-
-   3. ~./bashpass [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]~
-
-** In detail
-
-*** First time only:
-
-**** [[https://www.gnupg.org/gph/en/manual/c14.html][Default gpg keyring]]
-
-     If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][default gpg keyring]].
-
-**** Make and encrypt a ~sample.gpg~ SQLite3 file.
-
-***** The easy way:
-
-      Run ~setup [sample.gpg]~ from [[file:bashpass][bashpass]]'s directory.
-
-      It'll create ~dbs/sample~ SQLite3 and encrypt it as ~dbs/sample.gpg~ to your personal keyring
-
-***** The hard way:
-
-      You'll need to build ~sample~ like so: ~sqlite3 dbs/sample < examples/create.sql~ from this directory
-
-      and encrypt it like so: ~gpg --default-recipient-self --output dbs/sample.gpg --encrypt dbs/sample~,
-
-      Reason being SQLite3 ~sample~ file you'll work with, needs to be encrypted to your own keyring.
-
-      All relevant files must reside in [[file:bashpass][bashpass]]'s directory.
-
-*** Subsequent uses:
-
-    For subsequent uses just fire up the script directly: ~bashpass [sample.gpg]~ from a terminal,
-
+** Basic usage:
+   ~bashpass [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]~
+   If ~*.gpg~ parameter is unavailable (eg: first time use) or unusable, It'll be (re)created.
+   
 ** Optional command line arguments
 
-   - If you'd like to test other UI options try: ~bashpass [zenity|yad|Xdialog|gdialog|cdialog|dialog]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
-
-   - You can provide an SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
-
+   - If you'd like to test other UI options try: ~bashpass [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
+   - You can provide an gpg2 encrypted SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
    - The ~debug~ option will ~set -vx~ to ~bashpass~, enabling it to echo commands in the terminal. To say the least: It's noisy!
-
    - Help will print out Usage and exit.
 
 * Notes
 
-  1. You can only have one instance of each ~*.gpg~ file open at any given time for obvious reasons. Internally enforced by a simple MUTEX implementation.
-
-  2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.gpg]~) as it will not run otherwise. For SQLite session availability, gnupg input and debugging purposes.
-
+  1. You can only have one instance of each ~*.gpg~ file open at any given time.
+     This is internally enforced by MUTEX implementation.
+  2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.gpg]~) as it will not run otherwise.
+     For SQLite session availability, gnupg input and debugging purposes.
   3. Passwords generated by [[file:bashpass][bashpass]] are 16 character long ~[:graph:]~ type random strings from ~/dev/urandom~, with some exceptions: ~\ `$|,'"~, namely: backslash, backtick, pound, colon, comma, quotes(both).
+  4. GNU Privacy Guard file that'll be provided has to have a ~.gpg~ extension. If no ~*.gpg~ file parameter given, the script will default to ~sample.gpg~.
+  5. Avoid creating the SQLite3 db by any other means beyond ~examples/create.sql~ or ~bashpass~ itself (whitch uses the exact same .sql script).
+     It's more than likely to result in various errors.
 
-  4. GNU Privacy Guard file that'll be provided has to have a ~*.gpg~ extension. If no ~.gpg~ file parameter given, the script will default to ~sample.gpg~.
-
-  5. After <2019-11-27 Wed> depending on xclip availability, if on Xdialog mode and on single record Create, Retrieve or Update operations, you'll be able to paste affected password via middle-click.
-
-** Security concerns
-
-   This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
-
-   ~sample~ SQLite files used by this application get shredded upon quitting (if ~shred~ is available in system), otherwise a file recovery tool could recover unencrypted versions of them.
-
-* TO-DOS [3/5] [60%]
+* TO-DOS [3/6] [50%]
 ** DONE ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
    Add pgp encryption
@@ -201,17 +122,42 @@ password generator, storage and reference for the terminal and/or X.
    Add a menu option for pass compatibility mode
 ** TODO l10n support
    Source a ~l10n.src~ file that will feed translated strings according to ~${LANG}~ settings.
+** TODO NULL values
+   Central null value handling for various ?UIs list building consistancy.
    
 * Updates
+
+** <2019-11-27 Wed> 
+   Depending on xclip availability, if on Xdialog mode 
+   and on single record Create, Retrieve or Update operations, 
+   you'll be able to paste affected passwords via middle-click.
 
 ** <2021-09-03 Fri>
    gdialog is only tested with zenity link, 
    so you know what to do ...
 
+** <2021-09-06 Mon>
+   ~setup~ script went BB and got replaced with ~func_setup~,
+   for less repeated code and a more compact design.
+
+** <2021-09-06 Mon>
+   Changes to gpg2 encryption options.
+   
+   You can launch bashpass like so:
+   BP_KEY="my@email.net" ./bashpass mygpgfile.gpg # or
+   BP_EML="my@email.net" ./bashpass mygpgfile.gpg
+   Alternatively use an RC file to store email details,
+   see [[file:.bashpass.rc.example][.bashpass.rc.example]] and don't forget to rename it to use it: 
+   ~echo "BP_KEY=\"my@email.net\"" > .bashpass.rc~ or
+   ~echo "BP_EML=\"my@email.net\"" > .bashpass.rc~
+   $BP_KEY will encrypt to your personal keyring
+   $BP_EML will encrypt with a conventional symmetric algorithm
+   On RC file and envar absence this script will default to symmetric encryption
+   to a gpg key provided by you. (by gpg2 prompt)
+
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
   Typos, syntactic and grammar welcome, other than that all PR's will be reviewed.
-
   In the rare case that you really *must* contribute, feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
 
 * [[file:license][ISC License]] [[https://opensource.org/licenses/ISC][https://img.shields.io/badge/License-ISC-yellow.svg]]
