@@ -17,7 +17,11 @@ sl3_brlzen(){
 }
 
 sl3_insert_into(){
-    echo -ne "INSERT INTO ${act} VALUES('${1//:/\:}', '${2}', '${3}', '${4}', '${5}');"
+    local cnt=0 vals="${1}" IFS=$','
+    for i in $vals; do
+	arv[((cnt++))]="${i:-NULL}"
+    done
+    echo -ne "INSERT INTO ${act} VALUES('${arv[0]//:/\:}', '${arv[1]}', '${arv[2]}', '${arv[3]}', '${arv[4]}');"
 }
 
 sl3_select_newrecs(){

@@ -24,7 +24,7 @@ declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 declare -r dbsd="dbs" \
 	scsd="srcs"
 cd "${sdn}" || { echo "Something's not quite right..." >&2; exit 1; }
-declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
+# declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
 # Process optional arguments
@@ -151,7 +151,7 @@ create() {
     fi
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
     [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(func_gpw 16)"
-    "${sql3[@]}" "$(sl3_insert_into "${dm}" "${em}" "${un}" "${pw}" "${cm}")"
+    "${sql3[@]}" "$(sl3_insert_into "${dm},${em},${un},${pw},${cm}")"
     # "${rcm[@]}" "$(sl3_select_newrecs "${maxid}")" > "${tf}"
     "results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
 }

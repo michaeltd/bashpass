@@ -222,7 +222,7 @@ results_dialog(){
 	    return 1
 	fi
 	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-	"${DIALOG}" $(make_box password "${id}PasswordIs:") "${pw}" 2> /dev/null
+	"${DIALOG}" $(make_box password "${id}PasswordIs:") "${pw}" 2> /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }

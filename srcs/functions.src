@@ -5,11 +5,14 @@
 
 func_setup(){
     # setup - prep bashpass
-    echo -ne " ${rpgpgf} Not found or unusable.\n
-    So now ${sbn} will try to:\n \
-    1. Make a ${rpdb} SQLite3 file ... \n \
-    2. encrypt it to ${rpgpgf} ... \n \
-    3. Execute bashpass ${gpgf} \n"
+    echo -ne "\n  ${rpgpgf} Not found or unusable.\n
+    So now ${sbn} will try to:
+    1. Make a ${rpdb} SQLite3 file ...
+    2. encrypt it to ${rpgpgf} ...
+    3. Execute bashpass ${gpgf}
+
+    In the rare case you've misspelled your passphrase,
+    you're way better off just by hitting an enter here!\n"
     if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" && \
 	    "${gpgec[@]}" && \
@@ -101,13 +104,15 @@ func_read_dbflds(){
     local schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
     schm="${schm^^}" # sqlite is case insensitive
     local -a brkdwn=(
-	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT" "EXISTS" "NCHAR"
-	"100" "256" "PRIMARY" "KEY" "INTEGER" "REAL" "TEXT" "BLOB"
-	"TEXT" "NUMERIC" "INTEGER" "REAL" "NONE" "INT" "INTEGER" "TINYINT"
-	"SMALLINT" "MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT" "INT2" "INT8"
-	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
-	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
-	"DECIMAL" "BOOLEAN" "DATE" "DATETIME" "(" ")" "," ";" "\""
+	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT" "EXISTS"
+	"INTEGER" "REAL" "TEXT" "BLOB" "TEXT" "NUMERIC"
+	"INTEGER" "REAL" "NONE" "INT" "INTEGER" "TINYINT"
+	"SMALLINT" "MEDIUMINT" "BIGINT" "UNSIGNED" "BIG"
+	"INT" "INT2" "INT8" "CHARACTER" "VARCHAR" "VARYING"
+	"CHARACTER" "NCHAR" "NATIVE" "NVARCHAR" "CLOB"
+	"DOUBLE" "PRECISION" "FLOAT" "NUMERIC" "DECIMAL"
+	"BOOLEAN" "DATE" "DATETIME" "100" "256" "PRIMARY"
+	"KEY" "(" ")" "," ";" "\""
     )
 
     for i in ${brkdwn[@]}; do
@@ -168,9 +173,10 @@ func_brl() {
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
-        local rl+="${rec[0]} ${rec[1]:-NULL},${rec[2]:-NULL},${rec[3]:-NULL},${rec[4]:-NULL} off\n"
+        # local rl+="${rec[0]} ${rec[1]:-NULL},${rec[2]:-NULL},${rec[3]:-NULL},${rec[4]:-NULL} off\n"
+	local rl+="${rec[0]} ${rec[1]},${rec[2]},${rec[3]},${rec[4]} off\n"
     done
-    [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 NoRecordsFound ON"
+    [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No,Records,Found ON"
 }
 
 func_brlzen(){

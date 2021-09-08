@@ -130,7 +130,7 @@ results_yad(){
 	local -a id=( $("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "-1") )
 	[[ "${id[0]}" == "-1" ]] && return 255
 	local pw="$("${sql3[@]}" "$(sl3_showpw "${id[0]}")")"
-	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null
+	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }

@@ -1,7 +1,7 @@
 #+title: bashpass
 #+author: michaeltd
 #+date: <2019-08-18 Sun>
-#+description: password generator, storage, and reference for the terminal and/or X.
+#+description: password generator, storage and reference for the terminal and/or X.
 #+options: toc:t num:t
 #+html: <p align="center"><img src="assets/password.jpg"/></p>
 
@@ -10,67 +10,112 @@ password generator, storage and reference for the terminal and/or X.
 * Use Case
 
   1. I can create passwords
+
   2. \slash \slash recall passwords
+
   3. \slash \slash update passwords
+
   4. \slash \slash delete accounts
+
   5. \slash \slash import a csv file
+
   6. \slash \slash export a csv file
 
 ** Using [[file:assets/bp.png][terminal]]
-#+html: <p align="center"><img src="assets/bp.png"/></p>
+
+   #+html: <p align="center"><img src="assets/bp.png"/></p>
+   
 ** Using [[file:assets/dp.png][dialog]], cdialog
-#+html: <p align="center"><img src="assets/dp.png"/></p>
+
+   #+html: <p align="center"><img src="assets/dp.png"/></p>
+   
 ** Using [[file:assets/xp.png][Xdialog]]
-#+html: <p align="center"><img src="assets/xp.png"/></p>
+
+   #+html: <p align="center"><img src="assets/xp.png"/></p>
+   
 ** Using [[file:assets/yd.png][yad]]
-#+html: <p align="center"><img src="assets/yd.png"/></p>
+
+   #+html: <p align="center"><img src="assets/yd.png"/></p>
+   
 ** Using [[file:assets/zn.png][zenity]]
-#+html: <p align="center"><img src="assets/zn.png"/></p>
+
+   #+html: <p align="center"><img src="assets/zn.png"/></p>
 
 * Files
   1. [[file:bashpass][bashpass]]
+
      main script
-     1) [[file:srcs/][srcs]]
-       Accompanied functions.
-       Namely sqlite3, general and ?UI specific
-  2. [[file:examples/][examples]]
+
+  2. [[file:srcs/][srcs]]
+
+     Accompanied functions.
+
+     Namely sqlite3, general and ?UI specific
+     
+  3. [[file:examples/][examples]]
+
      Create DB script and import example files.
+
      1) [[file:examples/create.sql][create.sql]]
-        SQLite database create example script
+
+	SQLite database create example script
+
      2) [[file:examples/import.csv][import.csv]]
-        Accounts import example format
-  3. [[file:tests.bats][test.bats]]
-     Bats tests file.
-     Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
-  4. [[file:readme.org][readme.org]]
+
+	Accounts import example format
+
+  4. [[file:tests.bats][test.bats]]
+	
+     Bats tests file. Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
+     
+  5. [[file:readme.org][readme.org]]
+
      This file
-  5. [[file:license][license]]
+     
+  6. [[file:license][license]]
+
      A License
 
 * Dependencies
   
   1. GNU/BSD based distro
+
   2. BASH v4
+
      A recent Bash installation with a major version no less than 4.
+
   3. SQLite v3
+
      SQLite3 installed and ~sqlite3~ available in ~${PATH}.~
+
   4. GNU Privacy Guard
+
      You need gnupg installed, ~gpg2~ or ~gpg~ executable readily available in ~${PATH}.~
+
   5. Optionally...
+
      1. zenity,yad,kdialog,Xdialog,gdialog for an X client.
+
      2. whiptail,cdialog,dialog for a tty TUI.
+
      3. finally, xclip for some middle click password pasting functionality.
 
 * Usage
 
-** Disclaimer - Use at your own risk!!!
+** Disclaimer - Use at your own risk.
 
-   * This author makes no claims, guarantees or promises of any kind!
-   * This project is nothing more than a UI/CRUD/SQL/PGP playground!
-   * Not tested for production use at any load or capacity!
+   * This author makes no claims, guarantees or promises of any kind.
+
+   * This project is nothing more than a UI/CRUD/SQL/PGP playground.
+
+   * Not tested for production use at any load or capacity.
+
    * This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
+
    * ~sample.sl3~ SQLite files used by this script get shredded upon quitting.
+
    * Backup never hurt nobody [+.-]
+
    * So with that out of the way and If you're still around, let's move along ...
 
 ** [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]]
@@ -79,85 +124,152 @@ password generator, storage and reference for the terminal and/or X.
 
 ** Basic usage:
    ~bashpass [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]~
+
    If ~*.gpg~ parameter is unavailable (eg: first time use) or unusable, It'll be (re)created.
    
 ** Optional command line arguments
 
-   - If you'd like to test other UI options try: ~bashpass [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal]~, needless to say they have to be installed. If not ~bashpass~ will default to the highest available option in that order.
-   - You can provide an gpg2 encrypted SQLite3 database for use with ~bashpass~. That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
-   - The ~debug~ option will ~set -vx~ to ~bashpass~, enabling it to echo commands in the terminal. To say the least: It's noisy!
+   - If you'd like to test other UI options try: ~bashpass [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal]~, needless to say they have to be installed.
+
+     If not ~bashpass~ will default to the highest available option in that order.
+
+   - You can provide an gpg2 encrypted SQLite3 database for use with ~bashpass~.
+
+     That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
+
+   - The ~debug~ option will ~set -vx~ to ~bashpass~, enabling it to echo commands in the terminal.
+
+     To say the least: It's noisy!
+
    - Help will print out Usage and exit.
 
 * Notes
 
   1. You can only have one instance of each ~*.gpg~ file open at any given time.
+
      This is internally enforced by MUTEX implementation.
-  2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.gpg]~) as it will not run otherwise.
+     
+  2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled
+
+     (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.gpg]~)
+
+     as it will not run otherwise.
+     
      For SQLite session availability, gnupg input and debugging purposes.
-  3. Passwords generated by [[file:bashpass][bashpass]] are 16 character long ~[:graph:]~ type random strings from ~/dev/urandom~, with some exceptions: ~\ `$|,'"~, namely: backslash, backtick, pound, colon, comma, quotes(both).
-  4. GNU Privacy Guard file that'll be provided has to have a ~.gpg~ extension. If no ~*.gpg~ file parameter given, the script will default to ~sample.gpg~.
-  5. Avoid creating the SQLite3 db by any other means beyond ~examples/create.sql~ or ~bashpass~ itself (whitch uses the exact same .sql script).
+     
+  3. Passwords generated by [[file:bashpass][bashpass]] are 16 character long ~[:graph:]~ type
+
+     random strings from ~/dev/urandom~, with some exceptions: ~\ `$|,'"~, 
+
+     namely: backslash, backtick, pound, colon, comma, quotes(both).
+
+  4. GNU Privacy Guard file that'll be provided has to have a ~.gpg~ extension. 
+
+     If no ~*.gpg~ file parameter given, the script will default to ~sample.gpg~.
+
+  5. Avoid creating the SQLite3 db by any other means beyond ~examples/create.sql~ 
+
+     or ~bashpass~ itself (which uses the exact same .sql script).
+
      It's more than likely to result in various errors.
 
-* TO-DOS [3/6] [50%]
+* TO-DOS [3/7] [42%]
 ** DONE ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
    Add pgp encryption
+
 ** DONE ✔ Clipboard
    CLOSED: [2019-11-27 Wed 02:21]
-   Depending on xclip availability on Xdialog mode and upon single record Create,Retrieve,Update operations selected password will be copied to ~XA_PRIMARY~ xclip target (pasteable with middle mouse button), with it's trailing newline ('\n') removed.
+   Depending on xclip availability on Xdialog mode and upon single record 
+   
+   Create, Retrieve and Update operations selected password will be copied to 
+
+   ~XA_PRIMARY~ xclip target (pasteable with middle mouse button),
+
+   with it's trailing newline ('\n') removed.
+
 ** DONE ✔ Modular UI [3/3] [100%]
    CLOSED: [2019-08-22 Thu 01:43]
    Depending on the environment.
+
 *** DONE ✔ GUI
     CLOSED: [2019-08-22 Thu 01:44]
     Based on availability
+
 *** DONE ✔ GUI/TUI
     CLOSED: [2019-08-22 Thu 01:44]
     Based on X
+
 *** DONE ✔ zenity/yad support
     CLOSED: [2021-08-22 Sun 01:45]
     Done
+
 ** TODO pass mode
-   Add a menu option for pass compatibility mode
+   Add a menu option for pass (password-store) compatibility mode
+
 ** TODO l10n support
    Source a ~l10n.src~ file that will feed translated strings according to ~${LANG}~ settings.
+
 ** TODO NULL values
-   Central null value handling for various ?UIs list building consistancy.
+   Central null value handling for various ?UIs list building consistency.
    
+   SQLite3 ignores silently ~NOT NULL~, ~DEFAULT~ clauses in ~CREATE TABLE~ statements.
+
+** TODO Variable back ends
+   Like: csv, xml, json, flat etc...
+
 * Updates
 
 ** <2019-11-27 Wed> 
-   Depending on xclip availability, if on Xdialog mode 
-   and on single record Create, Retrieve or Update operations, 
+   Depending on xclip availability and on single record operations,
+
    you'll be able to paste affected passwords via middle-click.
 
 ** <2021-09-03 Fri>
    gdialog is only tested with zenity link, 
+
    so you know what to do ...
 
 ** <2021-09-06 Mon>
    ~setup~ script went BB and got replaced with ~func_setup~,
+
    for less repeated code and a more compact design.
 
 ** <2021-09-06 Mon>
    Changes to gpg2 encryption options.
    
    You can launch bashpass like so:
+
    BP_KEY="my@email.net" ./bashpass mygpgfile.gpg # or
+
    BP_EML="my@email.net" ./bashpass mygpgfile.gpg
-   Alternatively use an RC file to store email details,
+
+   Alternatively use an RC file to store email details, 
+
    see [[file:.bashpass.rc.example][.bashpass.rc.example]] and don't forget to rename it to use it: 
-   ~echo "BP_KEY=\"my@email.net\"" > .bashpass.rc~ or
-   ~echo "BP_EML=\"my@email.net\"" > .bashpass.rc~
-   $BP_KEY will encrypt to your personal keyring
-   $BP_EML will encrypt with a conventional symmetric algorithm
-   On RC file and envar absence this script will default to symmetric encryption
-   to a gpg key provided by you. (by gpg2 prompt)
+
+   ~echo "BP_KEY=\"my@email.net\"" > .bashpass.rc~ $BP_KEY will encrypt to your personal keyring, or 
+
+   ~echo "BP_EML=\"my@email.net\"" > .bashpass.rc~ $BP_EML will encrypt with a conventional symmetric algorithm.
+
+   On RC file and envar absence this script will default 
+   
+   to symmetric encryption to a gpg key provided by you (via gpg2 prompt).
+
+   Another small detail that could lead to misconceptions: 
+
+   RC file should be located in ~bashpass~'s dirname folder (as all other relative files)
+
+   and not ${HOME} or ${XDG_CONFIG_HOME:-${HOME}/.config}.
+
+   So this time literally, It's not a bug... It's a feature!
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
   Typos, syntactic and grammar welcome, other than that all PR's will be reviewed.
-  In the rare case that you really *must* contribute, feel free to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
+  
+  In the rare case that you really *must* contribute, feel free 
+  
+  to buy me some coffee in [[https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3THXBFPG9H3YY&source=michaeltd/.emacs.d][\euro]] or [[bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm][₿]] (bitcoin:19TznUEx2QZF6hQxL64bf3x15VWNy8Xitm).
 
 * [[file:license][ISC License]] [[https://opensource.org/licenses/ISC][https://img.shields.io/badge/License-ISC-yellow.svg]]
