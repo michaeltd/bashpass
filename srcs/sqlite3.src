@@ -40,8 +40,18 @@ sl3_update_pw(){
     echo -ne "UPDATE ${act} SET ${pwf} = '${1}' WHERE ${idf} = '${2}';"
 }
 
+sl3_update_rec(){
+    local cnt=0 vals="${1}" IFS=$','
+    for i in $vals; do arv[((cnt++))]="${i:-NULL}"; done
+    echo -ne "UPDATE ${act} SET ${dmf} = '${arv[1]}', ${emf} = '${arv[2]}', ${unf} = '${arv[3]}', ${pwf} = '${arv[4]}', ${cmf} = '${arv[5]}' WHERE ${idf} = '${arv[0]}';"
+}
+
 sl3_select_id_eq(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+sl3_select_all_id_eq(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
 sl3_delete_id_eq(){

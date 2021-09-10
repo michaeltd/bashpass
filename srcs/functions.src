@@ -5,21 +5,13 @@
 
 func_setup(){
     # setup - prep bashpass
-    echo -ne "\n  ${rpgpgf} Not found or unusable.\n
-    So now ${sbn} will try to:
-    1. Make a ${rpdb} SQLite3 file ...
-    2. encrypt it to ${rpgpgf} ...
-    3. Execute bashpass ${gpgf}
-
-    In the rare case you've misspelled your passphrase,
-    you're way better off just by hitting an enter here!\n"
-    if [[ "$(read -rp " Continue? [y/N]: " r;echo "${r:-n}")" =~ ^[Yy] ]]; then
-	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" && \
-	    "${gpgec[@]}" && \
-	    "${sdn}/bashpass" "${gpgf}" && \
-	    return 1 # If we get here, always return false to have user restart the script witch correct options.
+    echo -ne "\n  ${rpgpgf} Not found.\n  Would you like to build it? [y/N]: "
+    if [[ "$(read -r r;echo "${r:-n}")" =~ ^[Yy] ]]; then
+	# exit on failed creates/encrypts.
+	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" || return $?
+	"${gpgec[@]}" || return $?
     else
-	return 1 # ALWAYS return false!
+	return 1
     fi
 }
 
@@ -133,7 +125,7 @@ func_regex_forbid(){
     # echo -ne "\`\"'|,\$"
     # echo -ne "[=\`=][=\"=][='=][=|=][=,=][=\$=]"
     # echo -ne "$'\`'$'\"'$'\''$'|'$','$'\$'$'\'$' '"
-    echo -ne "\ \`\"'|,\$"
+    echo -ne "\ \`\$|,\"'"
 }
 
 func_chkinpt(){
@@ -174,11 +166,16 @@ func_brl() {
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
         # local rl+="${rec[0]} ${rec[1]:-NULL},${rec[2]:-NULL},${rec[3]:-NULL},${rec[4]:-NULL} off\n"
-	local rl+="${rec[0]} ${rec[1]},${rec[2]},${rec[3]},${rec[4]} off\n"
+	local rl+="${rec[0]} ${rec[1]//\ /_},${rec[2]//\ /_},${rec[3]//\ /_},${rec[4]//\ /_} off\n"
     done
     [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No,Records,Found ON"
 }
 
 func_brlzen(){
     echo "$("${sql3[@]}" "$(sl3_brlzen)")"
+}
+
+func_checkpw(){
+    local pw="${1:-NULL}" pw1="${2:-NULL}"
+    [[ "${pw}" != "${pw1}" ]]
 }

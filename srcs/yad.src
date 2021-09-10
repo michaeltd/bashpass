@@ -16,7 +16,6 @@ declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
 	ct_ops=( "${center_op}" "${title_op}" )
 
 declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-headers" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
-	create_ops=( "${gct_ops[@]}" "--form" "--separator=," "--field=Domain" "--field=Email" "--field=Uname" "--field=Password!Insert pasword or length or empty for auto:H" "--field=Password2!Insert password again.:H" "--field=Comment" ) \
 	retrieve_ops=( "${ct_ops[@]}" "--text=Enter search term to look for (empty for All):" "--entry" ) \
 	update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
 	password_ops=( "${ct_ops[@]}" "--text=Enter password or length/empty for auto:" "--entry" "--hide-text" ) \
@@ -40,79 +39,74 @@ bashpass_yad(){
 }
 
 create_yad() {
-    local errlvl cnt=0
+    local id="${1}" dm="enter a domain" em="enter an email address" un="enter your username" pw="$(func_gpw 16)" cm="comments goes here..." cnt=0 
+    local pw1="${pw}" title="Create Form"
 
-    local pw="$(func_gpw 16)"
-    local pw1="${pw}"
+    if [[ -n "${id}" ]]; then
+	local IFS=$'\|'
+	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
+	dm="${rs[1]}" em="${rs[2]}" un="${rs[3]}" pw="${rs[4]}" pw1="${rs[4]}" cm="${rs[5]}"
+	local title="Update Form"
+    fi
 
-    # local create_ops=( "${geometry_ops[@]}" "--forms" "--separator=," "--add-entry=Domain" "--add-entry=Email" "--add-entry=Uname" "--add-password=Password" "--add-password=Password1" "--add-entry=Comment" )
+    local -ar create_ops=( "${gc_ops[@]}" "--title=${title}" "--form" "--separator=,"
+			   "--field=Domain!${dm}" "${dm}"
+			   "--field=Email!${em}" "${em}"
+			   "--field=Uname!${un}" "${un}"
+			   "--field=Password!Insert pasword or length or empty for auto.:H" "${pw}"
+			   "--field=Pw check!Insert password again.:H" "${pw}"
+			   "--field=Comment!${cm}" "${cm}" )
     
-    "${DIALOG}" "${create_ops[@]}" > "${tf}"
-    errlvl=$?
-    (( errlvl != DIALOG_OK )) && return $errlvl
-    local -r vals="$(cat "${tf}")"
+    "${DIALOG}" "${create_ops[@]}" > "${tf}" || return $?
+
+    local vals="$(cat "${tf}")"
+
     local IFS=$','
-    for i in $vals; do
-	arv[((cnt++))]="$i"
-    done
-    echo -ne "dm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
+    for i in $vals; do arv[((cnt++))]="$i"; done
+
+    echo -ne "id=\"${id}\"\ndm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
+
 }
 
 retrieve_yad() {
     local dm errlvl
-    "${DIALOG}" "${retrieve_ops[@]}" > "${tf}"
-    errlvl=$? dm="$(cat "${tf}")"
-    (( errlvl != DIALOG_OK )) && return "${errlvl}"
+    "${DIALOG}" "${retrieve_ops[@]}" > "${tf}" || return $?
+    dm="$(cat "${tf}")"
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_yad() {
     local id errlvl pw pw1 rs IFS=$'\|\t\n'
-    "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}"
-    errlvl=$?
+    "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}" || return $?
     local rs=( $(cat ${tf}) )
     id="${rs[1]}"
-    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
-	return 1
-    fi
 
-    pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-    pw1="${pw}"
-    
-    "${DIALOG}" "${password_ops[@]}" "--entry-text" "${pw}" > "${tf}"
-    errlvl=$? pw="$(cat "${tf}")"
-    if (( errlvl != DIALOG_OK )); then
-	return "${errlvl}"
-    fi
+    [[ -z "${id}" ]] && return 1
 
-    "${DIALOG}" "${password1_ops[@]}" "--entry-text" "${pw1}" > "${tf}"
-    errlvl=$? pw1="$(cat "${tf}")"
-    if (( errlvl != DIALOG_OK )); then
-	return "${errlvl}"
-    fi
-    
-    echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
+    echo -ne "id=\"${id}\"\n" > "${tf}"
 }
 
 delete_yad() {
     local id errlvl rs IFS=$'\|\t\n'
-    "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}"
-    errlvl=$?
+    "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}" || return $?
+
     local rs=( $(cat ${tf}) )
+
     id="${rs[1]}"
-    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
-	return 1
-    fi
+
+    [[ -z "${id}" ]] && return 1
+
     echo -ne "id=\"${id}\"" > "${tf}"
 }
 
 csv_yad(){
     local errlvl csvf
-    "${DIALOG}" "${csv_ops[@]}" "--file-name=${1}" "${2}" > "${tf}"
-    errlvl=$?
-    (( errlvl != DIALOG_OK )) && return $errlvl
+    "${DIALOG}" "${csv_ops[@]}" "--file-name=${1}" "${2}" > "${tf}" || return $?
+
     csvf="$(cat "${tf}")"
+
     [[ -z "${csvf}" ]] && return 1
+
     echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
 }
 

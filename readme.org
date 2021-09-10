@@ -33,14 +33,14 @@ password generator, storage and reference for the terminal and/or X.
 
    #+html: <p align="center"><img src="assets/xp.png"/></p>
    
-** Using [[file:assets/yd.png][yad]]
-
-   #+html: <p align="center"><img src="assets/yd.png"/></p>
-   
 ** Using [[file:assets/zn.png][zenity]]
 
    #+html: <p align="center"><img src="assets/zn.png"/></p>
 
+** Using [[file:assets/yd.png][yad]]
+
+   #+html: <p align="center"><img src="assets/yd.png"/></p>
+   
 * Files
   1. [[file:bashpass][bashpass]]
 
@@ -94,7 +94,7 @@ password generator, storage and reference for the terminal and/or X.
 
   5. Optionally...
 
-     1. zenity,yad,kdialog,Xdialog,gdialog for an X client.
+     1. yad,zenity,Xdialog,gdialog for an X client.
 
      2. whiptail,cdialog,dialog for a tty TUI.
 
@@ -123,13 +123,13 @@ password generator, storage and reference for the terminal and/or X.
    If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]].
 
 ** Basic usage:
-   ~bashpass [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]~
+   ~bashpass [sample.gpg] [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]~
 
    If ~*.gpg~ parameter is unavailable (eg: first time use) or unusable, It'll be (re)created.
    
 ** Optional command line arguments
 
-   - If you'd like to test other UI options try: ~bashpass [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal]~, needless to say they have to be installed.
+   - If you'd like to test other UI options try: ~bashpass [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal]~, needless to say they have to be installed.
 
      If not ~bashpass~ will default to the highest available option in that order.
 
@@ -263,6 +263,12 @@ password generator, storage and reference for the terminal and/or X.
    and not ${HOME} or ${XDG_CONFIG_HOME:-${HOME}/.config}.
 
    So this time literally, It's not a bug... It's a feature!
+
+** <2021-09-08 Wed>
+   From no on the updates will update any account field not only passwords.
+
+** <2021-09-09 Thu>
+   Basic data input for all account fields has been implemented (see Notes #3, No ~\ `$|,'"~ chars.)
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 

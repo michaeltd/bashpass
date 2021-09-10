@@ -25,13 +25,13 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 cd "${sdn}" || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
-        zenity|yad|Xdialog|gdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
         -d|--debug) set -vx;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
@@ -52,9 +52,9 @@ readonly fpdb="${sdn}/${rpdb}"
 # Try to accommodate optional preference...
 # if [[ "${usrintrfce}" == "gtkdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-if [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
+elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 # elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
@@ -75,12 +75,12 @@ else # -z USERINTRFCE etc
     # if [[ -x "$(type -P gtkdialog)" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
     # 	declare -xr DIALOG="$(type -P gtkdialog)"
     # 	readonly usrintrfce="gtkdialog"
-    if [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
-	declare -xr DIALOG="$(type -P zenity)"
-	readonly usrintrfce="zenity"
-    elif [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
+    if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
 	declare -xr DIALOG="$(type -P yad)"
 	readonly usrintrfce="yad"
+    elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+	declare -xr DIALOG="$(type -P zenity)"
+	readonly usrintrfce="zenity"
     # elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
     # 	declare -xr DIALOG="$(type -P kdialog)"
     # 	readonly usrintrfce="kdialog"
@@ -142,18 +142,25 @@ for i in ${srcsfs[@]}; do
 done
 
 create() {
-    local maxid="$(func_maxid)" dm em un pw pw1 cm
-    "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    source "${tf}"
-    if [[ "${pw}" != "${pw1}" ]]; then
-	func_show_err "Password missmatch!"
-	return $?
-    fi
+    local maxid="$(func_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
+    
+    while func_chkinpt "${str2chk}" || func_checkpw "${pw}" "${pw1}"; do
+	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
+	source "${tf}"
+	str2chk="${id}${dm}${em}${un}${pw}${cm}"
+	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
+	func_checkpw "${pw}" "${pw1}" && func_show_err "Password missmatch!"
+    done
+
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
-    [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(func_gpw 16)"
-    "${sql3[@]}" "$(sl3_insert_into "${dm},${em},${un},${pw},${cm}")"
-    # "${rcm[@]}" "$(sl3_select_newrecs "${maxid}")" > "${tf}"
-    "results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
+    (( ${#pw} < 8 )) && pw="$(func_gpw 16)"
+
+    if [[ -n "${id}" ]]; then
+	"${dcm[@]}" "$(sl3_update_rec "${id},${dm},${em},${un},${pw},${cm}")"
+    else
+	"${sql3[@]}" "$(sl3_insert_into "${dm},${em},${un},${pw},${cm}")"
+	"results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
+    fi
 }
 
 retrieve() {
@@ -167,14 +174,7 @@ update() {
     local id errlvl pw pw1
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     source "${tf}"
-    if [[ "${pw}" != "${pw1}" ]]; then
-	func_show_err "Password missmatch!"
-	return $?
-    fi
-    [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
-    [[ -z "${pw}" ]] || (( ${#pw} < 8 )) && pw="$(func_gpw 16)"
-    "${dcm[@]}" "$(sl3_update_pw "${pw}" "${id}")"
-    # "${rcm[@]}" "$(sl3_select_id_eq "${id}")" > "${tf}"
+    create "${id}" || return $?
     "results_${usrintrfce}" "$(sl3_select_id_eq "${id}")"
 }
 
@@ -221,12 +221,13 @@ bashpass() {
 
     func_check_prereqs || return $?
     func_check_mutex || return $?
-    if ! func_check_decrypt; then
-	func_setup || return $? # func_setup always returns false.
-    fi
-    func_read_dbflds || func_do_quit $? # Have $db, $tf and $mutex so from now on we're do_quit and trap for propper housekeeping.
+    # GPG file not found? Let's make one and take it from there.
+    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
+    func_check_decrypt || return $?
+    # Have $db, $tf and $mutex so from now on we're do_quit for propper housekeeping.
+    func_read_dbflds || func_do_quit $? 
     func_check_sql || func_do_quit $?
-    # From now on any exit, normal or erratic is a do_quit $?
+    # From now on any exit, normal or erratic is a do_quit
     trap 'func_do_quit ${SIG_NONE}' "${SIG_NONE}"
     trap 'func_do_quit ${SIG_HUP}' "${SIG_HUP}"
     trap 'func_do_quit ${SIG_INT}' "${SIG_INT}"

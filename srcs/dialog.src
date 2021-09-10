@@ -13,7 +13,7 @@ declare -ax menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" 
 	csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file:" "--fselect" "${sdn}/examples/" "${geops[@]}" )
 
 make_rlist(){
-    echo -ne "${bt_ops[@]} --title ${1^} --column-separator , --radiolist SelectID2${1^} ${geops[@]} 5"
+    echo -ne "${bt_ops[@]} --title ${1^} --column-separator , --radiolist SelectID2${1^} ${geops[@]} 15"
 }
 
 make_msg(){
@@ -42,25 +42,29 @@ bashpass_gdialog(){
 }
 
 create_dialog() {
-    local dm em un pw="$(func_gpw 16)" cm errlvl cnt=0 
-    local pw1="${pw}"
-    local -arx create_ops=( "${bt_ops[@]}" "--title" "Set details" "--ok-label" "Submit" "--separator" $',' "--form" "Create Form" "${geops[@]}" 0
+    local id="${1}" dm="enter a domain" em="enter an email address" un="enter your username" pw="$(func_gpw 16)" cm="comments goes here..." errlvl cnt=0 
+    local pw1="${pw}" title="Create Form"
+
+    if [[ -n "${id}" ]]; then
+	local IFS=$'\|'
+	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
+	dm="${rs[1]}" em="${rs[2]}" un="${rs[3]}" pw="${rs[4]}" pw1="${rs[4]}" cm="${rs[5]}"
+	local title="Update Form"
+    fi
+
+    local -arx create_ops=( "${bt_ops[@]}" "--title" "${title}" "--ok-label" "Submit" "--separator" $',' "--form" "${title}" "${geops[@]}" 0
 			     "Domain:" 1 1 "$dm" 1 10 40 0
 			     "Email:" 2 1 "$em" 2 10 40 0
 			     "User:" 3 1 "$un" 3 10 40 0
 			     "Password:" 4 1 "$pw" 4 10 40 0
 			     "Pword1:" 5 1 "$pw1" 5 10 40 0 
 			     "Comments:" 6 1 "$cm" 6 10 40 0 )
-    # Store data to $VALUES variable
-    "${DIALOG}" "${create_ops[@]}" 2> "${tf}"
-    errlvl=$?
-    (( errlvl != DIALOG_OK )) && return $errlvl
+
+    "${DIALOG}" "${create_ops[@]}" 2> "${tf}" || return $?
     local -r vals="$(cat "${tf}")"
     local IFS=$','
-    for i in $vals; do
-	arv[((cnt++))]="$i"
-    done
-    echo -ne "dm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
+    for i in $vals; do arv[((cnt++))]="$i"; done
+    echo -ne "id=\"${id}\"\ndm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
 }
 
 create_cdialog(){
@@ -68,25 +72,40 @@ create_cdialog(){
 }
 
 create_Xdialog() {
-    # --2inputsbox <text> <height> <width> <label1> <init1> <label2> <init2>
-    # --3inputsbox <text> <height> <width> <label1> <init1> <label2> <init2> <label3> <init3>
-    local dm em un pw="$(func_gpw 16)" cm
-    local pw1="${pw}"
+    local id="${1}" dm="enter a domain" em="enter an email address" un="enter your username" pw="$(func_gpw 16)" cm="comments goes here..." errlvl cnt=0 
+    local pw1="${pw}" title="Create Form"
+    
+    if [[ -n "${id}" ]]; then # Don't create update
+	local IFS=$'\|'
+	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
+	dm="${rs[1]}" em="${rs[2]}" un="${rs[3]}" pw="${rs[4]}" pw1="${rs[4]}" cm="${rs[5]}"
+	local title="Update Form"
+    fi
 
-    "${DIALOG}" $(make_box input domain) 2> "${tf}"
-    (( $? == DIALOG_OK )) && dm=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box input email) 2> "${tf}"
-    (( $? == DIALOG_OK )) && em=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box input UserName) 2> "${tf}"
-    (( $? == DIALOG_OK )) && un=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box password password) "${pw}" 2> "${tf}"
-    (( $? == DIALOG_OK )) && pw=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box password password_again) "${pw1}" 2> "${tf}"
-    (( $? == DIALOG_OK )) && pw1=$(cat "${tf}") || return $?
-    "${DIALOG}" $(make_box input comment) 2> "${tf}"
-    (( $? == DIALOG_OK )) && cm=$(cat "${tf}") || return $?
+    "${DIALOG}" ${bt_ops[@]} --title "${title}" \
+		"--separator" $',' "--3inputsbox" "Input Domain, Email and UName" ${geops[@]} \
+		"Domain" "${dm}" \
+		"Email" "${em}" \
+		"UName" "${un}" 2> "${tf}" || return $?
 
-    echo -ne "dm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm}\"\n" > "${tf}"
+    local vals="$(cat "${tf}")"
+
+    local IFS=$','
+    for i in $vals; do arv[((cnt++))]="$i"; done
+    local IFS=$'\ \t\n'
+
+    dm="${arv[0]:-NULL}" em="${arv[1]:-NULL}" un="${arv[2]:-NULL}"
+
+    "${DIALOG}" $(make_box password password) "${pw}" 2> "${tf}" || return $?
+    pw="$(cat "${tf}")"
+
+    "${DIALOG}" $(make_box password password_again) "${pw1}" 2> "${tf}" || return $?
+    pw1="$(cat "${tf}")"
+
+    "${DIALOG}" $(make_box input any_comments? ) 2> "${tf}" || return $?
+    cm="$(cat "${tf}")"
+
+    echo -ne "id=\"${id}\"\ndm=\"${dm}\"\nem=\"${em}\"\nun=\"${un}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm}\"\n" > "${tf}"
 }
 
 create_gdialog(){
@@ -116,29 +135,12 @@ retrieve_gdialog(){
 }
 
 update_dialog(){
-    local id errlvl pw pw1
-    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(func_brl) 2> "${tf}"
-    errlvl=$? id="$(cat "${tf}")"
-    if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
-	return 1
-    fi
+    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3)}") $(func_brl) 2> "${tf}" || return $?
 
-    pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-    pw1="${pw}"
+    local id="$(cat "${tf}")"
+    [[ -z "${id}" ]] && return 1
 
-    "${DIALOG}" $(make_box password password) "${pw}" 2> "${tf}"
-    errlvl=$? pw="$(cat "${tf}")"
-    if (( errlvl != DIALOG_OK )); then
-	return "${errlvl}"
-    fi
-
-    "${DIALOG}" $(make_box password password_again) "${pw1}" 2> "${tf}"
-    errlvl=$? pw1="$(cat "${tf}")"
-    if (( errlvl != DIALOG_OK )); then
-	return "${errlvl}"
-    fi
-
-    echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"" > "${tf}"
+    echo -ne "id=\"${id}\"\n" > "${tf}"
 }
 
 update_cdialog(){
@@ -222,7 +224,7 @@ results_dialog(){
 	    return 1
 	fi
 	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-	"${DIALOG}" $(make_box password "${id}PasswordIs:") "${pw}" 2> /dev/null || return $?
+	"${DIALOG}" $(make_box password "${id}'s_Password_Is:") "${pw}" 2> /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
