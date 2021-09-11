@@ -231,7 +231,7 @@ bashpass() {
     func_read_dbflds || func_do_quit $? 
     func_check_sql || func_do_quit $?
     # From now on any exit, normal or erratic is a do_quit
-    trap 'func_do_quit' "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" "${SIG_TERM}"
+    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" "${SIG_TERM}"
 
     # Build menus and help messages.
     local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
