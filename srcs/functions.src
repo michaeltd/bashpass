@@ -32,10 +32,11 @@ func_do_quit() {
     "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     if ! "${gpgec[@]}"; then
-	func_show_err "Something smells fishy!"
+	func_show_err "Encryption failed or canceled!"
 	return "${?}"
     else
-	local -ar f2d=( "${rpdb}" "${tf}" "${mutex}" )
+	# local -ar f2d=( "${rpdb}" "${tf}" "${mutex}" )
+	local -ar f2d=( "${rpdb}" "${mutex}" )
 	for i in ${f2d[@]}; do
 	    ${shrc[@]} "${i}";
 	done
@@ -79,7 +80,9 @@ func_check_decrypt() {
         func_show_err "${bndb}, does not appear to be a valid SQLite 3.x database file."
         return $?
     else
-        touch {"${mutex}","${tf}"}
+        # touch {"${mutex}","${tf}"}
+	touch "${mutex}"
+	# mkfifo "${mutex}"
     fi
 }
 

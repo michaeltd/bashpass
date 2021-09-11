@@ -31,17 +31,22 @@ bashpass_zenity(){
 }
 
 create_zenity() {
-    local id="${1}" dm="enter a domain" em="enter an email address" un="enter your username" pw="$(func_gpw 16)" cm="comments goes here..." cnt=0 
-    local pw1="${pw}" title="Create Form"
+    local ttl="${FUNCNAME[@]:(-3):1} form" cnt=0
 
-    if [[ -n "${id}" ]]; then
-	local IFS=$'\|'
+    if [[ -z "${1}" ]]; then # Create mode
+	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	local pw1="${pw}" cm="${cm:-"comments goes here..."}"
+    else # Update mode
+        local id="${1}" IFS=$'\|'
 	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
-	dm="${rs[1]}" em="${rs[2]}" un="${rs[3]}" pw="${rs[4]}" pw1="${rs[4]}" cm="${rs[5]}"
-	local title="Update Form"
+	local dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
-    local -ar create_ops=( "${geometry_ops[@]}" "--title=${title}" "--forms" "--separator=,"
+    local -ar create_ops=( "${geometry_ops[@]}" "--title=${ttl^}"
+			   "--forms" "--separator=,"
 			   "--text=Enter requested details:"
 			   "--add-entry=Domain|${dm}"
 			   "--add-entry=Email|${em}"
@@ -50,12 +55,11 @@ create_zenity() {
 			   "--add-password=Password1|${pw1}"
 			   "--add-entry=Comment|${cm}" )
     
-    "${DIALOG}" "${create_ops[@]}" > "${tf}" || return $?
-
-    local -r vals="$(cat "${tf}")"
     local IFS=$','
-    for i in $vals; do arv[((cnt++))]="$i"; done
-    echo -ne "id=\"${id}\"\ndm=\"${arv[0]:-NULL}\"\nem=\"${arv[1]:-NULL}\"\nun=\"${arv[2]:-NULL}\"\npw=\"${arv[3]}\"\npw1=\"${arv[4]}\"\ncm=\"${arv[5]:-NULL}\"\n" > "${tf}"
+    local -a vals=( $("${DIALOG}" "${create_ops[@]}" || echo "-1") )
+    [[ "${vals[0]}" == "-1" ]] && return 255
+    echo -ne "export dm=\"${vals[0]:-NULL}\" em=\"${vals[1]:-NULL}\" un=\"${vals[2]:-NULL}\" pw=\"${vals[3]}\" pw1=\"${vals[4]}\" cm=\"${vals[5]:-NULL}\"\n" > "${tf}"
+    
 }
 
 retrieve_zenity() {

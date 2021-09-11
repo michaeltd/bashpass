@@ -23,7 +23,7 @@ declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 declare -r dbsd="dbs" \
 	scsd="srcs"
-cd "${sdn}" || { echo "Something's not quite right..." >&2; exit 1; }
+cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
@@ -129,8 +129,8 @@ readonly -a dcm=( "sqlite3" "-list" "${rpdb}" ) \
 	 scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
 	 sql3=( "sqlite3" "${rpdb}" )
 # Temp files
-readonly tf="${dbsd}/.${bndb}.${$}.tf" \
-	 mutex="${dbsd}/.${bndb}.mutex"
+readonly mutex="${dbsd}/.${bndb}.mtx"
+readonly tf="${mutex}"
 # Sources to use
 readonly -a srcsfs=( 
     "${scsd}/sqlite3.src"
@@ -142,12 +142,13 @@ for i in ${srcsfs[@]}; do
 done
 
 create() {
+
     local maxid="$(func_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
-    
+
     while func_chkinpt "${str2chk}" || func_checkpw "${pw}" "${pw1}"; do
 	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
 	source "${tf}"
-	str2chk="${id}${dm}${em}${un}${pw}${cm}"
+	str2chk="${dm}${em}${un}${pw}${cm}"
 	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
 	func_checkpw "${pw}" "${pw1}" && func_show_err "Password missmatch!"
     done
@@ -161,6 +162,8 @@ create() {
 	"${sql3[@]}" "$(sl3_insert_into "${dm},${em},${un},${pw},${cm}")"
 	"results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
     fi
+    # cleanup
+    unset dm em un pw pw1 cm
 }
 
 retrieve() {
@@ -224,17 +227,12 @@ bashpass() {
     # GPG file not found? Let's make one and take it from there.
     [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
     func_check_decrypt || return $?
-    # Have $db, $tf and $mutex so from now on we're do_quit for propper housekeeping.
+    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
     func_read_dbflds || func_do_quit $? 
     func_check_sql || func_do_quit $?
     # From now on any exit, normal or erratic is a do_quit
-    trap 'func_do_quit ${SIG_NONE}' "${SIG_NONE}"
-    trap 'func_do_quit ${SIG_HUP}' "${SIG_HUP}"
-    trap 'func_do_quit ${SIG_INT}' "${SIG_INT}"
-    trap 'func_do_quit ${SIG_QUIT}' "${SIG_QUIT}"
-    trap 'func_do_quit ${SIG_KILL}' "${SIG_KILL}"
-    trap 'func_do_quit ${SIG_TERM}' "${SIG_TERM}"
-    
+    trap 'func_do_quit' "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" "${SIG_TERM}"
+
     # Build menus and help messages.
     local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
     local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import_CSV" "Export_CSV" "SQLite3" "Help" "Quit" )

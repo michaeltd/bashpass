@@ -30,40 +30,45 @@ bashpass_terminal(){
 }
 
 create_terminal() {
-    local id="${1}" dm="enter a domain" em="enter an email address" un="enter your username" pw="$(func_gpw 16)" pw1 cm="comments goes here..." errlvl cnt=0
-    local pw1="${pw}" fnc="${FUNCNAME[@]:(-3):1}: (Ctrl-D to cancel):" input
+    local fnc="${FUNCNAME[@]:(-3):1}: (Ctrl-D to cancel):" input
     
-    if [[ -n "${id}" ]]; then
-	local IFS=$'\|'
+    if [[ -z "${1}" ]]; then # Create mode
+	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	local pw1="${pw}" cm="${cm:-"comments goes here..."}"
+    else # Update mode
+        local id="${1}" IFS=$'\|'
 	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
-	dm="${rs[1]}" em="${rs[2]}" un="${rs[3]}" pw="${rs[4]}" pw1="${rs[4]}" cm="${rs[5]}"
+	local dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
-    echo -ne  "${fnc} ${dm}: "
+    echo -ne "${fnc^} default: ${dm}: "
     read -r input || return $?
     dm="${input:-${dm}}"
 
-    echo -ne "${fnc} ${em}: "
+    echo -ne "${fnc^} default: ${em}: "
     read -r input || return $?
     em="${input:-${em}}"
 
-    echo -ne "${fnc} ${un}: "
+    echo -ne "${fnc^} default: ${un}: "
     read -r input || return $?
     un="${input:-${un}}"
 
-    echo -ne "${fnc} ${pw}: (alpha/numeric/punctuation or length/empty for auto): "
+    echo -ne "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): "
     read -r input || return $?
     pw="${input:-${pw}}"
 
-    echo -ne "${fnc} ${pw1}: (again):"
+    echo -ne "${fnc^} default: ${pw1}: (again): "
     read -r input || return $?
     pw1="${input:-${pw1}}"
 
-    echo -ne "${fnc} ${cm} "
+    echo -ne "${fnc^} default: ${cm}: "
     read -r input || return $?
     cm="${input:-${cm}}"
 
-    echo -ne "id=\"${id}\"\ndm=\"${dm:-NULL}\"\nem=\"${em:-NULL}\"\nun=\"${un:-NULL}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\ncm=\"${cm:-NULL}\"\n" > "${tf}"
+    echo -ne "export dm=\"${dm:-NULL}\" em=\"${em:-NULL}\" un=\"${un:-NULL}\" pw=\"${pw}\" pw1=\"${pw1}\" cm=\"${cm:-NULL}\"\n" > "${tf}"
 }
 
 retrieve_terminal(){
@@ -79,17 +84,6 @@ update_terminal(){
     echo -ne "Select ID to update: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-
-    # pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-    # pw1="${pw}"
-
-    # echo -ne "Enter password: (alpha/numeric/punctuation or length/empty for auto.) ( Last: '${pw}' ) "
-    # read -r pw || return $?
-
-    # echo -ne "Enter password again: ( Last: '${pw1}' )"
-    # read -r pw1 || return $?
-
-    # echo -ne "id=\"${id}\"\npw=\"${pw}\"\npw1=\"${pw1}\"\n" > "${tf}"
     echo -ne "id=\"${id}\"\n" > "${tf}"
 }
 
