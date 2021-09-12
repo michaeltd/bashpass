@@ -94,30 +94,28 @@ create_Xdialog() {
 	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
+
+    local -a vals
+
     local IFS=$','
-    local -a vals=(
-	$("${DIALOG}" ${bt_ops[@]} "--title" "${ttl^}" "--separator" $',' \
+
+    vals=($("${DIALOG}" ${bt_ops[@]} "--title" "${ttl^}" "--separator" $',' \
 		      "--3inputsbox" "Input Domain, Email and UName" ${geops[@]} \
 		      "Domain" "${dm}" \
 		      "Email" "${em}" \
-		      "UName" "${un}" 2>&1 || echo "-1")
-    )
-    local IFS=$'\ \t\n'
+		      "UName" "${un}" 2>&1)) || return $?
 
-    [[ "${vals[0]}" == "-1" ]] && return 255
+    local IFS=$'\ \t\n'
 
     dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}"
 
-    input="$("${DIALOG}" $(make_box password "password") "${pw}" 2>&1 || echo "-1")"
-    [[ "${input}" == "-1" ]] && return 255
+    input="$("${DIALOG}" $(make_box password "password") "${pw}" 2>&1)" || return $?
     pw="${input:-${pw}}"
 
-    input="$("${DIALOG}" $(make_box password "password_again") "${pw1}" 2>&1 || echo "-1")"
-    [[ "${input}" == "-1" ]] && return 255
+    input="$("${DIALOG}" $(make_box password "password_again") "${pw1}" 2>&1)" || return $?
     pw1="${input:-${pw1}}"
 
-    input="$("${DIALOG}" $(make_box input "any_comments?") "${cm}" 2>&1 || echo "-1")"
-    [[ "${input}" == "-1" ]] && return 255
+    input="$("${DIALOG}" $(make_box input "any_comments?") "${cm}" 2>&1)" || return $?
     cm="${input:-${cm}}"
 
     echo -ne "export dm=\"${dm:-NULL}\" em=\"${em:-NULL}\" un=\"${un:-NULL}\" pw=\"${pw}\" pw1=\"${pw1}\" cm=\"${cm:-NULL}\"\n" > "${tf}"

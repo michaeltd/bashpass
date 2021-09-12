@@ -278,6 +278,13 @@ password generator, storage and reference for the terminal and/or X.
    the user will be returned to create/update forms to trouble shoot accordingly with his edits preserved.
 
    The default option thus far was to repeat the proccess from scratch.
+   
+** <2021-09-12 Sun>
+   Zenity:
+
+   No way to set default values on forms,
+
+   so an editable list was the best way to go.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
