@@ -233,11 +233,9 @@ exportcsv_gdialog(){
 results_dialog(){
     local errlvl id=0 pw pw1
     while [[ -n "${id}" ]]; do
-	"${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl "${1}") 2> "${tf}"
-	errlvl=$? id="$(cat "${tf}")"
-	if (( errlvl != DIALOG_OK )) || [[ -z "${id}" ]]; then
-	    return 1
-	fi
+	"${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl "${1}") 2> "${tf}" || return $?
+	id="$(cat "${tf}")"
+	[[ -z "${id}" ]] && return 1
 	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
 	"${DIALOG}" $(make_box password "${id}'s_Password_Is:") "${pw}" 2> /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"

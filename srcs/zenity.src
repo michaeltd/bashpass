@@ -19,6 +19,14 @@ bashpass_zenity(){
 create_zenity() {
     local ttl="${FUNCNAME[@]:(-3):1} form"
 
+    local -ar review_ops=( "${gt_ops[@]}"
+			   "--text=${ttl^}: Enter required details.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
+			   "--list" "--editable" "--separator=," "--print-column=ALL"
+			   "--column=Domain" "--column=Email"
+			   "--column=User Name" "--column=Comments" )
+    local -ar pwd0_ops=( "--title=${ttl}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)." "--entry" "--hide-text" )
+    local -ar pwd1_ops=( "--title=${ttl}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both).\nVerification Password again: " "--entry" "--hide-text" )
+
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
 	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
@@ -30,14 +38,6 @@ create_zenity() {
 	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
-
-    local -ar review_ops=( "${gt_ops[@]}"
-			   "--text=${ttl^}: Enter required details.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
-			   "--list" "--editable" "--separator=," "--print-column=ALL"
-			   "--column=Domain" "--column=Email"
-			   "--column=User Name" "--column=Comments" )
-    local -ar pwd0_ops=( "--title=${bngpgf}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)." "--entry" "--hide-text" )
-    local -ar pwd1_ops=( "--title=${bngpgf}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both).\nVerification Password again: " "--entry" "--hide-text" )
 
     local IFS=$','
     local -a vals=( $("${DIALOG}" "${review_ops[@]}" "${dm}" "${em}" "${un}" "${cm}" || echo "-1") )
@@ -63,10 +63,9 @@ retrieve_zenity() {
 
 update_zenity() {
     local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to update:"
-			   "--list" "--radiolist"
-			   "--column" "Update" "--column" "ID"
-			   "--column" "Domain" "--column" "Email"
-			   "--column" "UName" "--hide-column=2" )
+			   "--list" "--hide-column=1"
+			   "--column" "ID" "--column" "Domain"
+			   "--column" "Email" "--column" "UName" )
     local id IFS=$'\|\t\n'
     "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}" || return $?
 
@@ -79,8 +78,8 @@ update_zenity() {
 
 delete_zenity() {
     local -ar delete_ops=( "${gt_ops[@]}" "--text=Select account to delete:"
-			   "--list" "--checklist" "--hide-column=2"
-			   "--column" "Update" "--column" "ID" "--column" "Domain"
+			   "--list" "--hide-column=1"
+			   "--column" "ID" "--column" "Domain"
 			   "--column" "Email" "--column" "UName" )
     local id IFS=$'\|\t\n'
     "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}" || return $?

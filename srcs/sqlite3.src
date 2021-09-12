@@ -13,7 +13,8 @@ sl3_brl(){
 }
 
 sl3_brlzen(){
-    echo -ne "SELECT 'FALSE' AS STATE, ${idf}, ${dmf}, ${emf}, ${unf} FROM ${act} ORDER BY ${idf} ASC;"
+    # echo -ne "SELECT 'FALSE' AS STATE, ${idf}, ${dmf}, ${emf}, ${unf} FROM ${act} ORDER BY ${idf} ASC;"
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 sl3_insert_rec(){

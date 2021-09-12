@@ -56,63 +56,42 @@ create_yad() {
 
 retrieve_yad() {
     local dm
-
     local -ar retrieve_ops=( "${ct_ops[@]}" "--text=Enter search term to look for (empty for All):" "--entry" )
-
     "${DIALOG}" "${retrieve_ops[@]}" > "${tf}" || return $?
-
     dm="$(cat "${tf}")"
-
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_yad() {
     local id rs IFS=$'\|\t\n'
-
-    local -ar update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--hide-column=2"
-		     "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" )
-
+    local -ar update_ops=( "${gct_ops[@]}" "--text=Select an account to update:" "--list" "--hide-column=1" "--print-column=1"
+		     "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" )
     "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}" || return $?
-
     local rs=( $(cat ${tf}) )
-
-    id="${rs[1]}"
-
+    id="${rs[0]}"
     [[ -z "${id}" ]] && return 1
-
     echo -ne "id=\"${id}\"\n" > "${tf}"
 }
 
 delete_yad() {
     local id rs IFS=$'\|\t\n'
-
-    local -ar delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:"
-			   "--list" "--checklist" "--hide-column=2"
-			   "--column" "Update" "--column" "ID"
+    local -ar delete_ops=( "${gct_ops[@]}" "--text=Select an account to delete:"
+			   "--list" "--hide-column=1" "--print-column=1"
+			   "--column" "ID"
 			   "--column" "Domain" "--column" "Email" "--column" "UName" )
-
     "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}" || return $?
-
     local rs=( $(cat ${tf}) )
-
-    id="${rs[1]}"
-
+    id="${rs[0]}"
     [[ -z "${id}" ]] && return 1
-
     echo -ne "id=\"${id}\"" > "${tf}"
 }
 
 csv_yad(){
     local errlvl csvf
-
     csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" )
-
     "${DIALOG}" "${csv_ops[@]}" "--file-name=${1}" "${2}" > "${tf}" || return $?
-
     csvf="$(cat "${tf}")"
-
     [[ -z "${csvf}" ]] && return 1
-
     echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
 }
 
@@ -128,7 +107,6 @@ results_yad(){
     local -ar preview_ops=( "${gct_ops[@]}" "--text=Results. Select account to preview:" "--no-markup"
 			    "--ok-label=Unsafe" "--cancel-label=Safe" "--list"  "--hide-column=1"
 			    "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" )
-
     local -ar showpw_ops=( "${ct_ops[@]}" "--text=Password selected:" "--entry" )
 
     local IFS=$'\|\t\n' id="0"
@@ -143,7 +121,6 @@ results_yad(){
 
 message_yad(){
     local -ar message_ops=( "${ct_ops[@]}" "--info"  )
-
     "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted. No errors reported."
 }
 
