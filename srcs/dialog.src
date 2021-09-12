@@ -42,7 +42,7 @@ bashpass_gdialog(){
 }
 
 create_dialog() {
-    local ttl="${FUNCNAME[@]:(-3):1} form" cnt=0
+    local ttl="${FUNCNAME[@]:(-3):1} form"
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
 	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
@@ -67,8 +67,8 @@ create_dialog() {
 			     "Pword1:" 5 1 "$pw1" 5 10 40 0 
 			     "Comments:" 6 1 "$cm" 6 10 40 0 )
 
-    exec 3>&1
     local IFS=$','
+    exec 3>&1
     local -a vals=( $("${DIALOG}" "${create_ops[@]}" 2>&1 1>&3 || echo "-1") )
     exec 3>&-
     [[ "${vals[0]}" == "-1" ]] && return 255
@@ -80,7 +80,7 @@ create_cdialog(){
 }
 
 create_Xdialog() {
-    local ttl="${FUNCNAME[@]:(-3):1} form" input cnt=0
+    local ttl="${FUNCNAME[@]:(-3):1} form" input
 
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"

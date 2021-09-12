@@ -126,14 +126,19 @@ func_regex_allow(){
 func_regex_forbid(){
     # Returns a regex string with all forbidden chars to check against user input
     # echo -ne "\`\"'|,\$"
-    # echo -ne "[=\`=][=\"=][='=][=|=][=,=][=\$=]"
+    # echo -ne "[=\`=][=\"=][=\'=][=|=][=,=][=\$=]"
     # echo -ne "$'\`'$'\"'$'\''$'|'$','$'\$'$'\'$' '"
-    echo -ne "\ \`\$|,\"'"
+    echo -ne "\ \`\$|,\"\'"
 }
 
 func_chkinpt(){
     # Returns true (0) on match false (1) otherwise
     [[ "${1}" =~ [$(func_regex_forbid)] ]]
+}
+
+func_chkpwd(){
+    local pw="${1:-NULL}" pw1="${2:-NULL}"
+    [[ "${pw}" != "${pw1}" ]]
 }
 
 # Generate PassWord
@@ -176,9 +181,4 @@ func_brl() {
 
 func_brlzen(){
     echo "$("${sql3[@]}" "$(sl3_brlzen)")"
-}
-
-func_checkpw(){
-    local pw="${1:-NULL}" pw1="${2:-NULL}"
-    [[ "${pw}" != "${pw1}" ]]
 }

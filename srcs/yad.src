@@ -5,41 +5,27 @@
 
 declare -rx center_op="--center" \
 	title_op="--title=${bngpgf}"
-
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
-
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
-
 declare -arx gc_ops=( ${geometry_ops[@]} "${center_op}" ) \
 	gct_ops=( ${geometry_ops[@]} "${center_op}" "${title_op}" ) \
 	ct_ops=( "${center_op}" "${title_op}" )
 
-declare -arx menu_ops=( "${gc_ops[@]}" "--list" "--title=Select action" "--no-headers" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
-	retrieve_ops=( "${ct_ops[@]}" "--text=Enter search term to look for (empty for All):" "--entry" ) \
-	update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	password_ops=( "${ct_ops[@]}" "--text=Enter password or length/empty for auto:" "--entry" "--hide-text" ) \
-	password1_ops=( "${ct_ops[@]}" "--text=Enter password again:" "--entry" "--hide-text" ) \
-	delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" ) \
-	results_ops=( "${gct_ops[@]}" "--text-info" ) \
-	preview_ops=( "${gct_ops[@]}" "--text=Results. Select account to preview:" "--list" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" ) \
-	showpw_ops=( "${ct_ops[@]}" "--text=Password selected:" "--entry" ) \
-	message_ops=( "${ct_ops[@]}" "--info"  ) \
-	usage_ops=( "${gc_ops[@]}" "--info" "--title=Help screen" )
+# export YAD_OPTIONS="--center --title=${bngpgf} --height=$H --width=$W"
 
 bashpass_yad(){
     local IFS=$'\|\t\n'
-    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
-    local errlvl=$?
-    local -a resp=( $(cat ${tf}) )
-    local selection="${resp[0]}"
-    echo "${selection}" > "${tf}"
-    return $errlvl
+    local -ar menu_ops=( "${gc_ops[@]}" "--title=Menu" 
+			 "--list"  "--print-column=1" "--no-headers"
+			 "--column=Option" "--column=SDesc" "--column=LDesc")
+    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}" || return $?
+    local res="$(cat "${tf}")"
+    echo "${res//\|}" > "${tf}"
 }
 
 create_yad() {
-    local ttl="${FUNCNAME[@]:(-3):1} form" cnt=0
+    local ttl="${FUNCNAME[@]:(-3):1} form"
 
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
@@ -69,16 +55,27 @@ create_yad() {
 }
 
 retrieve_yad() {
-    local dm errlvl
+    local dm
+
+    local -ar retrieve_ops=( "${ct_ops[@]}" "--text=Enter search term to look for (empty for All):" "--entry" )
+
     "${DIALOG}" "${retrieve_ops[@]}" > "${tf}" || return $?
+
     dm="$(cat "${tf}")"
+
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_yad() {
-    local id errlvl pw pw1 rs IFS=$'\|\t\n'
+    local id rs IFS=$'\|\t\n'
+
+    local -ar update_ops=( "${gct_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--hide-column=2"
+		     "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" )
+
     "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}" || return $?
+
     local rs=( $(cat ${tf}) )
+
     id="${rs[1]}"
 
     [[ -z "${id}" ]] && return 1
@@ -87,7 +84,13 @@ update_yad() {
 }
 
 delete_yad() {
-    local id errlvl rs IFS=$'\|\t\n'
+    local id rs IFS=$'\|\t\n'
+
+    local -ar delete_ops=( "${gct_ops[@]}" "--text=Select an ID to delete:"
+			   "--list" "--checklist" "--hide-column=2"
+			   "--column" "Update" "--column" "ID"
+			   "--column" "Domain" "--column" "Email" "--column" "UName" )
+
     "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}" || return $?
 
     local rs=( $(cat ${tf}) )
@@ -101,6 +104,9 @@ delete_yad() {
 
 csv_yad(){
     local errlvl csvf
+
+    csv_ops=( "${center_op}" "--title" "Select a csv file:" "--file" )
+
     "${DIALOG}" "${csv_ops[@]}" "--file-name=${1}" "${2}" > "${tf}" || return $?
 
     csvf="$(cat "${tf}")"
@@ -119,20 +125,29 @@ exportcsv_yad() {
 }
 
 results_yad(){
+    local -ar preview_ops=( "${gct_ops[@]}" "--text=Results. Select account to preview:" "--no-markup"
+			    "--ok-label=Unsafe" "--cancel-label=Safe" "--list"  "--hide-column=1"
+			    "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" )
+
+    local -ar showpw_ops=( "${ct_ops[@]}" "--text=Password selected:" "--entry" )
+
     local IFS=$'\|\t\n' id="0"
     while [[ "${id}" != "-1" ]]; do
 	local -a id=( $("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "-1") )
 	[[ "${id[0]}" == "-1" ]] && return 255
 	local pw="$("${sql3[@]}" "$(sl3_showpw "${id[0]}")")"
-	"${DIALOG}" "${showpw_ops[@]}" --entry-text="${pw}" > /dev/null || return $?
+	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
 
 message_yad(){
+    local -ar message_ops=( "${ct_ops[@]}" "--info"  )
+
     "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted. No errors reported."
 }
 
 usage_yad() {
+    local -ar usage_ops=( "${gc_ops[@]}" "--info" "--title=Help screen" )
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }

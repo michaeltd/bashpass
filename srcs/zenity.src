@@ -5,33 +5,19 @@
 
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
-
 declare -rx title_op="--title=${bngpgf}"
-
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
-
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
-declare -arx menu_ops=( "${gt_ops[@]}" "--list" "--text=Select Action" "--hide-header" "--column=Option" "--column=SDesc" "--column=LDesc" ) \
-	retrieve_ops=( "${title_op}" "--text=Enter search term to look for (empty for All):" "--entry" ) \
-	update_ops=( "${gt_ops[@]}" "--text=Select an ID to update:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	password_ops=( "--title=${bngpgf}" "--text=Enter password or length/empty for auto: " "--entry" "--hide-text" ) \
-	password1_ops=( "--title=${bngpgf}" "--text=Enter a password again: " "--entry" "--hide-text" ) \
-	delete_ops=( "${gt_ops[@]}" "--text=Select an ID to delete:" "--list" "--radiolist" "--column" "Update" "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" ) \
-	csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" ) \
-	results_ops=( "${gt_ops[@]}" "--text-info" "--no-markup" ) \
-	preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview password:" "--list" "--column=ID" "--column=Domain" "--column=Email" "--column=UName" "--column=Comments" ) \
-	showpw_ops=( "${title_op}" "--text=Password selected:" "--entry" ) \
-	message_ops=( "${title_op}" "--info" "--no-wrap" ) \
-	usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
-
 bashpass_zenity(){
+    declare -ar menu_ops=( "${gt_ops[@]}" "--list" "--text=Menu" "--hide-header"
+			   "--column=Option" "--column=SDesc" "--column=LDesc" )
     local IFS=$'\|\t\n'
     "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
 }
 
 create_zenity() {
-    local ttl="${FUNCNAME[@]:(-3):1} form" cnt=0
+    local ttl="${FUNCNAME[@]:(-3):1} form"
 
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
@@ -45,31 +31,42 @@ create_zenity() {
 	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
-    local -ar create_ops=( "${geometry_ops[@]}" "--title=${ttl^}"
-			   "--forms" "--separator=,"
-			   "--text=Enter requested details:"
-			   "--add-entry=Domain|${dm}"
-			   "--add-entry=Email|${em}"
-			   "--add-entry=Uname|${un}"
-			   "--add-password=Password|${pw}"
-			   "--add-password=Password1|${pw1}"
-			   "--add-entry=Comment|${cm}" )
-    
+    local -ar review_ops=( "${gt_ops[@]}"
+			   "--text=${ttl^}: Enter required details.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
+			   "--list" "--editable" "--separator=," "--print-column=ALL"
+			   "--column=Domain" "--column=Email"
+			   "--column=User Name" "--column=Comments" )
+    local -ar pwd0_ops=( "--title=${bngpgf}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)." "--entry" "--hide-text" )
+    local -ar pwd1_ops=( "--title=${bngpgf}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both).\nVerification Password again: " "--entry" "--hide-text" )
+
     local IFS=$','
-    local -a vals=( $("${DIALOG}" "${create_ops[@]}" || echo "-1") )
+    local -a vals=( $("${DIALOG}" "${review_ops[@]}" "${dm}" "${em}" "${un}" "${cm}" || echo "-1") )
+    local IFS=$'\ \t\n'
     [[ "${vals[0]}" == "-1" ]] && return 255
-    echo -ne "export dm=\"${vals[0]:-NULL}\" em=\"${vals[1]:-NULL}\" un=\"${vals[2]:-NULL}\" pw=\"${vals[3]}\" pw1=\"${vals[4]}\" cm=\"${vals[5]:-NULL}\"\n" > "${tf}"
     
+    local pw="$("${DIALOG}" "${pwd0_ops[@]}" "--entry-text=${pw}" || echo "-1")"
+    [[ "${pw}" == "-1" ]] && return 255
+
+    local pw1="$("${DIALOG}" "${pwd1_ops[@]}" "--entry-text=${pw1}" || echo "-1")"
+    [[ "${pw1}" == "-1" ]] && return 255
+
+    echo -ne "export dm=\"${vals[0]:-NULL}\" em=\"${vals[1]:-NULL}\" un=\"${vals[2]:-NULL}\" pw=\"${pw}\" pw1=\"${pw1}\" cm=\"${vals[3]:-NULL}\"\n" > "${tf}"    
 }
 
 retrieve_zenity() {
     local dm errlvl
+    local -ar retrieve_ops=( "${title_op}" "--text=Enter search term to look for (empty for All):" "--entry" )
     "${DIALOG}" "${retrieve_ops[@]}" > "${tf}" || return $?
     dm="$(cat "${tf}")"
     echo -ne "dm=\"${dm}\"" > "${tf}"
 }
 
 update_zenity() {
+    local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to update:"
+			   "--list" "--radiolist"
+			   "--column" "Update" "--column" "ID"
+			   "--column" "Domain" "--column" "Email"
+			   "--column" "UName" "--hide-column=2" )
     local id IFS=$'\|\t\n'
     "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}" || return $?
 
@@ -81,7 +78,11 @@ update_zenity() {
 }
 
 delete_zenity() {
-    local id errlvl IFS=$'\|\t\n'
+    local -ar delete_ops=( "${gt_ops[@]}" "--text=Select account to delete:"
+			   "--list" "--checklist" "--hide-column=2"
+			   "--column" "Update" "--column" "ID" "--column" "Domain"
+			   "--column" "Email" "--column" "UName" )
+    local id IFS=$'\|\t\n'
     "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}" || return $?
     id="$(cat "${tf}")"
     [[ -z "${id}" ]] && return 1
@@ -89,7 +90,8 @@ delete_zenity() {
 }
 
 importcsv_zenity() {
-    local errlvl csvf
+    local -ar csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" )
+    local csvf
     "${DIALOG}" "${csv_ops[@]}" > "${tf}" || return $?
     csvf="$(cat "${tf}")"
     [[ -z "${csvf}" ]] && return 1
@@ -101,6 +103,12 @@ exportcsv_zenity() {
 }
 
 results_zenity(){
+    local -ar preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview:"
+			    "--ok-label=Unsafe" "--cancel-label=Safe"
+			    "--list" "--hide-column=1"
+			    "--column=ID" "--column=Domain" "--column=Email"
+			    "--column=UName" "--column=Comments" )
+    local -ar showpw_ops=( "${title_op}" "--text=Password selected:" "--entry" )
     local IFS=$'\|\t\n' id="0"
     while [[ "${id}" != "-1" ]]; do
 	local -a id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "-1")"
@@ -112,9 +120,11 @@ results_zenity(){
 }
 
 message_zenity(){
+    local -ar message_ops=( "${title_op}" "--info" "--no-wrap" )
     "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted. No errors reported."
 }
 
 usage_zenity() {
+    local -ar usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }
