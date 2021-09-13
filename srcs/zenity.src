@@ -13,19 +13,25 @@ bashpass_zenity(){
     declare -ar menu_ops=( "${gt_ops[@]}" "--list" "--text=Menu" "--hide-header"
 			   "--column=Option" "--column=SDesc" "--column=LDesc" )
     local IFS=$'\|\t\n'
-    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
+    "${DIALOG}" "${menu_ops[@]}" ${gui_menu}
 }
 
 create_zenity() {
+    local -a vals
     local ttl="${FUNCNAME[@]:(-3):1} form"
 
     local -ar review_ops=( "${gt_ops[@]}"
 			   "--text=${ttl^}: Enter required details.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
 			   "--list" "--editable" "--separator=," "--print-column=ALL"
-			   "--column=Domain" "--column=Email"
-			   "--column=User Name" "--column=Comments" )
-    local -ar pwd0_ops=( "--title=${ttl}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)." "--entry" "--hide-text" )
-    local -ar pwd1_ops=( "--title=${ttl}" "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both).\nVerification Password again: " "--entry" "--hide-text" )
+			   "--column=Domain" "--column=Email" "--column=User Name" "--column=Comments" )
+
+    local -ar pwd0_ops=( "--title=${ttl}"
+			 "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
+			 "--entry" "--hide-text" )
+
+    local -ar pwd1_ops=( "--title=${ttl}"
+			 "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both).\nVerification Password again: "
+			 "--entry" "--hide-text" )
 
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
@@ -40,61 +46,44 @@ create_zenity() {
     fi
 
     local IFS=$','
-    local -a vals=( $("${DIALOG}" "${review_ops[@]}" "${dm}" "${em}" "${un}" "${cm}" || echo "-1") )
+    vals=( $("${DIALOG}" "${review_ops[@]}" "${dm}" "${em}" "${un}" "${cm}") ) || return $?
     local IFS=$'\ \t\n'
-    [[ "${vals[0]}" == "-1" ]] && return 255
     
-    local pw="$("${DIALOG}" "${pwd0_ops[@]}" "--entry-text=${pw}" || echo "-1")"
-    [[ "${pw}" == "-1" ]] && return 255
+    pw="$("${DIALOG}" "${pwd0_ops[@]}" "--entry-text=${pw}")" || return $?
 
-    local pw1="$("${DIALOG}" "${pwd1_ops[@]}" "--entry-text=${pw1}" || echo "-1")"
-    [[ "${pw1}" == "-1" ]] && return 255
+    pw1="$("${DIALOG}" "${pwd1_ops[@]}" "--entry-text=${pw1}")" || return $?
 
-    echo -ne "export dm=\"${vals[0]:-NULL}\" em=\"${vals[1]:-NULL}\" un=\"${vals[2]:-NULL}\" pw=\"${pw}\" pw1=\"${pw1}\" cm=\"${vals[3]:-NULL}\"\n" > "${tf}"    
+    echo -ne "${vals[0]}|${vals[1]}|${vals[2]}|${pw}|${pw1}|${vals[3]}" > "${tf}"
 }
 
 retrieve_zenity() {
-    local dm errlvl
+    local dm
     local -ar retrieve_ops=( "${title_op}" "--text=Enter search term to look for (empty for All):" "--entry" )
-    "${DIALOG}" "${retrieve_ops[@]}" > "${tf}" || return $?
-    dm="$(cat "${tf}")"
-    echo -ne "dm=\"${dm}\"" > "${tf}"
+    dm="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
+    echo -ne "${dm}" > "${tf}"
 }
 
 update_zenity() {
-    local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to update:"
+    local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to ${FUNCNAME[@]:(-3):1}:"
 			   "--list" "--hide-column=1"
 			   "--column" "ID" "--column" "Domain"
 			   "--column" "Email" "--column" "UName" )
     local id IFS=$'\|\t\n'
-    "${DIALOG}" "${update_ops[@]}" $(func_brlzen) > "${tf}" || return $?
-
-    id="$(cat "${tf}")"
-
+    id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
     [[ -z "${id}" ]] && return 1
-
-    echo -ne "id=\"${id}\"\n" > "${tf}"
+    echo -ne "${id}" > "${tf}"
 }
 
 delete_zenity() {
-    local -ar delete_ops=( "${gt_ops[@]}" "--text=Select account to delete:"
-			   "--list" "--hide-column=1"
-			   "--column" "ID" "--column" "Domain"
-			   "--column" "Email" "--column" "UName" )
-    local id IFS=$'\|\t\n'
-    "${DIALOG}" "${delete_ops[@]}" $(func_brlzen) > "${tf}" || return $?
-    id="$(cat "${tf}")"
-    [[ -z "${id}" ]] && return 1
-    echo -ne "id=\"${id}\"" > "${tf}"
+    update_zenity
 }
 
 importcsv_zenity() {
     local -ar csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" )
     local csvf
-    "${DIALOG}" "${csv_ops[@]}" > "${tf}" || return $?
-    csvf="$(cat "${tf}")"
+    csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
     [[ -z "${csvf}" ]] && return 1
-    echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
+    echo -ne "${csvf}" > "${tf}"
 }
 
 exportcsv_zenity() {
@@ -102,16 +91,16 @@ exportcsv_zenity() {
 }
 
 results_zenity(){
+    local id
     local -ar preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview:"
 			    "--ok-label=Unsafe" "--cancel-label=Safe"
 			    "--list" "--hide-column=1"
 			    "--column=ID" "--column=Domain" "--column=Email"
 			    "--column=UName" "--column=Comments" )
     local -ar showpw_ops=( "${title_op}" "--text=Password selected:" "--entry" )
-    local IFS=$'\|\t\n' id="0"
-    while [[ "${id}" != "-1" ]]; do
-	local -a id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}") || echo "-1")"
-	[[ "${id}" == "-1" ]] && return 255
+    local IFS=$'\|\t\n'
+    while :; do
+	id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}"))" || return $?
 	local pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
 	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"

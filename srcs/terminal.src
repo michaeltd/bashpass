@@ -3,30 +3,16 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2034,SC2155,SC2034,SC2155,SC2154
 
-# Font attributes, Colors, bg_colors
-declare -r reset="$(tput sgr0)" bold="$(tput bold)" \
-	dim="$(tput dim)" blink="$(tput blink)" \
-	underline="$(tput smul)" end_underline="$(tput rmul)" \
-	reverse="$(tput rev)" hidden="$(tput invis)"
-
-declare -r black="$(tput setaf 0)" red="$(tput setaf 1)" \
-	green="$(tput setaf 2)" yellow="$(tput setaf 3)" \
-	blue="$(tput setaf 4)" magenta="$(tput setaf 5)" \
-	cyan="$(tput setaf 6)" white="$(tput setaf 7)" \
-	default="$(tput setaf 9)"
-
-declare -r bg_black="$(tput setab 0)" bg_red="$(tput setab 1)" \
-	bg_green="$(tput setab 2)" bg_yellow="$(tput setab 3)" \
-	bg_blue="$(tput setab 4)" bg_magenta="$(tput setab 5)" \
-	bg_cyan="$(tput setab 6)" bg_white="$(tput setab 7)" \
-	bg_default="$(tput setab 9)"
+declare -r black='\e[0;30m' red='\e[0;31m' \
+	green='\e[0;32m' yellow='\e[0;33m' \
+	blue='\e[0;34m' magenta='\e[0;35m' \
+	cyan='\e[0;36m' white='\e[0;37m' \
+	default='\e[0;39m'
 
 bashpass_terminal(){
     echo -ne " ${tui_menu[*]}"
-    read -r usrinpt
-    errlvl=$?
+    read -r usrinpt || return $?
     echo "${usrinpt}" > "${tf}"
-    return $errlvl
 }
 
 create_terminal() {
@@ -68,23 +54,25 @@ create_terminal() {
     read -r input || return $?
     cm="${input:-${cm}}"
 
-    echo -ne "export dm=\"${dm:-NULL}\" em=\"${em:-NULL}\" un=\"${un:-NULL}\" pw=\"${pw}\" pw1=\"${pw1}\" cm=\"${cm:-NULL}\"\n" > "${tf}"
+    echo -ne "${dm}|${em}|${un}|${pw}|${pw1}|${cm}" > "${tf}"
 }
 
 retrieve_terminal(){
     local dm
     echo -ne "Enter search term to look for: (empty for All) "
     read -r dm || return $?
-    echo -ne "dm=\"${dm}\"" > "${tf}"
+    # echo -ne "dm=\"${dm}\"" > "${tf}"
+    echo -ne "${dm}" > "${tf}"
 }
 
 update_terminal(){
-    local id pw pw1
+    local id
     "${ccm[@]}" "$(sl3_select_preview)"
     echo -ne "Select ID to update: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    echo -ne "id=\"${id}\"\n" > "${tf}"
+    # echo -ne "id=\"${id}\"\n" > "${tf}"
+    echo -ne "${id}" > "${tf}"
 }
 
 delete_terminal(){
@@ -93,7 +81,8 @@ delete_terminal(){
     echo -ne "Select ID to delete: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    echo -ne "id=\"${id}\"" > "${tf}"
+    # echo -ne "id=\"${id}\"" > "${tf}"
+    echo -ne "${id}" > "${tf}"
 }
 
 importcsv_terminal(){
@@ -101,7 +90,8 @@ importcsv_terminal(){
     echo -ne "Enter csv file: (empty to cancel) "
     read -r csvf || return $?
     [[ -z "${csvf}" ]] && return 1
-    echo -ne "csvf=\"${csvf}\"" > "${tf}"
+    # echo -ne "csvf=\"${csvf}\"" > "${tf}"
+    echo -ne "${csvf}" > "${tf}"
 }
 
 exportcsv_terminal(){
@@ -109,8 +99,8 @@ exportcsv_terminal(){
 }
 
 results_terminal(){
-    local id=0 pw
-    while [[ -n "${id}" ]]; do
+    local id pw
+    while :; do
 	"${ccm[@]}" "${1}"
 	echo -ne "Select ID to preview password: (empty to cancel) "
 	read -r id || return $?

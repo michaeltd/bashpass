@@ -142,12 +142,18 @@ for i in ${srcsfs[@]}; do
 done
 
 create() {
-
     local maxid="$(func_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
-
+    local -a retv
     while func_chkinpt "${str2chk}" || func_chkpwd "${pw}" "${pw1}"; do
+	# retv="$("${FUNCNAME[0]}_${usrintrfce}" "${id}")" || return $?
 	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
-	source "${tf}"
+	local IFS=$'\|'
+	# retv=( ${retv} )
+	retv=( $(cat "${tf}") )
+	local IFS=$'\ \t\n'
+
+	export dm="${retv[0]}" em="${retv[1]}" un="${retv[2]}" pw="${retv[3]}" pw1="${retv[4]}" cm="${retv[5]}"
+	
 	str2chk="${dm}${em}${un}${pw}${cm}"
 	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input, like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
 	func_chkpwd "${pw}" "${pw1}" && func_show_err "Password missmatch!"
@@ -157,52 +163,55 @@ create() {
     (( ${#pw} < 8 )) && pw="$(func_gpw 16)"
 
     if [[ -z "${1}" ]]; then
-	"${sql3[@]}" "$(sl3_insert_rec "${dm},${em},${un},${pw},${cm}")"
+	"${sql3[@]}" "$(sl3_insert_rec "${dm}|${em}|${un}|${pw}|${cm}")"
 	"results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
     else
-	"${dcm[@]}" "$(sl3_update_rec "${id},${dm},${em},${un},${pw},${cm}")"
+	"${dcm[@]}" "$(sl3_update_rec "${id}|${dm}|${em}|${un}|${pw}|${cm}")"
     fi
     # cleanup
     unset dm em un pw pw1 cm
 }
 
 retrieve() {
-    local dm rc pw
+    local criteria
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    source "${tf}"
-    "results_${usrintrfce}" "$(sl3_select_dmemun_like "${dm}")"
+    criteria="$(cat "${tf}")"
+    "results_${usrintrfce}" "$(sl3_select_dmemun_like "${criteria}")"
 }
 
 update() {
-    local id errlvl pw pw1
+    local id
+    # id="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    source "${tf}"
+    id="$(cat "${tf}")"
     create "${id}" || return $?
     "results_${usrintrfce}" "$(sl3_select_id_eq "${id}")"
 }
 
 delete() {
-    local errlvl id
+    local id
+    # id="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    source "${tf}"
+    id="$(cat "${tf}")"
     "${dcm[@]}" "$(sl3_delete_id_eq "${id}")"
     "message_${usrintrfce}"
 }
 
 importcsv() {
-    local maxid csvf errlvl
+    local maxid csvf
     maxid="$(func_maxid)"
+    # csvf="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    source "${tf}"
+    csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_importcsv_sql "${csvf}")"
-    # "${rcm[@]}" "$(sl3_select_newrecs "${maxid}")" > "${tf}"
     "results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
 }
 
 exportcsv(){
-    local csvf errlvl
+    local csvf
+    # csvf="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    source "${tf}"
+    csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_select_all)" > "${csvf}"
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
@@ -220,7 +229,7 @@ usage() {
 }
 
 bashpass() {
-    local OFS="${IFS}" errlvl=0 usrinpt=''
+    local OFS="${IFS}" usrinpt="" errlvl
 
     func_check_prereqs || return $?
     func_check_mutex || return $?
@@ -234,7 +243,7 @@ bashpass() {
     trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" "${SIG_TERM}"
 
     # Build menus and help messages.
-    local -a tui_ops=( "${red}Create${reset}" "${green}Search${reset}" "${blue}Update${reset}" "${cyan}Delete${reset}" "${yellow}Import CSV${reset}" "${yellow}Export CSV${reset}" "${magenta}SQLite3${reset}" "${white}Help${reset}" "${dim}Quit${reset}" )
+    local -a tui_ops=( "${red}Create${default}" "${green}Search${default}" "${blue}Update${default}" "${cyan}Delete${default}" "${yellow}Import CSV${default}" "${yellow}Export CSV${default}" "${magenta}SQLite3${default}" "${white}Help${default}" "${dim}Quit${default}" )
     local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import_CSV" "Export_CSV" "SQLite3" "Help" "Quit" )
     local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
     local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
@@ -261,10 +270,11 @@ bashpass() {
 
     while :; do
 	"${FUNCNAME[0]}_${usrintrfce}"
-        errlvl=$?
-        case "${errlvl}" in
+	errlvl=$?
+	usrinpt="$(cat "${tf}")"
+	case "${errlvl}" in
             "0"|"${DIALOG_OK}")
-                case "$(cat "${tf}")" in
+                case "${usrinpt}" in
                     "${gui_ops[0]}"|"0") create ;;
                     "${gui_ops[1]}"|"1") retrieve ;;
                     "${gui_ops[2]}"|"2") update ;;
@@ -279,7 +289,7 @@ bashpass() {
             "1"|"${DIALOG_CANCEL}") exit ;;
             [2-4]|"${DIALOG_HELP}"|"${DIALOG_EXTRA}"|"${DIALOG_ITEM_HELP}") usage ;;
 	    # Most ?dialog implementations return a 255 exit code on esc, Yad returns 252!
-            "255"|"252"|"${DIALOG_ESC}") exit ;;
+            "252"|"255"|"${DIALOG_ESC}") exit ;;
         esac
     done
 }

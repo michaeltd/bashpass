@@ -18,14 +18,14 @@ sl3_brlzen(){
 }
 
 sl3_insert_rec(){
-    local IFS=$','
+    local IFS=$'\|'
     local vals=( ${1} )
     local vals[0]=${vals[0]:-NULL} vals[1]=${vals[1]:-NULL} vals[2]=${vals[2]:-NULL} vals[3]=${vals[3]:-NULL} vals[4]=${vals[4]:-NULL}
     echo -ne "INSERT INTO ${act} VALUES('${vals[0]//:/\:}', '${vals[1]}', '${vals[2]}', '${vals[3]}', '${vals[4]}');"
 }
 
 sl3_update_rec(){
-    local IFS=$','
+    local IFS=$'\|'
     local vals=( ${1} )    
     echo -ne "UPDATE ${act} SET ${dmf} = '${vals[1]}', ${emf} = '${vals[2]}', ${unf} = '${vals[3]}', ${pwf} = '${vals[4]}', ${cmf} = '${vals[5]}' WHERE ${idf} = '${vals[0]}';"
 }
