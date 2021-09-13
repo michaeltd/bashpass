@@ -275,7 +275,7 @@ password generator, storage and reference for the terminal and/or X.
 
    On create/update functions on charachter validity/password missmatch errors
 
-   the user will be returned to create/update forms to trouble shoot accordingly with his edits preserved.
+   the user will be returned to create/update forms to trouble-shoot accordingly with his edits preserved.
 
    The default option thus far was to repeat the proccess from scratch.
    
