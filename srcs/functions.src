@@ -29,7 +29,7 @@ func_show_err() {
 
 func_do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    "${sql3[@]}" "VACUUM;"
+    # "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     if ! "${gpgec[@]}"; then
 	func_show_err "Encryption failed or canceled!"
@@ -128,7 +128,7 @@ func_regex_forbid(){
     # echo -ne "\`\"'|,\$"
     # echo -ne "[=\`=][=\"=][=\'=][=|=][=,=][=\$=]"
     # echo -ne "$'\`'$'\"'$'\''$'|'$','$'\$'$'\'$' '"
-    echo -ne "\ \`\$|,\"\'"
+    echo -ne "\ \`\$|,\"'"
 }
 
 func_chkinpt(){
@@ -174,11 +174,11 @@ func_brl() {
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
         # local rl+="${rec[0]} ${rec[1]:-NULL},${rec[2]:-NULL},${rec[3]:-NULL},${rec[4]:-NULL} off\n"
-	local rl+="${rec[0]} ${rec[1]//\ /_},${rec[2]//\ /_},${rec[3]//\ /_},${rec[4]//\ /_} off\n"
+	local rl+="${rec[0]} ${rec[1]//\ /_}|${rec[2]//\ /_}|${rec[3]//\ /_}|${rec[4]//\ /_} off\n"
     done
-    [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No,Records,Found ON"
+    [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No|Records|Found OFF"
 }
 
 func_brlzen(){
-    echo "$("${sql3[@]}" "$(sl3_brlzen)")"
+    echo "$("${sql3[@]}" "$(sl3_brl)")"
 }

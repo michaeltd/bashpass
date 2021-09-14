@@ -145,15 +145,11 @@ create() {
     local maxid="$(func_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
     local -a retv
     while func_chkinpt "${str2chk}" || func_chkpwd "${pw}" "${pw1}"; do
-	# retv="$("${FUNCNAME[0]}_${usrintrfce}" "${id}")" || return $?
 	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
 	local IFS=$'\|'
-	# retv=( ${retv} )
 	retv=( $(cat "${tf}") )
 	local IFS=$'\ \t\n'
-
 	export dm="${retv[0]}" em="${retv[1]}" un="${retv[2]}" pw="${retv[3]}" pw1="${retv[4]}" cm="${retv[5]}"
-	
 	str2chk="${dm}${em}${un}${pw}${cm}"
 	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input, like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
 	func_chkpwd "${pw}" "${pw1}" && func_show_err "Password missmatch!"
@@ -181,7 +177,6 @@ retrieve() {
 
 update() {
     local id
-    # id="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     id="$(cat "${tf}")"
     create "${id}" || return $?
@@ -190,7 +185,6 @@ update() {
 
 delete() {
     local id
-    # id="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     id="$(cat "${tf}")"
     "${dcm[@]}" "$(sl3_delete_id_eq "${id}")"
@@ -200,7 +194,6 @@ delete() {
 importcsv() {
     local maxid csvf
     maxid="$(func_maxid)"
-    # csvf="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_importcsv_sql "${csvf}")"
@@ -209,7 +202,6 @@ importcsv() {
 
 exportcsv(){
     local csvf
-    # csvf="$("${FUNCNAME[0]}_${usrintrfce}")" || return $?
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_select_all)" > "${csvf}"
@@ -228,24 +220,12 @@ usage() {
     "${FUNCNAME[0]}_${usrintrfce}"
 }
 
-bashpass() {
-    local OFS="${IFS}" usrinpt="" errlvl
-
-    func_check_prereqs || return $?
-    func_check_mutex || return $?
-    # GPG file not found? Let's make one and take it from there.
-    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
-    func_check_decrypt || return $?
-    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
-    func_read_dbflds || func_do_quit $? 
-    func_check_sql || func_do_quit $?
-    # From now on any exit, normal or erratic is a do_quit
-    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" "${SIG_TERM}"
-
+menu() {
+    local usrinpt="" errlvl
     # Build menus and help messages.
-    local -a tui_ops=( "${red}Create${default}" "${green}Search${default}" "${blue}Update${default}" "${cyan}Delete${default}" "${yellow}Import CSV${default}" "${yellow}Export CSV${default}" "${magenta}SQLite3${default}" "${white}Help${default}" "${dim}Quit${default}" )
-    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import_CSV" "Export_CSV" "SQLite3" "Help" "Quit" )
-    local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a file" "Export a file" "Sqlite3 session" "Help screen" "Exit" )
+    local -a tui_ops=( "${red}Create${default}" "${green}Search${default}" "${blue}Update${default}" "${cyan}Delete${default}" "${yellow}Import${default}" "${yellow}Export${default}" "${magenta}SQLite3${default}" "${white}Help${default}" "${dim}Quit${default}" )
+    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import" "Export" "SQLite3" "Help" "Quit" )
+    local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a csv file" "Export a csv file" "Sqlite3 session" "Help screen" "Exit" )
     local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
 
     local -a tui_menu=( )
@@ -284,7 +264,7 @@ bashpass() {
                     "${gui_ops[6]}"|"6") "${sql3[@]}" ;;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
-                    *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2;;
+                    *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2 ;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;
             [2-4]|"${DIALOG_HELP}"|"${DIALOG_EXTRA}"|"${DIALOG_ITEM_HELP}") usage ;;
@@ -292,6 +272,20 @@ bashpass() {
             "252"|"255"|"${DIALOG_ESC}") exit ;;
         esac
     done
+}
+
+bashpass() {
+    func_check_prereqs || return $?
+    func_check_mutex || return $?
+    # GPG file not found? Let's make one and take it from there.
+    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
+    func_check_decrypt || return $?
+    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
+    func_read_dbflds || func_do_quit $? 
+    func_check_sql || func_do_quit $?
+    # From now on any exit, normal or erratic is a do_quit
+    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" # "${SIG_KILL}" "${SIG_TERM}" Don't trap kill-term signals ... coz... reasons...
+    menu
 }
 
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && "${sbn}" "${@}"

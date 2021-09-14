@@ -9,14 +9,14 @@ declare -r black='\e[0;30m' red='\e[0;31m' \
 	cyan='\e[0;36m' white='\e[0;37m' \
 	default='\e[0;39m'
 
-bashpass_terminal(){
+menu_terminal(){
     echo -ne " ${tui_menu[*]}"
     read -r usrinpt || return $?
     echo "${usrinpt}" > "${tf}"
 }
 
 create_terminal() {
-    local fnc="${FUNCNAME[@]:(-3):1}: (Ctrl-D to cancel):" input
+    local fnc="${FUNCNAME[@]:(-4):1}: (Ctrl-D to cancel):" input
     
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
@@ -30,6 +30,14 @@ create_terminal() {
 	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
+echo -ne "${fnc^} Enter required details!
+Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
+    
     echo -ne "${fnc^} default: ${dm}: "
     read -r input || return $?
     dm="${input:-${dm}}"
@@ -61,7 +69,6 @@ retrieve_terminal(){
     local dm
     echo -ne "Enter search term to look for: (empty for All) "
     read -r dm || return $?
-    # echo -ne "dm=\"${dm}\"" > "${tf}"
     echo -ne "${dm}" > "${tf}"
 }
 
@@ -71,7 +78,6 @@ update_terminal(){
     echo -ne "Select ID to update: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    # echo -ne "id=\"${id}\"\n" > "${tf}"
     echo -ne "${id}" > "${tf}"
 }
 
@@ -81,21 +87,23 @@ delete_terminal(){
     echo -ne "Select ID to delete: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    # echo -ne "id=\"${id}\"" > "${tf}"
     echo -ne "${id}" > "${tf}"
 }
 
-importcsv_terminal(){
+csv_terminal(){
     local csvf
-    echo -ne "Enter csv file: (empty to cancel) "
+    echo -ne "Enter csv file to ${FUNCNAME[1]:0:6}: (empty to cancel) "
     read -r csvf || return $?
     [[ -z "${csvf}" ]] && return 1
-    # echo -ne "csvf=\"${csvf}\"" > "${tf}"
     echo -ne "${csvf}" > "${tf}"
 }
 
+importcsv_terminal(){
+    csv_terminal
+}
+
 exportcsv_terminal(){
-    importcsv_terminal
+    csv_terminal
 }
 
 results_terminal(){

@@ -9,28 +9,44 @@ declare -rx title_op="--title=${bngpgf}"
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
-bashpass_zenity(){
+menu_zenity(){
     declare -ar menu_ops=( "${gt_ops[@]}" "--list" "--text=Menu" "--hide-header"
 			   "--column=Option" "--column=SDesc" "--column=LDesc" )
     local IFS=$'\|\t\n'
-    "${DIALOG}" "${menu_ops[@]}" ${gui_menu}
+    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
 }
 
 create_zenity() {
     local -a vals
-    local ttl="${FUNCNAME[@]:(-3):1} form"
+    local ttl="${FUNCNAME[@]:(-4):1} form"
 
     local -ar review_ops=( "${gt_ops[@]}"
-			   "--text=${ttl^}: Enter required details.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
+			   "--text=${ttl^}: Enter required details!
+Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			   "--list" "--editable" "--separator=," "--print-column=ALL"
 			   "--column=Domain" "--column=Email" "--column=User Name" "--column=Comments" )
 
     local -ar pwd0_ops=( "--title=${ttl}"
-			 "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
+			 "--text=Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			 "--entry" "--hide-text" )
 
     local -ar pwd1_ops=( "--title=${ttl}"
-			 "--text=Passwords can be alpha-numeric with punctuation charachters.\nMake sure you're not using any restricted charachters as input,like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both).\nVerification Password again: "
+			 "--text=Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			 "--entry" "--hide-text" )
 
     if [[ -z "${1}" ]]; then # Create mode
@@ -64,10 +80,10 @@ retrieve_zenity() {
 }
 
 update_zenity() {
-    local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to ${FUNCNAME[@]:(-3):1}:"
+    local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to ${FUNCNAME[@]:(-4):1}:"
 			   "--list" "--hide-column=1"
 			   "--column" "ID" "--column" "Domain"
-			   "--column" "Email" "--column" "UName" )
+			   "--column" "Email" "--column" "Username" "--column" "Comments" )
     local id IFS=$'\|\t\n'
     id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
     [[ -z "${id}" ]] && return 1
@@ -78,16 +94,20 @@ delete_zenity() {
     update_zenity
 }
 
-importcsv_zenity() {
-    local -ar csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file:" "--file-selection" )
+csv_zenity(){
+    local -ar csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file to ${FUNCNAME[1]:0:6}:" "--file-selection" )
     local csvf
     csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
     [[ -z "${csvf}" ]] && return 1
     echo -ne "${csvf}" > "${tf}"
 }
 
+importcsv_zenity() {
+    csv_zenity
+}
+
 exportcsv_zenity() {
-    importcsv_zenity
+    csv_zenity
 }
 
 results_zenity(){

@@ -5,11 +5,12 @@
 
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 
 declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${bngpgf}"
 
-bashpass_yad(){
+menu_yad(){
     local IFS=$'\|\t\n' res
     local -ar menu_ops=( "${geometry_ops[@]}" "--title=Menu" 
 			 "--list"  "--print-column=1" "--no-headers"
@@ -20,7 +21,7 @@ bashpass_yad(){
 
 create_yad() {
     local -a vals
-    local ttl="${FUNCNAME[@]:(-3):1} form"
+    local ttl="${FUNCNAME[@]:(-4):1} form"
 
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
@@ -35,14 +36,21 @@ create_yad() {
     fi
 
     local -ar create_ops=( "${geometry_ops[@]}" "--title=${ttl^}"
+			   "--text" "${ttl^}: Enter required details!
+Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			   "--form" "--separator=,"
-			   "--field=Domain!${dm}" "${dm}"
+			   "--field=Domain!${dm//:}" "${dm}"
 			   "--field=Email!${em}" "${em}"
 			   "--field=Uname!${un}" "${un}"
 			   "--field=Password!Insert pasword or length or empty for auto.:H" "${pw}"
 			   "--field=Pw check!Insert password again.:H" "${pw1}"
 			   "--field=Comment!${cm}" "${cm}" )
-    
+
     local IFS=$','
 
     vals=( $("${DIALOG}" "${create_ops[@]}") ) || return $?
@@ -52,17 +60,17 @@ create_yad() {
 
 retrieve_yad() {
     local dm
-    local -ar retrieve_ops=( "${ct_ops[@]}" "--text=Enter search term to look for (empty for All):" "--entry" )
+    local -ar retrieve_ops=( "--text=Enter search term to look for (empty for All):" "--entry" )
     dm="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
     echo -ne "${dm}" > "${tf}"
 }
 
 update_yad() {
     local id rs IFS=$'\|\t\n'
-    local -ar update_ops=( "${geometry_ops[@]}" "--text=Select an account to ${FUNCNAME[@]:(-3):1}:"
+    local -ar update_ops=( "${geometry_ops[@]}" "--text=Select an account to ${FUNCNAME[@]:(-4):1}:"
 			   "--list" "--hide-column=1" "--print-column=1"
-			   "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UName" )
-    
+			   "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "Username" "--column" "Comments" )
+
     rs="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
     id="${rs//\|}"
     [[ -z "${id}" ]] && return 1
@@ -75,8 +83,8 @@ delete_yad() {
 
 csv_yad(){
     local csvf
-    csv_ops=( "--title" "Select a csv file:" "--file" )    
-    csvf="$("${DIALOG}" "${csv_ops[@]}" "--file-name=${1}" "${2}")" || return $?
+    csv_ops=( "--title" "Select a csv file to ${FUNCNAME[1]:0:6}:" "--file" )
+    csvf="$("${DIALOG}" "${csv_ops[@]}" "${2}" "--file-name=${1}")" || return $?
     [[ -z "${csvf}" ]] && return 1
     echo -ne "${csvf}" > "${tf}"
 }
@@ -100,8 +108,7 @@ results_yad(){
     local IFS=$'\|\t\n'
     while :; do
 	id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}"))" || return $?
-	id=${id//\|}
-	local pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+	local pw="$("${sql3[@]}" "$(sl3_showpw "${id//\|}")")"
 	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
@@ -112,6 +119,6 @@ message_yad(){
 }
 
 usage_yad() {
-    local -ar usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
+    local -ar usage_ops=( "--info" "--title=Help screen" )
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }

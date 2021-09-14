@@ -11,39 +11,39 @@ declare -arx bt_ops=( "--backtitle" "${bngpgf}" )
 
 # export DIALOGOPTS="--stdout"
 
-make_rlist(){
-    echo -ne "${bt_ops[@]} --title ${1^} --column-separator , --radiolist SelectID2${1^} ${geops[@]} 10"
+mklist(){
+    echo -ne "${bt_ops[@]} --title ${1^} --column-separator | --radiolist SelectID2${1^} ${geops[@]} 10"
 }
 
-make_msg(){
+mkmsg(){
     echo -ne "${bt_ops[@]} --title ${1^}"
 }
 
-make_box(){
-    echo -ne "${bt_ops[@]} --title ${2^} --${1}box ${2} ${geops[@]}"
+mkbox(){
+    echo -ne "${bt_ops[@]} --title ${2^} --insecure --${1}box ${2} ${geops[@]}"
 }
 
-bashpass_dialog(){
+menu_dialog(){
     local -ar menu_ops=( "${bt_ops[@]}" "--title" "Selection Menu"  "--item-help" "--cancel-label" "Quit" "--menu" "Menu:" "${geops[@]}" )
     local IFS=$'\|\t\n'
-    "${DIALOG}" "${menu_ops[@]}" ${#gui_ops[*]} ${gui_menu} 2> "${tf}" || return $?
+    "${DIALOG}" "${menu_ops[@]}" ${#gui_ops[*]} ${gui_menu} 2> "${tf}"
 }
 
-bashpass_cdialog(){
-    bashpass_dialog
+menu_cdialog(){
+    menu_dialog
 }
 
-bashpass_Xdialog(){
-    bashpass_dialog
+menu_Xdialog(){
+    menu_dialog
 }
 
-bashpass_gdialog(){
-    bashpass_Xdialog
+menu_gdialog(){
+    menu_Xdialog
 }
 
 create_dialog() {
     local -a vals
-    local ttl="${FUNCNAME[@]:(-3):1} form"
+    local ttl="${FUNCNAME[@]:(-4):1} form"
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
 	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
@@ -58,20 +58,30 @@ create_dialog() {
 	local cnt=0
     fi
 
-    local -arx create_ops=( "${bt_ops[@]}" "--title" "${ttl^}"
-			    "--ok-label" "Submit" "--separator" $','
-			    "--form" "${ttl^}" "${geops[@]}" 0
-			     "Domain:" 1 1 "$dm" 1 10 40 0
-			     "Email:" 2 1 "$em" 2 10 40 0
-			     "User:" 3 1 "$un" 3 10 40 0
-			     "Password:" 4 1 "$pw" 4 10 40 0
-			     "Pword1:" 5 1 "$pw1" 5 10 40 0 
-			     "Comments:" 6 1 "$cm" 6 10 40 0 )
+    local -arx create_ops=( "${bt_ops[@]}" \
+			    "--title" "${ttl^}" \
+			    "--ok-label" "Submit" \
+			    "--separator" "|" \
+			    "--insecure" \
+			    "--mixedform" "${ttl^}: Enter required details!\n
+Passwords can be alpha-numeric-punctuation characters.\n
+You can use a pword of your choice or a desired length (8-64 chars) \n
+or leave empty for auto (16 chars).\n
+Make sure you're not using any restricted characters as input.\n
+Like  : $(func_regex_forbid)\n
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n" \
+			    "${geops[@]}" 0 \
+			     "Domain          :" 1 1 "$dm"  1 20 50 0 0 \
+			     "Email           :" 2 1 "$em"  2 20 50 0 0 \
+			     "User            :" 3 1 "$un"  3 20 50 0 0 \
+			     "Password        :" 4 1 "$pw"  4 20 50 0 1 \
+			     "Verify Password :" 5 1 "$pw1" 5 20 50 0 1 \
+			     "Comments        :" 6 1 "$cm"  6 20 50 0 0 \
+			  )
 
-    local IFS=$','
+    local IFS=$'\|'
     exec 3>&1
     vals=( $("${DIALOG}" "${create_ops[@]}" 2>&1 1>&3) ) || return $?
-    # vals=( $("${DIALOG}" "${create_ops[@]}") ) || return $?
     exec 3>&-
 
     echo -ne "${vals[0]}|${vals[1]}|${vals[2]}|${vals[3]}|${vals[4]}|${vals[5]}" > "${tf}"
@@ -83,7 +93,7 @@ create_cdialog(){
 
 create_Xdialog() {
     local -a vals
-    local ttl="${FUNCNAME[@]:(-3):1} form" input
+    local ttl="${FUNCNAME[@]:(-4):1} form" input
 
     if [[ -z "${1}" ]]; then # Create mode
 	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
@@ -97,25 +107,32 @@ create_Xdialog() {
 	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
-    local IFS=$','
+    local IFS=$'\|'
 
-    vals=($("${DIALOG}" ${bt_ops[@]} "--title" "${ttl^}" "--separator" $',' \
-		      "--3inputsbox" "Input Domain, Email and UName" ${geops[@]} \
+    vals=( $("${DIALOG}" ${bt_ops[@]} "--title" "${ttl^}" "--separator" "|" \
+		      "--3inputsbox" "${ttl^}: Enter required details!\n
+Passwords can be alpha-numeric-punctuation characters.\n
+You can use a pword of your choice or a desired length (8-64 chars) \n
+or leave empty for auto (16 chars).\n
+Make sure you're not using any restricted characters as input.\n
+Like  : $(func_regex_forbid)\n
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n" \
+		      ${geops[@]} \
 		      "Domain" "${dm}" \
 		      "Email" "${em}" \
-		      "UName" "${un}" 2>&1 )) || return $?
+		      "UName" "${un}" 2>&1 ) ) || return $?
 
     local IFS=$'\ \t\n'
 
     dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}"
 
-    input="$("${DIALOG}" $(make_box password "password") "${pw}" 2>&1 )" || return $?
+    input="$("${DIALOG}" $(mkbox "password" "password") "${pw}" 2>&1 )" || return $?
     pw="${input:-${pw}}"
 
-    input="$("${DIALOG}" $(make_box password "password_again") "${pw1}" 2>&1 )" || return $?
+    input="$("${DIALOG}" $(mkbox "password" "password_again!") "${pw1}" 2>&1 )" || return $?
     pw1="${input:-${pw1}}"
 
-    input="$("${DIALOG}" $(make_box input "any_comments?") "${cm}" 2>&1 )" || return $?
+    input="$("${DIALOG}" $(mkbox "input" "any_comments?") "${cm}" 2>&1 )" || return $?
     cm="${input:-${cm}}"
     
     echo -ne "${dm}|${em}|${un}|${pw}|${pw1}|${cm}" > "${tf}"
@@ -126,7 +143,7 @@ create_gdialog(){
 }
 
 retrieve_dialog(){
-    "${DIALOG}" $(make_box input Domain "empty for all") 2> "${tf}"
+    "${DIALOG}" $(mkbox "input" "Criteria_empty_for_all") 2> "${tf}"
 }
 
 retrieve_cdialog(){
@@ -142,14 +159,7 @@ retrieve_gdialog(){
 }
 
 update_dialog(){
-    # "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl) 2> "${tf}" || return $?
-    # local id="$(cat "${tf}")"
-    # [[ -z "${id}" ]] && return 1
-    # echo -ne "id=\"${id}\"\n" > "${tf}"
-
-    # "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl)
-    
-    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl) 2> "${tf}"
+    "${DIALOG}" $(mklist "${FUNCNAME[@]:(-4):1}") $(func_brl) 2> "${tf}"
 }
 
 update_cdialog(){
@@ -165,76 +175,68 @@ update_gdialog(){
 }
 
 delete_dialog(){
-#     local id
-#     "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl) 2> "${tf}" || return $?
-#     id="$(cat "${tf}")"
-#     [[ -z "${id}" ]] && return 1
-#     echo -ne "id=\"${id}\"" > "${tf}"
-    
-    "${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl) 2> "${tf}"
-
+    update_dialog
 }
 
 delete_cdialog(){
-    delete_dialog
+    update_dialog
 }
 
 delete_Xdialog(){
-    delete_dialog
+    update_dialog
 }
 
 delete_gdialog(){
-    delete_Xdialog
+    update_dialog
 }
 
-importcsv_dialog(){
-    local -ar csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file:" "--fselect" "${sdn}/examples/" "${geops[@]}" )
-#     "${DIALOG}" "${csv_ops[@]}" 2> "${tf}" || return $?
-#     local csvf
-#     csvf="$(cat "${tf}")"
-#     [[ -z "${csvf}" ]] && return 1
-#     echo -ne "csvf=\"${csvf}\"\n" > "${tf}"
-
+csv_dialog(){
+    local -ar csv_ops=( "${bt_ops[@]}" "--title" "Enter a csv file to ${FUNCNAME[1]:0:6}:" "--fselect" "${sdn}/examples/" "${geops[@]}" )
     "${DIALOG}" "${csv_ops[@]}" 2> "${tf}"
 }
 
+importcsv_dialog(){
+    csv_dialog
+}
+
 importcsv_cdialog(){
-    importcsv_dialog
+    csv_dialog
 }
 
 importcsv_Xdialog(){
-    importcsv_dialog
+    csv_dialog
 }
 
 importcsv_gdialog(){
-    importcsv_Xdialog
+    csv_dialog
 }
 
 exportcsv_dialog(){
-    importcsv_dialog
+    csv_dialog
 }
 
 exportcsv_cdialog(){
-    exportcsv_dialog
+    csv_dialog
 }
 
 exportcsv_Xdialog(){
-    exportcsv_dialog
+    csv_dialog
 }
 
 exportcsv_gdialog(){
-    exportcsv_Xdialog
+    csv_dialog
 }
 
 results_dialog(){
-    local id pw
+    local id pw errlvl
     while :; do
-	# id="$("${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl "${1}"))" || return $?
-	"${DIALOG}" $(make_rlist "${FUNCNAME[@]:(-3):1}") $(func_brl "${1}") 2> "${tf}" || return $?
+	"${DIALOG}" $(mklist "${FUNCNAME[@]:(-4):1}") $(func_brl "${1}") 2> "${tf}"
+	errlvl=$?
+	[[ $errlvl != 0 ]] && return $errlvl
 	id="$(cat "${tf}")"
 	[[ -z "${id}" ]] && return 1
 	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
-	"${DIALOG}" $(make_box password "${id}'s_Password_Is:") "${pw}" 2> /dev/null || return $?
+	"${DIALOG}" $(mkbox password "#${id}'s_Password_Is:") "${pw}" 2> /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
@@ -252,7 +254,7 @@ results_gdialog(){
 }
 
 message_dialog(){
-    "${DIALOG}" $(make_msg "message") "--msgbox" "Account ID: #${id} deleted. No errors reported." "${geops[@]}"
+    "${DIALOG}" $(mkmsg "message") "--msgbox" "Account ID: #${id} deleted. No errors reported." "${geops[@]}"
 }
 
 message_cdialog(){
@@ -268,7 +270,7 @@ message_gdialog(){
 }
 
 usage_dialog(){
-    "${DIALOG}" $(make_msg "Help") "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
+    "${DIALOG}" $(mkmsg "Help") "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
 }
 
 usage_cdialog(){
@@ -276,7 +278,7 @@ usage_cdialog(){
 }
 
 usage_Xdialog(){
-    "${DIALOG}" $(make_msg "Help") "--left" "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
+    "${DIALOG}" $(mkmsg "Help") "--left" "--msgbox" "${gui_hmsg[*]}" "${geops[@]}"
 }
 
 usage_gdialog(){
