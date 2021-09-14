@@ -43,29 +43,37 @@ password generator, storage and reference for the terminal and/or X.
    
 * Files
   1. [[file:bashpass][bashpass]]
+     
      main script
 
   2. [[file:srcs/][srcs]]
+     
      Accompanied functions.
 
      Namely sqlite3, general and ?UI specific
      
   3. [[file:examples/][examples]]
+     
      Create DB script and import example files.
 
      1) [[file:examples/create.sql][create.sql]]
+	
 	SQLite database create example script
 
      2) [[file:examples/import.csv][import.csv]]
+	
 	Accounts import example format
 
   4. [[file:tests.bats][test.bats]]
+     
      Bats tests file. Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
      
   5. [[file:readme.org][readme.org]]
+     
      This file
      
   6. [[file:license][license]]
+     
      A License
 
 * Dependencies
