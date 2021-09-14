@@ -66,7 +66,9 @@ password generator, storage and reference for the terminal and/or X.
 
   4. [[file:tests.bats][test.bats]]
      
-     Bats tests file. Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
+     Bats tests file.
+
+     Needs [[https://github.com/bats-core/bats-core][bats]] installed to run.
      
   5. [[file:readme.org][readme.org]]
      
@@ -268,7 +270,7 @@ password generator, storage and reference for the terminal and/or X.
    From now on the updates will update any account field not only passwords.
 
 ** <2021-09-09 Thu>
-   Basic data input for all account fields has been implemented (see [[Notes]] #3, No ~\ `$|,'"~ chars.)
+   Basic data input validation for all account fields has been implemented (see [[Notes]] #3, No ~\ `$|,'"~ chars.)
 
 ** <2021-09-10 Fri>
    Persistant edits have been implemented.
