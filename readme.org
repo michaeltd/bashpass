@@ -56,13 +56,13 @@ password generator, storage and reference for the terminal and/or X.
      
      Create DB script and import example files.
 
-     1) [[file:examples/create.sql][create.sql]]
-	
-	SQLite database create example script
+     - [[file:examples/create.sql][create.sql]]
+       
+       SQLite database create example script
 
-     2) [[file:examples/import.csv][import.csv]]
-	
-	Accounts import example format
+     - [[file:examples/import.csv][import.csv]]
+       
+       Accounts import example format
 
   4. [[file:tests.bats][test.bats]]
      
