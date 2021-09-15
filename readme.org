@@ -299,11 +299,11 @@ password generator, storage and reference for the terminal and/or X.
 
    However, even so, data that make it to disk,
 
-   are detrimental, trivial and functional related data.
+   are non detrimental, trivial and functional related data only.
 
    All account related, security sensitive information is handled
 
-   from now on in memory only.
+   from now on only in memory.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
