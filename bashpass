@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #shellcheck shell=bash source=/dev/null disable=SC1008,SC2096,SC2155,SC1090,SC2068,SC2086,SC2141,SC2046,SC2015
 #
-# bashpass gtkdialog/yad/zenity/kdialog/Xdialog/gdialog/whiptail/cdialog/dialog/terminal assisted password management.
+# bashpass yad/zenity/Xdialog/cdialog/dialog/terminal assisted password management.
 
 # Restrict permissions
 umask 077
@@ -11,11 +11,6 @@ set +vx -f
 # xmessage timeout is in seconds...
 declare -rx XMTO="30"
 declare -rx XDTO="$((XMTO * 1000))" # Xdialog/dialog is in milliseconds
-# Xdialog/dialog
-declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
-	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
-	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
-	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
@@ -25,13 +20,13 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
         *.gpg) gpgf="${1}";;
-        yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
+        yad|zenity|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
         -d|--debug) set -vx;;
         -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
         *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
@@ -60,8 +55,8 @@ elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
+# elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 # elif [[ "${usrintrfce}" == "whiptail" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for whiptail
 #     declare -xr DIALOG="$(type -P "${usrintrfce}")"
 elif [[ "${usrintrfce}" == "cdialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for cdialog
@@ -87,9 +82,9 @@ else # -z USERINTRFCE etc
     elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
 	declare -xr DIALOG="$(type -P Xdialog)"
 	readonly usrintrfce="Xdialog"
-    elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-	declare -xr DIALOG="$(type -P gdialog)"
-	readonly usrintrfce="gdialog"
+    # elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+    # 	declare -xr DIALOG="$(type -P gdialog)"
+    # 	readonly usrintrfce="gdialog"
     # elif [[ -x "$(type -P whiptail)" ]]; then # Check for whiptail
     # 	declare -xr DIALOG="$(type -P whiptail)"
     # 	readonly usrintrfce="whiptail"
@@ -138,7 +133,7 @@ readonly -a srcsfs=(
     "${scsd}/${usrintrfce}.src"
 )
 for i in ${srcsfs[@]}; do
-    source "${i}" || exit $?
+    source "${i}" || { echo -ne "Try a 'git pull' or 'git fetch'!\nThat may help.\n" >&2; exit $?; }
 done
 
 create() {
@@ -146,10 +141,6 @@ create() {
     local -a retv
     while func_chkinpt "${str2chk}" || func_chkpwd "${pw}" "${pw1}"; do
 	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
-	local IFS=$'\|'
-	retv=( $(cat "${tf}") )
-	local IFS=$'\ \t\n'
-	export dm="${retv[0]}" em="${retv[1]}" un="${retv[2]}" pw="${retv[3]}" pw1="${retv[4]}" cm="${retv[5]}"
 	str2chk="${dm}${em}${un}${pw}${cm}"
 	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input, like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
 	func_chkpwd "${pw}" "${pw1}" && func_show_err "Password missmatch!"
@@ -171,14 +162,14 @@ create() {
 retrieve() {
     local criteria
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    criteria="$(cat "${tf}")"
+    # criteria="$(cat "${tf}")"
     "results_${usrintrfce}" "$(sl3_select_dmemun_like "${criteria}")"
 }
 
 update() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    id="$(cat "${tf}")"
+    # id="$(cat "${tf}")"
     create "${id}" || return $?
     "results_${usrintrfce}" "$(sl3_select_id_eq "${id}")"
 }
@@ -186,7 +177,7 @@ update() {
 delete() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    id="$(cat "${tf}")"
+    # id="$(cat "${tf}")"
     "${dcm[@]}" "$(sl3_delete_id_eq "${id}")"
     "message_${usrintrfce}"
 }
@@ -195,7 +186,7 @@ importcsv() {
     local maxid csvf
     maxid="$(func_maxid)"
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    csvf="$(cat "${tf}")"
+    # csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_importcsv_sql "${csvf}")"
     "results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
 }
@@ -203,7 +194,7 @@ importcsv() {
 exportcsv(){
     local csvf
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    csvf="$(cat "${tf}")"
+    # csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_select_all)" > "${csvf}"
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
@@ -251,7 +242,6 @@ menu() {
     while :; do
 	"${FUNCNAME[0]}_${usrintrfce}"
 	errlvl=$?
-	usrinpt="$(cat "${tf}")"
 	case "${errlvl}" in
             "0"|"${DIALOG_OK}")
                 case "${usrinpt}" in
@@ -271,6 +261,7 @@ menu() {
 	    # Most ?dialog implementations return a 255 exit code on esc, Yad returns 252!
             "252"|"255"|"${DIALOG_ESC}") exit ;;
         esac
+	usrinpt=""
     done
 }
 

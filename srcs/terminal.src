@@ -10,24 +10,25 @@ declare -r black='\e[0;30m' red='\e[0;31m' \
 	default='\e[0;39m'
 
 menu_terminal(){
-    echo -ne " ${tui_menu[*]}"
+    echo -ne "\n ${tui_menu[*]}"
     read -r usrinpt || return $?
-    echo "${usrinpt}" > "${tf}"
+    export usrinpt
 }
 
 create_terminal() {
     local fnc="${FUNCNAME[@]:(-4):1}: (Ctrl-D to cancel):" input
     
     if [[ -z "${1}" ]]; then # Create mode
-	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	local pw1="${pw}" cm="${cm:-"comments goes here..."}"
+	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	pw1="${pw}" cm="${cm:-"comments goes here..."}"
     else # Update mode
-        local id="${1}" IFS=$'\|'
+        id="${1}"
+	local IFS=$'\|'
 	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
-	local dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
 echo -ne "${fnc^} Enter required details!
@@ -40,62 +41,56 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
     
     echo -ne "${fnc^} default: ${dm}: "
     read -r input || return $?
-    dm="${input:-${dm}}"
+    export dm="${input:-${dm}}"
 
     echo -ne "${fnc^} default: ${em}: "
     read -r input || return $?
-    em="${input:-${em}}"
+    export em="${input:-${em}}"
 
     echo -ne "${fnc^} default: ${un}: "
     read -r input || return $?
-    un="${input:-${un}}"
+    export un="${input:-${un}}"
 
     echo -ne "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): "
     read -r input || return $?
-    pw="${input:-${pw}}"
+    export pw="${input:-${pw}}"
 
     echo -ne "${fnc^} default: ${pw1}: (again): "
     read -r input || return $?
-    pw1="${input:-${pw1}}"
+    export pw1="${input:-${pw1}}"
 
     echo -ne "${fnc^} default: ${cm}: "
     read -r input || return $?
-    cm="${input:-${cm}}"
-
-    echo -ne "${dm}|${em}|${un}|${pw}|${pw1}|${cm}" > "${tf}"
+    export cm="${input:-${cm}}"
 }
 
 retrieve_terminal(){
-    local dm
     echo -ne "Enter search term to look for: (empty for All) "
-    read -r dm || return $?
-    echo -ne "${dm}" > "${tf}"
+    read -r criteria || return $?
+    export criteria
 }
 
 update_terminal(){
-    local id
     "${ccm[@]}" "$(sl3_select_preview)"
     echo -ne "Select ID to update: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    echo -ne "${id}" > "${tf}"
+    export id
 }
 
 delete_terminal(){
-    local id
     "${ccm[@]}" "$(sl3_select_preview)"
     echo -ne "Select ID to delete: (empty to cancel) "
     read -r id || return $?
     [[ -z "${id}" ]] && return 1
-    echo -ne "${id}" > "${tf}"
+    export id
 }
 
 csv_terminal(){
-    local csvf
     echo -ne "Enter csv file to ${FUNCNAME[1]:0:6}: (empty to cancel) "
     read -r csvf || return $?
     [[ -z "${csvf}" ]] && return 1
-    echo -ne "${csvf}" > "${tf}"
+    export csvf
 }
 
 importcsv_terminal(){

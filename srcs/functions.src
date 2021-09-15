@@ -40,7 +40,8 @@ func_do_quit() {
 	for i in ${f2d[@]}; do
 	    ${shrc[@]} "${i}";
 	done
-	read -rp "Return to continue ... "
+	# read -rp "Return to continue ... "
+	echo "${sbn} gracefull exit..."
         return "${1:-0}"
     fi
 }

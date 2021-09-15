@@ -15,14 +15,15 @@ sl3_brl(){
 sl3_insert_rec(){
     local IFS=$'\|'
     local vals=( ${1} )
-
     vals[0]=${vals[0]:-NULL}
     vals[1]=${vals[1]:-NULL}
     vals[2]=${vals[2]:-NULL}
     vals[3]=${vals[3]:-NULL}
     vals[4]=${vals[4]:-NULL}
-
     echo -ne "INSERT INTO ${act} VALUES('${vals[0]//:/\:}', '${vals[1]}', '${vals[2]}', '${vals[3]}', '${vals[4]}');"
+
+    # dm="${dm:-NULL}" em="${em:-NULL}" un="${un:-NULL}" pw="${pw:-NULL}" cm="${cm:-NULL}"
+    # echo -ne "INSERT INTO ${act} VALUES('${dm}', '${em}', '${un}', '${pw}', '${cm}');"
 }
 
 sl3_update_rec(){

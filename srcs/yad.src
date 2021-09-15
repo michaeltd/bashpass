@@ -11,12 +11,12 @@ declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${bngpgf}"
 
 menu_yad(){
-    local IFS=$'\|\t\n' res
+    local IFS=$'\|\t\n'
     local -ar menu_ops=( "${geometry_ops[@]}" "--title=Menu" 
 			 "--list"  "--print-column=1" "--no-headers"
 			 "--column=Option" "--column=SDesc" "--column=LDesc")
-    res="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
-    echo "${res//\|}" > "${tf}"
+    usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
+    export usrinpt="${usrinpt//\|}"
 }
 
 create_yad() {
@@ -24,15 +24,16 @@ create_yad() {
     local ttl="${FUNCNAME[@]:(-4):1} form"
 
     if [[ -z "${1}" ]]; then # Create mode
-	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	local pw1="${pw}" cm="${cm:-"comments goes here..."}"
+	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	pw1="${pw}" cm="${cm:-"comments goes here..."}"
     else # Update mode
-        local id="${1}" IFS=$'\|'
+        id="${1}"
+	local IFS=$'\|'
 	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
-	local dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+        dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
     local -ar create_ops=( "${geometry_ops[@]}" "--title=${ttl^}"
@@ -43,7 +44,7 @@ or leave empty for auto (16 chars).
 Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
-			   "--form" "--separator=,"
+			   "--form"
 			   "--field=Domain!${dm//:}" "${dm}"
 			   "--field=Email!${em}" "${em}"
 			   "--field=Uname!${un}" "${un}"
@@ -51,30 +52,30 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			   "--field=Pw check!Insert password again.:H" "${pw1}"
 			   "--field=Comment!${cm}" "${cm}" )
 
-    local IFS=$','
+    local IFS=$'\|\t\n'
 
     vals=( $("${DIALOG}" "${create_ops[@]}") ) || return $?
 
-    echo -ne "${vals[0]}|${vals[1]}|${vals[2]}|${vals[3]}|${vals[4]}|${vals[5]}" > "${tf}"
+    export dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}" \
+	   pw="${vals[3]:-${pw}}" pw1="${vals[4]:-${pw1}}" cm="${vals[5]:-cm}"
 }
 
 retrieve_yad() {
-    local dm
     local -ar retrieve_ops=( "--text=Enter search term to look for (empty for All):" "--entry" )
-    dm="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
-    echo -ne "${dm}" > "${tf}"
+    criteria="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
+    export criteria="${criteria//\|}"
 }
 
 update_yad() {
-    local id rs IFS=$'\|\t\n'
+    local IFS=$'\|\t\n'
     local -ar update_ops=( "${geometry_ops[@]}" "--text=Select an account to ${FUNCNAME[@]:(-4):1}:"
 			   "--list" "--hide-column=1" "--print-column=1"
 			   "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "Username" "--column" "Comments" )
 
-    rs="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
-    id="${rs//\|}"
+    id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
+    id="${id//\|}"
     [[ -z "${id}" ]] && return 1
-    echo -ne "${id}" > "${tf}"
+    export id
 }
 
 delete_yad() {
@@ -82,11 +83,11 @@ delete_yad() {
 }
 
 csv_yad(){
-    local csvf
     csv_ops=( "--title" "Select a csv file to ${FUNCNAME[1]:0:6}:" "--file" )
     csvf="$("${DIALOG}" "${csv_ops[@]}" "${2}" "--file-name=${1}")" || return $?
+    csvf="${csvf//\|}"
     [[ -z "${csvf}" ]] && return 1
-    echo -ne "${csvf}" > "${tf}"
+    export csvf
 }
 
 importcsv_yad() {
@@ -98,7 +99,6 @@ exportcsv_yad() {
 }
 
 results_yad(){
-    local id
     local -ar preview_ops=( "${geometry_ops[@]}" "--text=Results. Select account to preview:" "--no-markup"
 			    "--ok-label=Unsafe" "--cancel-label=Safe" "--list" "--hide-column=1" "--print-column=1"
 			    "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" )

@@ -5,15 +5,19 @@
 
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
+
 declare -rx title_op="--title=${bngpgf}"
+
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
+
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
 menu_zenity(){
     declare -ar menu_ops=( "${gt_ops[@]}" "--list" "--text=Menu" "--hide-header"
 			   "--column=Option" "--column=SDesc" "--column=LDesc" )
     local IFS=$'\|\t\n'
-    "${DIALOG}" "${menu_ops[@]}" ${gui_menu} > "${tf}"
+    usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
+    export usrinpt
 }
 
 create_zenity() {
@@ -28,7 +32,7 @@ or leave empty for auto (16 chars).
 Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
-			   "--list" "--editable" "--separator=," "--print-column=ALL"
+			   "--list" "--editable" "--print-column=ALL"
 			   "--column=Domain" "--column=Email" "--column=User Name" "--column=Comments" )
 
     local -ar pwd0_ops=( "--title=${ttl}"
@@ -50,33 +54,37 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			 "--entry" "--hide-text" )
 
     if [[ -z "${1}" ]]; then # Create mode
-	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	local pw1="${pw}" cm="${cm:-"comments goes here..."}"
+	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	pw1="${pw}" cm="${cm:-"comments goes here..."}"
     else # Update mode
-        local id="${1}" IFS=$'\|'
+        id="${1}"
+	local IFS=$'\|'
 	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
-	local dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
-    local IFS=$','
+    local IFS=$'\|\t\n'
     vals=( $("${DIALOG}" "${review_ops[@]}" "${dm}" "${em}" "${un}" "${cm}") ) || return $?
     local IFS=$'\ \t\n'
-    
-    pw="$("${DIALOG}" "${pwd0_ops[@]}" "--entry-text=${pw}")" || return $?
 
-    pw1="$("${DIALOG}" "${pwd1_ops[@]}" "--entry-text=${pw1}")" || return $?
+    dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}" cm="${vals[3]:-cm}"
 
-    echo -ne "${vals[0]}|${vals[1]}|${vals[2]}|${pw}|${pw1}|${vals[3]}" > "${tf}"
+    input="$("${DIALOG}" "${pwd0_ops[@]}" "--entry-text=${pw}")" || return $?
+    pw="${input:-${pw}}"
+
+    input="$("${DIALOG}" "${pwd1_ops[@]}" "--entry-text=${pw1}")" || return $?
+    pw1="${input:-${pw1}}"
+
+    export dm em un pw pw1 cm
 }
 
 retrieve_zenity() {
-    local dm
     local -ar retrieve_ops=( "${title_op}" "--text=Enter search term to look for (empty for All):" "--entry" )
-    dm="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
-    echo -ne "${dm}" > "${tf}"
+    criteria="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
+    export criteria
 }
 
 update_zenity() {
@@ -84,10 +92,10 @@ update_zenity() {
 			   "--list" "--hide-column=1"
 			   "--column" "ID" "--column" "Domain"
 			   "--column" "Email" "--column" "Username" "--column" "Comments" )
-    local id IFS=$'\|\t\n'
+    local IFS=$'\|\t\n'
     id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
     [[ -z "${id}" ]] && return 1
-    echo -ne "${id}" > "${tf}"
+    export id
 }
 
 delete_zenity() {
@@ -96,10 +104,9 @@ delete_zenity() {
 
 csv_zenity(){
     local -ar csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file to ${FUNCNAME[1]:0:6}:" "--file-selection" )
-    local csvf
     csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
     [[ -z "${csvf}" ]] && return 1
-    echo -ne "${csvf}" > "${tf}"
+    export csvf
 }
 
 importcsv_zenity() {
@@ -111,7 +118,6 @@ exportcsv_zenity() {
 }
 
 results_zenity(){
-    local id
     local -ar preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview:"
 			    "--ok-label=Unsafe" "--cancel-label=Safe"
 			    "--list" "--hide-column=1"

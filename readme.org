@@ -96,9 +96,9 @@ password generator, storage and reference for the terminal and/or X.
 
   5. Optionally...
 
-     1. yad,zenity,Xdialog,gdialog for an X client.
+     1. yad,zenity,Xdialog for an X client.
 
-     2. whiptail,cdialog,dialog for a tty TUI.
+     2. cdialog,dialog for a tty TUI.
 
      3. finally, xclip for some middle click password pasting functionality.
 
@@ -125,13 +125,13 @@ password generator, storage and reference for the terminal and/or X.
    If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]].
 
 ** Basic usage:
-   ~bashpass [sample.gpg] [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal] [--debug] [--help]~
+   ~bashpass [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]~
 
-   If ~*.gpg~ parameter is unavailable (eg: first time use) or unusable, It'll be (re)created.
+   If ~*.gpg~ parameter is unavailable (eg: first time use), It'll be (re)created.
    
 ** Optional command line arguments
 
-   - If you'd like to test other UI options try: ~bashpass [yad|zenity|Xdialog|gdialog|cdialog|dialog|terminal]~, needless to say they have to be installed.
+   - If you'd like to test other UI options try: ~bashpass [yad|zenity|Xdialog|cdialog|dialog]~, needless to say they have to be installed.
 
      If not ~bashpass~ will default to the highest available option in that order.
 
@@ -175,7 +175,7 @@ password generator, storage and reference for the terminal and/or X.
 
      It's more than likely to result in various errors.
 
-* TO-DOS [3/7] [42%]
+* TO-DOS [3/8] [37%]
 ** DONE ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
    Add pgp encryption
@@ -215,10 +215,13 @@ password generator, storage and reference for the terminal and/or X.
 ** TODO NULL values
    Central null value handling for various ?UIs list building consistency.
    
-   SQLite3 ignores silently ~NOT NULL~, ~DEFAULT~ clauses in ~CREATE TABLE~ statements.
+   Side note: SQLite3 silently ignores ~NOT NULL~, ~DEFAULT~ clauses in ~CREATE TABLE~ statements.
 
 ** TODO Variable back ends
    Like: csv, xml, json, flat etc...
+
+** TODO In memory only SQLite3 db
+   For security reasons
 
 * Updates
 
@@ -226,11 +229,6 @@ password generator, storage and reference for the terminal and/or X.
    Depending on xclip availability and on single record operations,
 
    you'll be able to paste affected passwords via middle-click.
-
-** <2021-09-03 Fri>
-   gdialog is only tested with zenity link, 
-
-   so you know what to do ...
 
 ** <2021-09-06 Mon>
    ~setup~ script went BB and got replaced with ~func_setup~,
@@ -267,7 +265,7 @@ password generator, storage and reference for the terminal and/or X.
    So this time literally, It's not a bug... It's a feature!
 
 ** <2021-09-08 Wed>
-   From now on the updates will update any account field not only passwords.
+   From now on the update function will be able to modify all available account fields, not only passwords.
 
 ** <2021-09-09 Thu>
    Basic data input validation for all account fields has been implemented (see [[Notes]] #3, No ~\ `$|,'"~ chars.)
@@ -287,6 +285,17 @@ password generator, storage and reference for the terminal and/or X.
    No way to set default values on forms,
 
    so an editable list was the best way to go.
+
+** <2021-09-14 Tue>
+   Temp file became obsolete.
+
+   All variable assignments are now done in memory only.
+
+   The only exception is dialog, cdialog TUI implementations
+
+   witch present their own challenges as they both need
+
+   to output to stderr due to curses deps.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
