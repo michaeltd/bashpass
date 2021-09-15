@@ -299,7 +299,7 @@ password generator, storage and reference for the terminal and/or X.
 
    However, even so, data that make it to disk,
 
-   are detrimental, functional related trivial data.
+   are detrimental, trivial and functional related data.
 
    All account related, security sensitive information is handled
 
