@@ -133,17 +133,17 @@ password generator, storage and reference for the terminal and/or X.
 
    - If you'd like to test other UI options try: ~bashpass [yad|zenity|Xdialog|cdialog|dialog]~, needless to say they have to be installed.
 
-     If not ~bashpass~ will default to the highest available option in that order.
+     If not, ~bashpass~ will default to the highest available option in that order.
 
-   - You can provide an gpg2 encrypted SQLite3 database for use with ~bashpass~.
+   - You can provide a gpg2 encrypted SQLite3 database for use with ~bashpass~.
 
-     That db needs to be encrypted to your personal keyring and have a ~.gpg~ extension.
+     That db needs to be encrypted to your personal keyring, have a ~.gpg~ extension and reside in [[file:dbs/][dbs]] folder.
 
    - The ~debug~ option will ~set -vx~ to ~bashpass~, enabling it to echo commands in the terminal.
 
      To say the least: It's noisy!
 
-   - Help will print out Usage and exit.
+   - Help will print Usage and exit.
 
 * Notes
 
@@ -296,6 +296,14 @@ password generator, storage and reference for the terminal and/or X.
    witch present their own challenges as they both need
 
    to output to stderr due to curses deps.
+
+   However, even so, data that make it to disk,
+
+   are detrimental, functional related trivial data.
+
+   All account related, security sensitive information is handled
+
+   from now on in memory only.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 
