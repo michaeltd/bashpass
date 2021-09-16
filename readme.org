@@ -284,26 +284,7 @@ password generator, storage and reference for the terminal and/or X.
 
    No way to set default values on forms,
 
-   so an editable list was the best way to go.
-
-** <2021-09-14 Tue>
-   Temp file became obsolete.
-
-   All variable assignments are now done in memory only.
-
-   The only exception is dialog, cdialog TUI implementations
-
-   witch present their own challenges as they both need
-
-   to output to stderr due to curses deps.
-
-   However, even so, data that make it to disk,
-
-   are non detrimental, trivial and functional related data only.
-
-   All account related, security sensitive information is handled
-
-   from now on only in memory.
+   so with that in mind, an editable list was the best way to go.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 

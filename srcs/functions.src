@@ -174,7 +174,6 @@ func_brl() {
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
-        # local rl+="${rec[0]} ${rec[1]:-NULL},${rec[2]:-NULL},${rec[3]:-NULL},${rec[4]:-NULL} off\n"
 	local rl+="${rec[0]} ${rec[1]//\ /_}|${rec[2]//\ /_}|${rec[3]//\ /_}|${rec[4]//\ /_} off\n"
     done
     [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No|Records|Found OFF"

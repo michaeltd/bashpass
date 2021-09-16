@@ -4,4 +4,3 @@
 
 # mylang="${LANG:-en_US_UTF_8}"
 # export mylang="${mylang//[.-]/_}"
-

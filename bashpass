@@ -133,7 +133,7 @@ readonly -a srcsfs=(
     "${scsd}/${usrintrfce}.src"
 )
 for i in ${srcsfs[@]}; do
-    source "${i}" || { echo -ne "Try a 'git pull' or 'git fetch'!\nThat may help.\n" >&2; exit $?; }
+    source "${i}" || { echo -ne "Try a 'git restore $i'!\nThat may help.\n" >&2; exit $?; }
 done
 
 create() {
@@ -275,7 +275,7 @@ bashpass() {
     func_read_dbflds || func_do_quit $? 
     func_check_sql || func_do_quit $?
     # From now on any exit, normal or erratic is a do_quit
-    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" # "${SIG_KILL}" "${SIG_TERM}" Don't trap kill-term signals ... coz... reasons...
+    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" # "${SIG_KILL}" "${SIG_TERM}" Don't trap kill-term signals coz... reasons...
     menu
 }
 
