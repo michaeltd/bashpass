@@ -8,7 +8,7 @@ declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 
 declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 
-declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${bngpgf}"
+declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${bngpgf} --no-markup"
 
 menu_yad(){
     local IFS=$'\|\t\n'
@@ -45,7 +45,7 @@ Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			   "--form"
-			   "--field=Domain!${dm//:}" "${dm}"
+			   "--field=Domain!${dm//\:/\|}" "${dm}"
 			   "--field=Email!${em}" "${em}"
 			   "--field=Uname!${un}" "${un}"
 			   "--field=Password!Insert pasword or length or empty for auto.:H" "${pw}"
@@ -99,11 +99,15 @@ exportcsv_yad() {
 }
 
 results_yad(){
-    local -ar preview_ops=( "${geometry_ops[@]}" "--text=Results. Select account to preview:" "--no-markup"
-			    "--ok-label=Unsafe" "--cancel-label=Safe" "--list" "--hide-column=1" "--print-column=1"
-			    "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "UserName" "--column" "Comments" )
+    local -ar preview_ops=( "${geometry_ops[@]}"
+			    "--text=Results. Select account to preview:"
+			    "--list"
+			    "--hide-column=1" "--print-column=1"
+			    "--column" "ID" "--column" "Domain"
+			    "--column" "Email" "--column" "UserName"
+			    "--column" "Comments" )
 
-    local -ar showpw_ops=( "--text=Password selected:" "--entry" )
+    local -ar showpw_ops=( "--text=Password selected:" "--entry" "--hide-text" )
 
     local IFS=$'\|\t\n'
     while :; do

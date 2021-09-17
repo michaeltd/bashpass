@@ -33,24 +33,29 @@ Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			   "--list" "--editable" "--print-column=ALL"
-			   "--column=Domain" "--column=Email" "--column=User Name" "--column=Comments" )
+			   "--column=Domain" "--column=Email"
+			   "--column=User Name" "--column=Comments" )
 
-    local -ar pwd0_ops=( "--title=${ttl}"
+    local -ar pwd0_ops=( "--title=${ttl^}"
 			 "--text=Passwords can be alpha-numeric-punctuation characters.
 You can use a pword of your choice or a desired length (8-64 chars)
 or leave empty for auto (16 chars).
 Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both).
+
+Enter a desired password:"
 			 "--entry" "--hide-text" )
 
-    local -ar pwd1_ops=( "--title=${ttl}"
+    local -ar pwd1_ops=( "--title=${ttl^}"
 			 "--text=Passwords can be alpha-numeric-punctuation characters.
 You can use a pword of your choice or a desired length (8-64 chars)
 or leave empty for auto (16 chars).
 Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both).
+
+Enter a desired password again to verify:"
 			 "--entry" "--hide-text" )
 
     if [[ -z "${1}" ]]; then # Create mode
@@ -82,7 +87,9 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 }
 
 retrieve_zenity() {
-    local -ar retrieve_ops=( "${title_op}" "--text=Enter search term to look for (empty for All):" "--entry" )
+    local -ar retrieve_ops=( "${title_op}"
+			     "--text=Enter search term to look for (empty for All):"
+			     "--entry" )
     criteria="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
     export criteria
 }
@@ -91,7 +98,8 @@ update_zenity() {
     local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to ${FUNCNAME[@]:(-4):1}:"
 			   "--list" "--hide-column=1"
 			   "--column" "ID" "--column" "Domain"
-			   "--column" "Email" "--column" "Username" "--column" "Comments" )
+			   "--column" "Email" "--column" "Username"
+			   "--column" "Comments" )
     local IFS=$'\|\t\n'
     id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
     [[ -z "${id}" ]] && return 1
@@ -103,7 +111,9 @@ delete_zenity() {
 }
 
 csv_zenity(){
-    local -ar csv_ops=( "${geometry_ops[@]}" "--title=Select a csv file to ${FUNCNAME[1]:0:6}:" "--file-selection" )
+    local -ar csv_ops=( "${geometry_ops[@]}"
+			"--title=Select a csv file to ${FUNCNAME[1]:0:6}:"
+			"--file-selection" )
     csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
     [[ -z "${csvf}" ]] && return 1
     export csvf
@@ -119,11 +129,12 @@ exportcsv_zenity() {
 
 results_zenity(){
     local -ar preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview:"
-			    "--ok-label=Unsafe" "--cancel-label=Safe"
 			    "--list" "--hide-column=1"
-			    "--column=ID" "--column=Domain" "--column=Email"
-			    "--column=UName" "--column=Comments" )
-    local -ar showpw_ops=( "${title_op}" "--text=Password selected:" "--entry" )
+			    "--column=ID" "--column=Domain"
+			    "--column=Email" "--column=UName"
+			    "--column=Comments" )
+
+    local -ar showpw_ops=( "${title_op}" "--text=Password selected:" "--entry" "--hide-text" )
     local IFS=$'\|\t\n'
     while :; do
 	id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}"))" || return $?
