@@ -104,7 +104,7 @@ fi
 type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
 type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
 [[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
-declare -xr GPG_TTY="$(tty)" # Fixes problems when gpg is not so sure from where to expect pinentry input.
+declare -xr GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure from where to expect pinentry input.
 if [[ -n "${BP_KEY}" ]]; then
     # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
     readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--encrypt")
