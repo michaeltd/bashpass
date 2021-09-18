@@ -9,7 +9,7 @@ func_setup(){
     if [[ "$(read -r r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	# exit on failed creates/encrypts.
 	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" || return $?
-	"${gpgec[@]}" || return $?
+	"${gpgec[@]}" < "${rpdb}" > "${rpgpgf}" || return $?
     else
 	return 1
     fi
@@ -31,7 +31,7 @@ func_do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
     # "${sql3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
-    if ! "${gpgec[@]}"; then
+    if ! "${gpgec[@]}" < "${rpdb}" > "${rpgpgf}"; then
 	func_show_err "Encryption failed or canceled!"
 	return "${?}"
     else
@@ -74,7 +74,7 @@ func_check_decrypt() {
     if ! [[ "$(file -b "${rpgpgf}")" =~ ^PGP ]]; then
         func_show_err "${bngpgf}, does not appear to be a valid PGP file."
         return $?
-    elif ! "${gpgdc[@]}"; then
+    elif ! "${gpgdc[@]}" < "${rpgpgf}" > "${rpdb}"; then
         func_show_err "${bngpgf} decryption failed."
         return $?
     elif ! [[ "$(file -b "${rpdb}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.

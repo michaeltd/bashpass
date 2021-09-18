@@ -52,11 +52,15 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
     export un="${input:-${un}}"
 
     echo -ne "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): "
-    read -sr input && echo || return $?
+    stty -echo
+    read -r input && echo || return $?
+    stty echo
     export pw="${input:-${pw}}"
 
     echo -ne "${fnc^} default: ${pw1}: (again to verify): "
-    read -sr input && echo || return $?
+    stty -echo
+    read -r input && echo || return $?
+    stty echo
     export pw1="${input:-${pw1}}"
 
     echo -ne "${fnc^} default: ${cm}: "

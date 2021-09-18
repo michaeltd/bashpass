@@ -273,7 +273,7 @@ password generator, storage and reference for the terminal and/or X.
 ** <2021-09-10 Fri>
    Persistant edits have been implemented.
 
-   On create/update functions on charachter validity/password missmatch errors
+   On create/update functions on charachter validity/password mismatch errors
 
    the user will be returned to create/update forms to trouble-shoot accordingly with his edits preserved.
 
@@ -282,7 +282,7 @@ password generator, storage and reference for the terminal and/or X.
 ** <2021-09-12 Sun>
    Zenity:
 
-   No way to set default values on forms,
+   No way to set default values on zenity forms,
 
    so with that in mind, an editable list was the best way to go.
 

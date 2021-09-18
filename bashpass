@@ -21,15 +21,16 @@ declare -r dbsd="dbs" \
 cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
-declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb
+declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sl3"
 # Process optional arguments
 while [[ -n "${1}" ]]; do
     case "${1}" in
-        *.gpg) gpgf="${1}";;
-        yad|zenity|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}";;
-        -d|--debug) set -vx;;
-        -h|--help) echo -ne "${bpusage}\n" >&2; exit 1;;
-        *) echo -ne "Unknown option: ${1}\n${bpusage}\n" >&2; exit 1;;
+        *.gpg)                                      gpgf="${1}"                                                ;;
+        yad|zenity|Xdialog|cdialog|dialog|terminal) readonly usrintrfce="${1}"                                 ;;
+	csv|xml|json|sl3)                           declare be="${1}"                                          ;;
+        -d|--debug)                                 set -vx                                                    ;;
+        -h|--help)                                  echo -ne "${bpusage}\n" >&2; exit 1                        ;;
+        *)                                          echo -ne "${1}: Unknown option!\n${bpusage}\n" >&2; exit 1 ;;
     esac
     shift
 done
@@ -102,16 +103,20 @@ fi
 # gpg commands
 type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
 type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
-[[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc"
+[[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
+declare -xr GPG_TTY="$(tty)" # Fixes problems when gpg is not so sure from where to expect pinentry input.
 if [[ -n "${BP_KEY}" ]]; then
-    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
+    # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
+    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--encrypt")
 elif [[ -n "${BP_EML}" ]]; then
-    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_EML}" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
+    # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_EML}" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
+    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_EML}" "--symmetric" "--encrypt")
 else
-    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
+    # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
+    readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--symmetric" "--encrypt")
 fi
-readonly -a gpgdc=("${gpgc}" "--quiet" "--yes" "--output" "${rpdb}" "--decrypt" "${rpgpgf}")
-	 
+# readonly -a gpgdc=("${gpgc}" "--quiet" "--yes" "--output" "${rpdb}" "--decrypt" "${rpgpgf}")
+readonly -a gpgdc=("${gpgc}" "--quiet" "--yes" "--decrypt")
 # Shred commands
 type -P shred &> /dev/null && \
     readonly -a shrc=( "shred" "--zero" "--remove" ) || \
@@ -142,8 +147,8 @@ create() {
     while func_chkinpt "${str2chk}" || func_chkpwd "${pw}" "${pw1}"; do
 	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
 	str2chk="${dm}${em}${un}${pw}${cm}"
-	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input, like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)."
-	func_chkpwd "${pw}" "${pw1}" && func_show_err "Password missmatch!"
+	func_chkinpt "${str2chk}" && func_show_err "Make sure you're not using \nany restricted charachters as input, like: $(func_regex_forbid)\nnamely: space, backslash, backtick, pound, colon, comma or quotes(both)!"
+	func_chkpwd "${pw}" "${pw1}" && func_show_err "Password mismatch!"
     done
 
     [[ "${pw}" =~ ^[0-9]+$ ]] && (( pw >= 8 && pw <= 64 )) && pw="$(func_gpw "${pw}")"
@@ -268,12 +273,33 @@ menu() {
 bashpass() {
     func_check_prereqs || return $?
     func_check_mutex || return $?
-    # GPG file not found? Let's make one and take it from there.
-    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
-    func_check_decrypt || return $?
-    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
-    func_read_dbflds || func_do_quit $? 
-    func_check_sql || func_do_quit $?
+    case "${be}" in
+	"csv")
+	    func_show_err "${be}: No such back end!"
+	    return $?
+	    ;;
+	"xml")
+	    func_show_err "${be}: No such back end!"
+	    return $?
+	    ;;
+	"json")
+	    func_show_err "${be}: No such back end!"
+	    return $?
+	    ;;
+	"sl3")
+	    # GPG file not found? Let's make one and take it from there.
+	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
+	    func_check_decrypt || return $?
+	    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
+	    func_read_dbflds || func_do_quit $? 
+	    func_check_sql || func_do_quit $?
+	    ;;
+	*)
+	    func_show_err "${be}: No such back end!"
+	    return $?
+	    ;;
+    esac
+
     # From now on any exit, normal or erratic is a do_quit
     trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" # "${SIG_KILL}" "${SIG_TERM}" Don't trap kill-term signals coz... reasons...
     menu
