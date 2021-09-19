@@ -10,7 +10,7 @@ set +vx -f
 # Timeout settings for Xdialog, Xmessage
 # xmessage timeout is in seconds...
 declare -rx XMTO="30"
-declare -rx XDTO="$((XMTO * 1000))" # Xdialog/dialog is in milliseconds
+declare -rx XDTO="$((XMTO * 1000))" # ... Xdialog/dialog is in milliseconds
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
@@ -167,14 +167,12 @@ create() {
 retrieve() {
     local criteria
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    # criteria="$(cat "${tf}")"
     "results_${usrintrfce}" "$(sl3_select_dmemun_like "${criteria}")"
 }
 
 update() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    # id="$(cat "${tf}")"
     create "${id}" || return $?
     "results_${usrintrfce}" "$(sl3_select_id_eq "${id}")"
 }
@@ -182,7 +180,6 @@ update() {
 delete() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    # id="$(cat "${tf}")"
     "${dcm[@]}" "$(sl3_delete_id_eq "${id}")"
     "message_${usrintrfce}"
 }
@@ -191,7 +188,6 @@ importcsv() {
     local maxid csvf
     maxid="$(func_maxid)"
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    # csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_importcsv_sql "${csvf}")"
     "results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
 }
@@ -199,7 +195,6 @@ importcsv() {
 exportcsv(){
     local csvf
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    # csvf="$(cat "${tf}")"
     "${icm[@]}" "$(sl3_select_all)" > "${csvf}"
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"

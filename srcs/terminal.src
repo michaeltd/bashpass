@@ -17,7 +17,7 @@ menu_terminal(){
 
 create_terminal() {
     local fnc="${FUNCNAME[@]:(-4):1}: (Ctrl-D to cancel):" input
-    
+
     if [[ -z "${1}" ]]; then # Create mode
 	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
 	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
@@ -31,13 +31,13 @@ create_terminal() {
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
-echo -ne "${fnc^} Enter required details!
-Passwords can be alpha-numeric-punctuation characters.
-You can use a pword of your choice or a desired length (8-64 chars)
-or leave empty for auto (16 chars).
-Make sure you're not using any restricted characters as input.
-Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
+    echo -ne "  ${fnc^} Enter required details!
+    Passwords can be alpha/numeric/punctuation characters.
+    You can use a pword of your choice or a desired length (8-64 chars)
+    or leave empty for auto (16 chars).
+    Make sure you're not using any restricted characters as input.
+    Like  : $(func_regex_forbid)
+    Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
     
     echo -ne "${fnc^} default: ${dm}: "
     read -r input || return $?
@@ -53,13 +53,15 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
 
     echo -ne "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): "
     stty -echo
-    read -r input && echo || return $?
+    read -r input || return $?
+    echo
     stty echo
     export pw="${input:-${pw}}"
 
     echo -ne "${fnc^} default: ${pw1}: (again to verify): "
     stty -echo
-    read -r input && echo || return $?
+    read -r input || return $?
+    echo
     stty echo
     export pw1="${input:-${pw1}}"
 
