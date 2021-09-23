@@ -220,6 +220,8 @@ password generator, storage and reference for the terminal and/or X.
 ** TODO Variable back ends
    Like: csv, xml, json, flat etc...
 
+   This repo may help: [[https://github.com/dbohdan/structured-text-tools][structured-text-tools]]
+
 ** TODO In memory only SQLite3 db
    For security reasons
 
