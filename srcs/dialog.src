@@ -158,7 +158,7 @@ retrieve_dialog(){
     "${DIALOG}" "${bt_ops[@]}" \
     		"--title" "Criteria" \
 		"--inputbox" "Criteria. (Empty for all)" \
-		"${geops[@]}"  2> "${tf}" || return $?
+		"${geops[@]}" 2> "${tf}" || return $?
     criteria="$(cat "${tf}")"
     export criteria
 }
@@ -265,9 +265,7 @@ results_Xdialog(){
 }
 
 message_dialog(){
-    "${DIALOG}" ${bt_ops[@]} \
-		"--title" "Message" \
-		"$([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")" \
+    "${DIALOG}" ${bt_ops[@]} "--title" "Message" "$([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")" \
 		"--msgbox" "Account ID: #${id} deleted. No errors reported." \
 		"${geops[@]}" || return $?
 }
@@ -281,9 +279,7 @@ message_Xdialog(){
 }
 
 usage_dialog(){
-    "${DIALOG}" ${bt_ops[@]} \
-		"--title" "Help" \
-		"$([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")" \
+    "${DIALOG}" ${bt_ops[@]} "--title" "Help" "$([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")" \
 		"--msgbox" "${gui_hmsg[*]}" \
 		"${geops[@]}" || return $?
 }
