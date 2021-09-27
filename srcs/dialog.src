@@ -62,7 +62,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
     local -arx create_ops=( "${bt_ops[@]}" \
 			    "--title" "${ttl^}" \
 			    "--ok-label" "Submit" \
-			    "--separator" $'\|' \
+			    "--separator" "|" \
 			    "--insecure" \
 			    "--mixedform" "${ttl^}: Enter required details!\n${pwmsg}" \
 			    "${geops[@]}" 0 \
@@ -113,7 +113,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
 			 "--stdout" \
 			 "--title" "${ttl^}" \
 			 "--left" \
-			 "--separator" $'\|' \
+			 "--separator" "|" \
 			 "--3inputsbox" "${ttl^}: Enter required details!\n${pwmsg}" \
 			 "${geops[@]}" \
 			 "Domain" "${dm}" \
@@ -174,7 +174,7 @@ retrieve_Xdialog(){
 update_dialog(){
     "${DIALOG}" ${bt_ops[@]} \
     		"--title" "${FUNCNAME[@]:(-4):1}" \
-		"--column-separator" $'\|' \
+		"--column-separator" "|" \
 		"--radiolist" "Select account to ${FUNCNAME[@]:(-4):1}" \
 		"${geops[@]}" 10 \
 		$(func_brl) 2> "${tf}" || return $?
@@ -241,7 +241,7 @@ results_dialog(){
     while :; do
 	"${DIALOG}" "${bt_ops[@]}" \
 		    "--title" "${FUNCNAME[@]:(-4):1}" \
-		    "--column-separator" $'\|' \
+		    "--column-separator" "|" \
 		    "--radiolist" "Select account to preview/copy password:" \
 		    "${geops[@]}" 10 $(func_brl "${1}") 2> "${tf}" || return $?
 	id="$(cat "${tf}")"
