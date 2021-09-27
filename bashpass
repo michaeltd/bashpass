@@ -20,136 +20,11 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [sl3|csv] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sl3"
-# Process optional arguments
-while [[ -n "${1}" ]]; do
-    case "${1}" in
-        *.gpg)
-	    gpgf="${1}" ;;
-        yad|zenity|Xdialog|cdialog|dialog|terminal)
-	    readonly usrintrfce="${1}" ;;
-	csv|xml|json|sl3)
-	    declare be="${1}" ;;
-        -d|--debug)
-	    set -vx ;;
-        -h|--help)
-	    echo -ne "${bpusage}\n" >&2; exit 1 ;;
-        *)
-	    echo -ne "${1}: Unknown option!\n${bpusage}\n" >&2; exit 1 ;;
-    esac
-    shift
-done
-# GPG file, db file related vars
-if [[ -z "${gpgf}" ]]; then
-    readonly gpgf="sample.gpg"
-fi
-readonly db="${gpgf//.gpg/.sl3}"
-readonly bngpgf="${gpgf}"
-readonly bndb="${db}"
-readonly rpgpgf="${dbsd}/${gpgf}"
-readonly rpdb="${dbsd}/${db}"
-readonly fpgpgf="${sdn}/${rpgpgf}"
-readonly fpdb="${sdn}/${rpdb}"
-# Try to accommodate optional preference...
-# if [[ "${usrintrfce}" == "gtkdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
-#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
-# elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
-# elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-# elif [[ "${usrintrfce}" == "whiptail" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for whiptail
-#     declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "cdialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for cdialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "dialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for dialog
-    declare -xr DIALOG="$(type -P "${usrintrfce}")"
-elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
-    unset DIALOG
-else # -z USERINTRFCE etc
-    # ... or pick a default available UI
-    # if [[ -x "$(type -P gtkdialog)" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
-    # 	declare -xr DIALOG="$(type -P gtkdialog)"
-    # 	readonly usrintrfce="gtkdialog"
-    if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
-	declare -xr DIALOG="$(type -P yad)"
-	readonly usrintrfce="yad"
-    elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
-	declare -xr DIALOG="$(type -P zenity)"
-	readonly usrintrfce="zenity"
-    # elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-    # 	declare -xr DIALOG="$(type -P kdialog)"
-    # 	readonly usrintrfce="kdialog"
-    elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	declare -xr DIALOG="$(type -P Xdialog)"
-	readonly usrintrfce="Xdialog"
-    # elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-    # 	declare -xr DIALOG="$(type -P gdialog)"
-    # 	readonly usrintrfce="gdialog"
-    # elif [[ -x "$(type -P whiptail)" ]]; then # Check for whiptail
-    # 	declare -xr DIALOG="$(type -P whiptail)"
-    # 	readonly usrintrfce="whiptail"
-    elif [[ -x "$(type -P cdialog)" ]]; then # Check for cdialog
-	declare -xr DIALOG="$(type -P cdialog)"
-	readonly usrintrfce="cdialog"
-    elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
-	declare -xr DIALOG="$(type -P dialog)"
-	readonly usrintrfce="dialog"
-    else
-	unset DIALOG
-	readonly usrintrfce="terminal"
-    fi
-fi
-# gpg commands
-type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
-type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
-[[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
-declare -xr GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure from where to expect pinentry input.
-if [[ -n "${BP_KEY}" ]]; then
-    # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_KEY}" "--output" "${rpgpgf}" "--encrypt" "${rpdb}")
-    readonly -a gpgec=("${gpgc}" "-q" "--trust-model" "always" "-r" "${BP_KEY}" "-e")
-elif [[ -n "${BP_EML}" ]]; then
-    # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--trust-model" "always" "--recipient" "${BP_EML}" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
-    readonly -a gpgec=("${gpgc}" "-q" "--trust-model" "always" "-r" "${BP_EML}" "-c" "-e")
-else
-    # readonly -a gpgec=("${gpgc}" "--quiet" "--yes" "--output" "${rpgpgf}" "--symmetric" "--encrypt" "${rpdb}")
-    readonly -a gpgec=("${gpgc}" "-q" "-c" "-e")
-fi
-# readonly -a gpgdc=("${gpgc}" "--quiet" "--yes" "--output" "${rpdb}" "--decrypt" "${rpgpgf}")
-readonly -a gpgdc=("${gpgc}" "-q" "-d")
-# Shred commands
-type -P shred &> /dev/null && \
-    readonly -a shrc=( "shred" "--zero" "--remove" ) || \
-	readonly -a shrc=( "rm" "-P" "-f" )
-# SQLite commands
-readonly -a dcm=( "sqlite3" "-list" "${rpdb}" ) \
-	 rcm=( "sqlite3" "-line" "${rpdb}" ) \
-	 icm=( "sqlite3" "-csv" "${rpdb}" ) \
-	 ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
-	 scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
-	 sql3=( "sqlite3" "${rpdb}" )
-# Temp files
-readonly mutex="${dbsd}/.${bndb}.mtx"
-readonly tf="${mutex}"
-# Sources to use
-readonly -a srcsfs=( 
-    "${scsd}/sqlite3.src"
-    "${scsd}/functions.src"
-    "${scsd}/${usrintrfce}.src"
-)
-for i in ${srcsfs[@]}; do
-    source "${i}" || { echo -ne "Try a 'git restore $i'!\nThat may help.\n" >&2; exit $?; }
-done
 
 create() {
     local maxid="$(func_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
-    local -a retv
     while func_chkinpt "${str2chk}" || func_chkpwd "${pw}" "${pw1}"; do
 	"${FUNCNAME[0]}_${usrintrfce}" "${id}" || return $?
 	str2chk="${dm}${em}${un}${pw}${cm}"
@@ -167,7 +42,7 @@ create() {
 	"${dcm[@]}" "$(sl3_update_rec "${id}|${dm}|${em}|${un}|${pw}|${cm}")"
     fi
     # cleanup
-    unset dm em un pw pw1 cm
+    unset id dm em un pw pw1 cm
 }
 
 retrieve() {
@@ -272,12 +147,51 @@ menu() {
 }
 
 bashpass() {
+
+    # Process optional arguments
+    while [[ -n "${1}" ]]; do
+	case "${1}" in
+            *.gpg)
+		export gpgf="${1}" ;;
+            yad|zenity|Xdialog|cdialog|dialog|terminal)
+		export usrintrfce="${1}" ;;
+	    sl3|csv)
+		export be="${1}" ;;
+            -d|--debug)
+		set -vx ;;
+            -h|--help)
+		echo -ne "${bpusage}\n" >&2; exit 1 ;;
+            *)
+		echo -ne "${1}: Unknown option!\n${bpusage}\n" >&2; exit 1 ;;
+	esac
+	shift
+    done
+
+    source "${scsd}/functions.src" || exit 1
+    
+    func_assignui # Assign ?UI related vars, Needs optional args set.
+
+    func_assignvars
+    
+    [[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
+    export GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure from where to expect pinentry input.
+
+    func_assigncmds
+    
+    # Sources to use
+    declare -ra srcsfs=( 
+	"${scsd}/sqlite3.src"
+	"${scsd}/${usrintrfce}.src"
+    )
+
+    for i in ${srcsfs[@]}; do
+	source "${i}" || exit $?
+    done
+
     func_check_prereqs || return $?
     func_check_mutex || return $?
     case "${be}" in
-	"csv") func_show_err "${be}: No such back end!"; return $? ;;
-	"xml") func_show_err "${be}: No such back end!"; return $? ;;
-	"json") func_show_err "${be}: No such back end!"; return $? ;;
+	"csv") :;;
 	"sl3")
 	    # GPG file not found? Let's make one and take it from there.
 	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
@@ -285,7 +199,7 @@ bashpass() {
 	    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
 	    func_read_dbflds || func_do_quit $? 
 	    func_check_sql || func_do_quit $? ;;
-	*) func_show_err "${be}: No such back end!"; return $? ;;
+	*) func_show_err "${be}: No such back end! (yet...)"; return $? ;;
     esac
 
     # From now on any exit, normal or erratic is a do_quit

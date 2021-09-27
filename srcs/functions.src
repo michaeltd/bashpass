@@ -3,6 +3,109 @@
 # Pick up right editor syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
+func_assigncmds(){
+    # gpg commands
+    type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
+    type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
+
+    if [[ -n "${BP_KEY}" ]]; then
+	export gpgec=("${gpgc}" "-q" "--trust-model" "always" "-r" "${BP_KEY}" "-e")
+    elif [[ -n "${BP_EML}" ]]; then
+	export gpgec=("${gpgc}" "-q" "--trust-model" "always" "-r" "${BP_EML}" "-c" "-e")
+    else
+	export gpgec=("${gpgc}" "-q" "-c" "-e")
+    fi
+    export gpgdc=("${gpgc}" "-q" "-d")
+
+    # Shred commands
+    type -P shred &> /dev/null && \
+	export shrc=( "shred" "--zero" "--remove" ) || \
+	    export shrc=( "rm" "-P" "-f" )
+
+    # SQLite commands
+    export dcm=( "sqlite3" "-list" "${rpdb}" ) \
+	     rcm=( "sqlite3" "-line" "${rpdb}" ) \
+	     icm=( "sqlite3" "-csv" "${rpdb}" ) \
+	     ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
+	     scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
+	     sql3=( "sqlite3" "${rpdb}" )
+}
+
+func_assignvars(){
+    # GPG file, db file related vars
+    if [[ -z "${gpgf}" ]]; then
+	export gpgf="sample.gpg"
+    fi
+    export db="${gpgf//.gpg/.sl3}"
+    export bngpgf="${gpgf}"
+    export bndb="${db}"
+    export rpgpgf="${dbsd}/${gpgf}"
+    export rpdb="${dbsd}/${db}"
+    export fpgpgf="${sdn}/${rpgpgf}"
+    export fpdb="${sdn}/${rpdb}"
+    # Temp files
+    export mutex="${dbsd}/.${bndb}.mtx"
+    export tf="${mutex}"
+}
+
+func_assignui(){
+    # Try to accommodate optional preference...
+    # if [[ "${usrintrfce}" == "gtkdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
+    #     declare -rx DIALOG="$(type -P "${usrintrfce}")"
+    if [[ "${usrintrfce}" == "yad" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, yad
+	export DIALOG="$(type -P "${usrintrfce}")"
+    elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+	export DIALOG="$(type -P "${usrintrfce}")"
+	# elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+	#     export DIALOG="$(type -P "${usrintrfce}")"
+    elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+	export DIALOG="$(type -P "${usrintrfce}")"
+	# elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+	#     export DIALOG="$(type -P "${usrintrfce}")"
+	# elif [[ "${usrintrfce}" == "whiptail" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for whiptail
+	#     export DIALOG="$(type -P "${usrintrfce}")"
+    elif [[ "${usrintrfce}" == "cdialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for cdialog
+	export DIALOG="$(type -P "${usrintrfce}")"
+    elif [[ "${usrintrfce}" == "dialog" && -x "$(type -P "${usrintrfce}")" ]]; then # Check for dialog
+	export DIALOG="$(type -P "${usrintrfce}")"
+    elif [[ "${usrintrfce}" == "terminal" ]]; then # plain ol' terminal
+	unset DIALOG
+    else # -z USERINTRFCE etc
+	# ... or pick a default available UI
+	# if [[ -x "$(type -P gtkdialog)" && -n "${DISPLAY}" ]]; then # Check for X, gtkdialog
+	# 	export DIALOG="$(type -P gtkdialog)"
+	# 	declare -r usrintrfce="gtkdialog"
+	if [[ -x "$(type -P yad)" && -n "${DISPLAY}" ]]; then # Check for X, yad
+	    export DIALOG="$(type -P yad)"
+	    export usrintrfce="yad"
+	elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
+	    export DIALOG="$(type -P zenity)"
+	    export usrintrfce="zenity"
+	    # elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+		# 	export DIALOG="$(type -P kdialog)"
+	    # 	declare -r usrintrfce="kdialog"
+	elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+	    export DIALOG="$(type -P Xdialog)"
+	    export usrintrfce="Xdialog"
+	    # elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+	    # 	export DIALOG="$(type -P gdialog)"
+	    # 	declare -r usrintrfce="gdialog"
+	    # elif [[ -x "$(type -P whiptail)" ]]; then # Check for whiptail
+	    # 	export DIALOG="$(type -P whiptail)"
+	    # 	declare -r usrintrfce="whiptail"
+	elif [[ -x "$(type -P cdialog)" ]]; then # Check for cdialog
+	    export DIALOG="$(type -P cdialog)"
+	    export usrintrfce="cdialog"
+	elif [[ -x "$(type -P dialog)" ]]; then # Check for dialog
+	    export DIALOG="$(type -P dialog)"
+	    export usrintrfce="dialog"
+	else
+	    unset DIALOG
+	    export usrintrfce="terminal"
+	fi
+    fi
+}
+
 func_setup(){
     # setup - prep bashpass
     echo -ne "\n  ${rpgpgf} Not found.\n  Would you like to build it? [y/N]: "

@@ -13,7 +13,7 @@ declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
 menu_zenity(){
-    declare -ar menu_ops=( "${gt_ops[@]}" "--list" "--text=Menu" "--hide-header"
+    declare -ar menu_ops=(  "--height=330" "--width=520" "${title_op[@]}" "--list" "--text=Menu" "--hide-header"
 			   "--column=Option" "--column=SDesc" "--column=LDesc" )
     local IFS=$'\|\t\n'
     usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
@@ -112,7 +112,7 @@ delete_zenity() {
 
 csv_zenity(){
     local -ar csv_ops=( "${geometry_ops[@]}"
-			"--title=Select a csv file to ${FUNCNAME[1]:0:6}:"
+			"--text=Select a csv file to ${FUNCNAME[1]:0:6}:"
 			"--file-selection" )
     csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
     [[ -z "${csvf}" ]] && return 1
