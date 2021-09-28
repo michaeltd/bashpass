@@ -13,7 +13,7 @@ declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
 menu_zenity(){
-    declare -ar menu_ops=(  "--height=330" "--width=520" "${title_op[@]}" "--list" "--text=Menu" "--hide-header"
+    declare -ar menu_ops=(  "${geometry_ops[@]}" "${title_op[@]}" "--list" "--text=Menu" "--hide-header"
 			   "--column=Option" "--column=SDesc" "--column=LDesc" )
     local IFS=$'\|\t\n'
     usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
@@ -23,39 +23,24 @@ menu_zenity(){
 create_zenity() {
     local -a vals
     local ttl="${FUNCNAME[@]:(-4):1} form"
-
-    local -ar review_ops=( "${gt_ops[@]}"
-			   "--text=${ttl^}: Enter required details!
-Passwords can be alpha-numeric-punctuation characters.
+    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
 You can use a pword of your choice or a desired length (8-64 chars)
 or leave empty for auto (16 chars).
 Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
+    local -ar review_ops=( "${gt_ops[@]}"
+			   "--text=${ttl^}: Enter required details!\n${pwmsg}\n"
 			   "--list" "--editable" "--print-column=ALL"
 			   "--column=Domain" "--column=Email"
 			   "--column=User Name" "--column=Comments" )
 
     local -ar pwd0_ops=( "--title=${ttl^}"
-			 "--text=Passwords can be alpha-numeric-punctuation characters.
-You can use a pword of your choice or a desired length (8-64 chars)
-or leave empty for auto (16 chars).
-Make sure you're not using any restricted characters as input.
-Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both).
-
-Enter a desired password:"
+			 "--text=${pwmsg}\n\nEnter password:\n"
 			 "--entry" "--hide-text" )
 
     local -ar pwd1_ops=( "--title=${ttl^}"
-			 "--text=Passwords can be alpha-numeric-punctuation characters.
-You can use a pword of your choice or a desired length (8-64 chars)
-or leave empty for auto (16 chars).
-Make sure you're not using any restricted characters as input.
-Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both).
-
-Enter a desired password again to verify:"
+			 "--text=${pwmsg}\n\nVerify password:\n"
 			 "--entry" "--hide-text" )
 
     if [[ -z "${1}" ]]; then # Create mode

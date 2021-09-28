@@ -18,7 +18,7 @@ declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 declare -r dbsd="dbs" \
 	scsd="srcs"
-cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
+# cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [sl3|csv] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sl3"
@@ -95,7 +95,7 @@ usage() {
 menu() {
     local usrinpt="" errlvl
     # Build menus and help messages.
-    local -a tui_ops=( "${red}Create${default}" "${green}Search${default}" "${blue}Update${default}" "${cyan}Delete${default}" "${yellow}Import${default}" "${yellow}Export${default}" "${magenta}SQLite3${default}" "${white}Help${default}" "${dim}Quit${default}" )
+    local -a tui_ops=( "${green}Create${default}" "${blue}Search${default}" "${magenta}Update${default}" "${red}Delete${default}" "${yellow}Import${default}" "${yellow}Export${default}" "${cyan}SQLite3${default}" "${white}Help${default}" "${white}Quit${default}" )
     local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import" "Export" "SQLite3" "Help" "Quit" )
     local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a csv file" "Export a csv file" "Sqlite3 session" "Help screen" "Exit" )
     local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
@@ -147,7 +147,6 @@ menu() {
 }
 
 bashpass() {
-
     # Process optional arguments
     while [[ -n "${1}" ]]; do
 	case "${1}" in
@@ -191,7 +190,6 @@ bashpass() {
     func_check_prereqs || return $?
     func_check_mutex || return $?
     case "${be}" in
-	"csv") :;;
 	"sl3")
 	    # GPG file not found? Let's make one and take it from there.
 	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.

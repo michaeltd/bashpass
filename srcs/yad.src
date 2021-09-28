@@ -12,7 +12,7 @@ declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${
 
 menu_yad(){
     local IFS=$'\|\t\n'
-    local -ar menu_ops=( "--height=330" "--width=520" "--text=Menu"
+    local -ar menu_ops=( "${geometry_ops[@]}" "--text=Menu"
 			 "--list"  "--print-column=1" "--no-headers"
 			 "--column=Option" "--column=SDesc" "--column=LDesc")
     usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
@@ -22,7 +22,12 @@ menu_yad(){
 create_yad() {
     local -a vals
     local ttl="${FUNCNAME[@]:(-4):1} form"
-
+    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     if [[ -z "${1}" ]]; then # Create mode
 	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
 	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
@@ -37,13 +42,7 @@ create_yad() {
     fi
 
     local -ar create_ops=( "${geometry_ops[@]}"
-			   "--text" "${ttl^}: Enter required details!
-Passwords can be alpha-numeric-punctuation characters.
-You can use a pword of your choice or a desired length (8-64 chars)
-or leave empty for auto (16 chars).
-Make sure you're not using any restricted characters as input.
-Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
+			   "--text" "${ttl^}: Enter required details!\n${pwmsg}\n"
 			   "--form"
 			   "--field=Domain!${dm//\:/\|}" "${dm}"
 			   "--field=Email!${em}" "${em}"
@@ -83,7 +82,7 @@ delete_yad() {
 }
 
 csv_yad(){
-    csv_ops=( "--text" "Select a csv file to ${FUNCNAME[1]:0:6}:" "--file" )
+    csv_ops=( "${geometry_ops[@]}" "--text" "Select a csv file to ${FUNCNAME[1]:0:6}:" "--file" )
     csvf="$("${DIALOG}" "${csv_ops[@]}" "${2}" "--file-name=${1}")" || return $?
     csvf="${csvf//\|}"
     [[ -z "${csvf}" ]] && return 1
@@ -123,6 +122,6 @@ message_yad(){
 }
 
 usage_yad() {
-    local -ar usage_ops=( "--info" "--title=Help screen" )
+    local -ar usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }

@@ -6,7 +6,7 @@
 # Xdialog/dialog
 declare -rx DIALOG_OK=0 DIALOG_CANCEL=1 DIALOG_HELP=2 \
 	DIALOG_EXTRA=3 DIALOG_ITEM_HELP=4 DIALOG_ESC=255 \
-	XDIALOG_HIGH_DIALOG_COMPAT=0 XDIALOG_FORCE_AUTOSIZE=1 \
+	XDIALOG_HIGH_DIALOG_COMPAT=1 XDIALOG_FORCE_AUTOSIZE=1 \
 	XDIALOG_INFOBOX_TIMEOUT="${XDTO}" XDIALOG_NO_GMSGS=1
 
 declare -rx L="0" C="0"
@@ -39,24 +39,23 @@ menu_Xdialog(){
 create_dialog() {
     local -a vals
     local ttl="${FUNCNAME[@]:(-4):1} form"
-    local pwmsg="Passwords can be alpha-numeric-punctuation characters.\n
-You can use a pword of your choice or a desired length (8-64 chars) \n
-or leave empty for auto (16 chars).\n
-Make sure you're not using any restricted characters as input.\n
-Like  : $(func_regex_forbid)\n
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
+    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     if [[ -z "${1}" ]]; then # Create mode
-	local dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	local un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	local pw1="${pw}" cm="${cm:-"comments goes here..."}"
-	local cnt=0
+	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	pw1="${pw}" cm="${cm:-"comments goes here..."}"
     else # Update mode
-        local id="${1}" IFS=$'\|'
+        id="${1}"
+	local IFS=$'\|'
 	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
-	local dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	local un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	local pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
-	local cnt=0
+	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
 
     local -arx create_ops=( "${bt_ops[@]}" \
@@ -82,14 +81,14 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
 }
 
 create_cdialog(){
-    create_dialog
+    create_dialog "${1}"
 }
 
 create_Xdialog() {
     local -a vals
     local ttl="${FUNCNAME[@]:(-4):1} form" input
     local pwmsg="Passwords can be alpha-numeric-punctuation characters.\n
-You can use a pword of your choice or a desired length (8-64 chars) \n
+You can use a pword of your choice or a desired length (8-64 chars)\n
 or leave empty for auto (16 chars).\n
 Make sure you're not using any restricted characters as input.\n
 Like  : $(func_regex_forbid)\n
@@ -114,7 +113,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
 			 "--title" "${ttl^}" \
 			 "--left" \
 			 "--separator" "|" \
-			 "--3inputsbox" "${ttl^}: Enter required details!\n${pwmsg}" \
+			 "--3inputsbox" "${ttl^}: Enter required details!\n${pwmsg}\n" \
 			 "${geops[@]}" \
 			 "Domain" "${dm}" \
 			 "Email" "${em}" \
@@ -265,9 +264,11 @@ results_Xdialog(){
 }
 
 message_dialog(){
-    "${DIALOG}" ${bt_ops[@]} "--title" "Message" "$([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")" \
-		"--msgbox" "Account ID: #${id} deleted. No errors reported." \
-		"${geops[@]}" || return $?
+    "${DIALOG}" $([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left") \
+	${bt_ops[@]} \
+	--title Message \
+	--msgbox "Account ID: #${id} deleted. No errors reported." \
+	${geops[@]} || return $?
 }
 
 message_cdialog(){
@@ -279,9 +280,12 @@ message_Xdialog(){
 }
 
 usage_dialog(){
-    "${DIALOG}" ${bt_ops[@]} "--title" "Help" "$([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")" \
-		"--msgbox" "${gui_hmsg[*]}" \
-		"${geops[@]}" || return $?
+    local hlpbox_ops=( $([[ "${DIALOG}" =~ Xdialog$ ]] && echo "--left")
+		       ${bt_ops[@]}
+		       --title Help
+		       --msgbox
+		     )
+    "${DIALOG}" ${hlpbox_ops[@]} "${gui_hmsg[*]}" ${geops[@]} || return $?
 }
 
 usage_cdialog(){
