@@ -20,7 +20,7 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 # cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [sl3|csv] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sl3"
 
 create() {
@@ -154,7 +154,7 @@ bashpass() {
 		export gpgf="${1}" ;;
             yad|zenity|Xdialog|cdialog|dialog|terminal)
 		export usrintrfce="${1}" ;;
-	    sl3|csv)
+	    sl3)
 		export be="${1}" ;;
             -d|--debug)
 		set -vx ;;
