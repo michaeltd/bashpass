@@ -20,7 +20,7 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 # cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|kdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sl3"
 
 create() {
@@ -111,7 +111,7 @@ menu() {
 	(( ( x + 1 ) % 4 == 0 )) && tui_menu+=( "\n" ) || tui_menu+=( "\t" )
         tui_hmsg+=( "Use ${x}, for ${tui_ops[x]}, which will ${desc[x]}\n" )
         gui_menu+="${gui_ops[x]}|${sdesc[x]}|${desc[x]}|"
-        kdg_menu+="${x} ${gui_ops[x]} "
+        kdg_menu+="${x} ${gui_ops[x]} off "
         gui_hmsg+=( "Use ${gui_ops[x]}, to ${desc[x]}\n" )
     done
 
@@ -152,7 +152,7 @@ bashpass() {
 	case "${1}" in
             *.gpg)
 		export gpgf="${1}" ;;
-            yad|zenity|Xdialog|cdialog|dialog|terminal)
+            yad|zenity|Xdialog|kdialog|cdialog|dialog|terminal)
 		export usrintrfce="${1}" ;;
 	    sl3)
 		export be="${1}" ;;

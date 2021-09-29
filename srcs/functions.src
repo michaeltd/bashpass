@@ -56,9 +56,9 @@ func_assignui(){
 	export DIALOG="$(type -P "${usrintrfce}")"
     elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
 	export DIALOG="$(type -P "${usrintrfce}")"
-	# elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-	#     export DIALOG="$(type -P "${usrintrfce}")"
     elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
+	export DIALOG="$(type -P "${usrintrfce}")"
+    elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 	export DIALOG="$(type -P "${usrintrfce}")"
 	# elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 	#     export DIALOG="$(type -P "${usrintrfce}")"
@@ -81,12 +81,12 @@ func_assignui(){
 	elif [[ -x "$(type -P zenity)" && -n "${DISPLAY}" ]]; then # Check for X, zenity
 	    export DIALOG="$(type -P zenity)"
 	    export usrintrfce="zenity"
-	    # elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-		# 	export DIALOG="$(type -P kdialog)"
-	    # 	declare -r usrintrfce="kdialog"
 	elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
 	    export DIALOG="$(type -P Xdialog)"
 	    export usrintrfce="Xdialog"
+	elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
+	    export DIALOG="$(type -P kdialog)"
+	    export usrintrfce="kdialog"
 	    # elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 	    # 	export DIALOG="$(type -P gdialog)"
 	    # 	declare -r usrintrfce="gdialog"
