@@ -9,10 +9,16 @@ declare -r black='\e[0;30m' red='\e[0;31m' \
 	cyan='\e[0;36m' white='\e[0;37m' \
 	default='\e[0;39m'
 
+myread(){
+    echo -ne "${1}"
+    read -r"${2}" input || return $?
+    [[ -n "${2}" ]] && echo
+    export input
+}
+
 menu_terminal(){
-    echo -ne "\n ${tui_menu[*]}"
-    read -r usrinpt || return $?
-    export usrinpt
+    myread "\n ${tui_menu[*]}" || return $?
+    export usrinpt="${input}"
 }
 
 create_terminal() {
@@ -25,7 +31,7 @@ create_terminal() {
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
+	local -a rs=( $("${sql3[@]}" "$(sql_select_all_id_eq "${id}")") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -38,63 +44,46 @@ create_terminal() {
     Make sure you're not using any restricted characters as input.
     Like  : $(func_regex_forbid)
     Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
-    
-    echo -ne "${fnc^} default: ${dm}: "
-    read -r input || return $?
+
+    myread "${fnc^} default: ${dm}: " || return $?
     export dm="${input:-${dm}}"
 
-    echo -ne "${fnc^} default: ${em}: "
-    read -r input || return $?
+    myread "${fnc^} default: ${em}: " || return $?
     export em="${input:-${em}}"
 
-    echo -ne "${fnc^} default: ${un}: "
-    read -r input || return $?
+    myread "${fnc^} default: ${un}: " || return $?
     export un="${input:-${un}}"
 
-    echo -ne "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): "
-    stty -echo
-    read -r input || return $?
-    echo
-    stty echo
+    myread "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): " "s" || return $?
     export pw="${input:-${pw}}"
 
-    echo -ne "${fnc^} default: ${pw1}: (again to verify): "
-    stty -echo
-    read -r input || return $?
-    echo
-    stty echo
+    myread "${fnc^} default: ${pw1}: (again to verify): " "s" || return $?
     export pw1="${input:-${pw1}}"
 
-    echo -ne "${fnc^} default: ${cm}: "
-    read -r input || return $?
+    myread "${fnc^} default: ${cm}: " || return $?
     export cm="${input:-${cm}}"
 }
 
 retrieve_terminal(){
-    echo -ne "Enter search term to look for: (empty for All) "
-    read -r criteria || return $?
-    export criteria
+    myread "Enter search term to look for: (empty for All) " || return $?
+    export criteria="${input}"
 }
 
 update_terminal(){
-    "${ccm[@]}" "$(sl3_select_preview)"
-    echo -ne "Select ID to update: (empty to cancel) "
-    read -r id || return $?
+    "${ccm[@]}" "$(sql_select_preview)"
+    myread "Select ID to ${FUNCNAME[@]:(-4):1}: (empty to cancel) " || return $?
+    id="${input}"
     [[ -z "${id}" ]] && return 1
     export id
 }
 
 delete_terminal(){
-    "${ccm[@]}" "$(sl3_select_preview)"
-    echo -ne "Select ID to delete: (empty to cancel) "
-    read -r id || return $?
-    [[ -z "${id}" ]] && return 1
-    export id
+    update_terminal
 }
 
 csv_terminal(){
-    echo -ne "Enter csv file to ${FUNCNAME[1]:0:6}: (empty to cancel) "
-    read -r csvf || return $?
+    myread "Enter csv file to ${FUNCNAME[1]:0:6}: (empty to cancel) " || return $?
+    csvf="${input}"
     [[ -z "${csvf}" ]] && return 1
     export csvf
 }
@@ -111,10 +100,10 @@ results_terminal(){
     local id pw
     while :; do
 	"${ccm[@]}" "${1}"
-	echo -ne "Select ID to preview password: (empty to cancel) "
-	read -r id || return $?
+	myread "Select ID to preview password: (empty to cancel) " || return $?
+	id="${input}"
 	[[ -z "${id}" ]] && return 1
-	pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+	pw="$("${sql3[@]}" "$(sql_showpw "${id}")")"
 	echo "Account: ${id}, Password: ${pw}"
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done

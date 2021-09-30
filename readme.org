@@ -215,8 +215,6 @@ password generator, storage and reference for the terminal and/or X.
 ** TODO NULL values
    Central null value handling for various ?UIs list building consistency.
    
-   Side note: SQLite3 silently ignores ~NOT NULL~, ~DEFAULT~ clauses in ~CREATE TABLE~ statements.
-
 ** TODO Variable back ends
    Like: csv, xml, json, flat etc...
 

@@ -20,8 +20,8 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 # cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|kdialog|cdialog|dialog|terminal] [--debug] [--help]"
-declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sl3"
+declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="sql"
 
 create() {
     local maxid="$(func_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
@@ -36,10 +36,10 @@ create() {
     (( ${#pw} < 8 )) && pw="$(func_gpw 16)"
 
     if [[ -z "${1}" ]]; then
-	"${sql3[@]}" "$(sl3_insert_rec "${dm}|${em}|${un}|${pw}|${cm}")"
-	"results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
+	"${sql3[@]}" "$(sql_insert_rec "${dm}|${em}|${un}|${pw}|${cm}")"
+	"results_${usrintrfce}" "$(sql_select_newrecs "${maxid}")"
     else
-	"${dcm[@]}" "$(sl3_update_rec "${id}|${dm}|${em}|${un}|${pw}|${cm}")"
+	"${dcm[@]}" "$(sql_update_rec "${id}|${dm}|${em}|${un}|${pw}|${cm}")"
     fi
     # cleanup
     unset id dm em un pw pw1 cm
@@ -48,20 +48,20 @@ create() {
 retrieve() {
     local criteria
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "results_${usrintrfce}" "$(sl3_select_dmemun_like "${criteria}")"
+    "results_${usrintrfce}" "$(sql_select_dmemun_like "${criteria}")"
 }
 
 update() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     create "${id}" || return $?
-    "results_${usrintrfce}" "$(sl3_select_id_eq "${id}")"
+    "results_${usrintrfce}" "$(sql_select_id_eq "${id}")"
 }
 
 delete() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${dcm[@]}" "$(sl3_delete_id_eq "${id}")"
+    "${dcm[@]}" "$(sql_delete_id_eq "${id}")"
     "message_${usrintrfce}"
 }
 
@@ -69,14 +69,14 @@ importcsv() {
     local maxid csvf
     maxid="$(func_maxid)"
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${icm[@]}" "$(sl3_importcsv_sql "${csvf}")"
-    "results_${usrintrfce}" "$(sl3_select_newrecs "${maxid}")"
+    "${icm[@]}" "$(sql_importcsv_sql "${csvf}")"
+    "results_${usrintrfce}" "$(sql_select_newrecs "${maxid}")"
 }
 
 exportcsv(){
     local csvf
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${icm[@]}" "$(sl3_select_all)" > "${csvf}"
+    "${icm[@]}" "$(sql_select_all)" > "${csvf}"
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
     elif [[ -x "$(type -P "${VISUAL}")"  ]]; then
@@ -103,7 +103,6 @@ menu() {
     local -a tui_menu=( )
     local -a tui_hmsg=( "\n${bpusage[*]}\n\n" )
     local gui_menu=""
-    local kdg_menu=""
     local -a gui_hmsg=( "\n${bpusage[*]}\n\n" )
 
     for (( x = 0; x < ${#tui_ops[@]}; x++ )); do
@@ -111,7 +110,6 @@ menu() {
 	(( ( x + 1 ) % 4 == 0 )) && tui_menu+=( "\n" ) || tui_menu+=( "\t" )
         tui_hmsg+=( "Use ${x}, for ${tui_ops[x]}, which will ${desc[x]}\n" )
         gui_menu+="${gui_ops[x]}|${sdesc[x]}|${desc[x]}|"
-        kdg_menu+="${x} ${gui_ops[x]} off "
         gui_hmsg+=( "Use ${gui_ops[x]}, to ${desc[x]}\n" )
     done
 
@@ -152,10 +150,12 @@ bashpass() {
 	case "${1}" in
             *.gpg)
 		export gpgf="${1}" ;;
-            yad|zenity|Xdialog|kdialog|cdialog|dialog|terminal)
+            yad|zenity|Xdialog|cdialog|dialog|terminal)
 		export usrintrfce="${1}" ;;
-	    sl3)
+	    sql|mem)
 		export be="${1}" ;;
+	    csv|xml|json)
+		echo -ne "${1}: No such backend (yet)!\n${bpusage}\n" >&2; exit 1 ;;
             -d|--debug)
 		set -vx ;;
             -h|--help)
@@ -167,11 +167,11 @@ bashpass() {
     done
 
     source "${scsd}/functions.src" || exit 1
-    
+
     func_assignui # Assign ?UI related vars, Needs optional args set.
 
     func_assignvars
-    
+
     [[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
     export GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure from where to expect pinentry input.
 
@@ -179,7 +179,7 @@ bashpass() {
     
     # Sources to use
     declare -ra srcsfs=( 
-	"${scsd}/sqlite3.src"
+	"${scsd}/${be}.src"
 	"${scsd}/${usrintrfce}.src"
     )
 
@@ -190,7 +190,14 @@ bashpass() {
     func_check_prereqs || return $?
     func_check_mutex || return $?
     case "${be}" in
-	"sl3")
+	"mem")
+	    # GPG file not found? Let's make one and take it from there.
+	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
+	    func_check_decrypt || return $?
+	    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
+	    func_read_dbflds || func_do_quit $? 
+	    func_check_sql || func_do_quit $? ;;
+	"sql")
 	    # GPG file not found? Let's make one and take it from there.
 	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
 	    func_check_decrypt || return $?

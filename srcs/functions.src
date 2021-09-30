@@ -33,10 +33,11 @@ func_assigncmds(){
 
 func_assignvars(){
     # GPG file, db file related vars
-    if [[ -z "${gpgf}" ]]; then
-	export gpgf="sample.gpg"
-    fi
-    export db="${gpgf//.gpg/.sl3}"
+    case "${be}" in
+	"mem") [[ -z "${gpgf}" ]] && export gpgf="sample.sql.gpg" ;;
+	"sql") [[ -z "${gpgf}" ]] && export gpgf="sample.db.gpg" ;;
+    esac
+    export db="${gpgf//.gpg/}"
     export bngpgf="${gpgf}"
     export bndb="${db}"
     export rpgpgf="${dbsd}/${gpgf}"
@@ -57,8 +58,6 @@ func_assignui(){
     elif [[ "${usrintrfce}" == "zenity" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, zenity
 	export DIALOG="$(type -P "${usrintrfce}")"
     elif [[ "${usrintrfce}" == "Xdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
-	export DIALOG="$(type -P "${usrintrfce}")"
-    elif [[ "${usrintrfce}" == "kdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 	export DIALOG="$(type -P "${usrintrfce}")"
 	# elif [[ "${usrintrfce}" == "gdialog" && -x "$(type -P "${usrintrfce}")" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 	#     export DIALOG="$(type -P "${usrintrfce}")"
@@ -84,9 +83,6 @@ func_assignui(){
 	elif [[ -x "$(type -P Xdialog)" && -n "${DISPLAY}" ]]; then # Check for X, Xdialog
 	    export DIALOG="$(type -P Xdialog)"
 	    export usrintrfce="Xdialog"
-	elif [[ -x "$(type -P kdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
-	    export DIALOG="$(type -P kdialog)"
-	    export usrintrfce="kdialog"
 	    # elif [[ -x "$(type -P gdialog)" && -n "${DISPLAY}" ]]; then # Check for X, kdialog
 	    # 	export DIALOG="$(type -P gdialog)"
 	    # 	declare -r usrintrfce="gdialog"
@@ -143,7 +139,6 @@ func_do_quit() {
 	for i in ${f2d[@]}; do
 	    ${shrc[@]} "${i}";
 	done
-	# read -rp "Return to continue ... "
 	echo "${sbn} gracefull exit..."
         return "${1:-0}"
     fi
@@ -192,7 +187,7 @@ func_check_decrypt() {
 
 # SQL or func_show_err.
 func_check_sql() {
-    if ! "${dcm[@]}" "$(sl3_select_all)" &> /dev/null; then
+    if ! "${dcm[@]}" "$(sql_select_all)" &> /dev/null; then
         func_show_err "Need a working db to function."
     fi
 }
@@ -256,24 +251,24 @@ func_gpw() {
 
 # RowID'S
 # func_rids() {
-#     "${dcm[@]}" "$(sl3_rids)"
+#     "${dcm[@]}" "$(sql_rids)"
 # }
 
 # -.-
 func_maxid() {
-    local maxid="$("${dcm[@]}" "$(sl3_maxid)")"
+    local maxid="$("${dcm[@]}" "$(sql_maxid)")"
     echo "${maxid:-0}" # check null values
 }
 
 # Row count
 func_rcount() {
-    "${dcm[@]}" "$(sl3_rcount)"
+    "${dcm[@]}" "$(sql_rcount)"
 }
 
 # Build Row Lines (for (X)dialog check/radio lists)
 func_brl() {
     local IFS=$'\n'
-    local -a rs=( $("${sql3[@]}" "${1:-"$(sl3_brl)"}") )
+    local -a rs=( $("${sql3[@]}" "${1:-"$(sql_brl)"}") )
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
@@ -283,5 +278,5 @@ func_brl() {
 }
 
 func_brlzen(){
-    echo "$("${sql3[@]}" "$(sl3_brl)")"
+    echo "$("${sql3[@]}" "$(sql_brl)")"
 }

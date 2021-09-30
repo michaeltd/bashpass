@@ -1,73 +1,66 @@
 #!/bin/bash
 
-sl3_maxid(){
+sql_maxid(){
     echo -ne "SELECT MAX(${idf}) FROM ${act};"
 }
 
-sl3_rcount(){
+sql_rcount(){
     echo -ne "SELECT COUNT(${idf}) FROM ${act};"
 }
 
-sl3_brl(){
+sql_brl(){
     echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
-sl3_insert_rec(){
+sql_insert_rec(){
     local IFS=$'\|'
     local vals=( ${1} )
-    vals[0]=${vals[0]:-NULL}
-    vals[1]=${vals[1]:-NULL}
-    vals[2]=${vals[2]:-NULL}
-    vals[3]=${vals[3]:-NULL}
-    vals[4]=${vals[4]:-NULL}
+    local vals[0]=${vals[0]:-NULL} vals[1]=${vals[1]:-NULL} vals[2]=${vals[2]:-NULL} vals[3]=${vals[3]:-NULL} vals[4]=${vals[4]:-NULL}
     echo -ne "INSERT INTO ${act} VALUES('${vals[0]//:/\:}', '${vals[1]}', '${vals[2]}', '${vals[3]}', '${vals[4]}');"
-
-    # dm="${dm:-NULL}" em="${em:-NULL}" un="${un:-NULL}" pw="${pw:-NULL}" cm="${cm:-NULL}"
-    # echo -ne "INSERT INTO ${act} VALUES('${dm}', '${em}', '${un}', '${pw}', '${cm}');"
 }
 
-sl3_update_rec(){
+sql_update_rec(){
     local IFS=$'\|'
     local vals=( ${1} )
     echo -ne "UPDATE ${act} SET ${dmf} = '${vals[1]}', ${emf} = '${vals[2]}', ${unf} = '${vals[3]}', ${pwf} = '${vals[4]}', ${cmf} = '${vals[5]}' WHERE ${idf} = '${vals[0]}';"
 }
 
-sl3_select_newrecs(){
+sql_select_newrecs(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
 }
 
-sl3_select_dm_like(){
+sql_select_dm_like(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%';"
 }
 
-sl3_select_dmemun_like(){
+sql_select_dmemun_like(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
 }
 
-sl3_select_id_eq(){
+sql_select_id_eq(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
-sl3_select_all_id_eq(){
+sql_select_all_id_eq(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
-sl3_delete_id_eq(){
+sql_delete_id_eq(){
     echo -ne "DELETE FROM ${act} WHERE ${idf} = '${1}';"
 }
 
-sl3_importcsv_sql(){
+sql_importcsv_sql(){
     echo -ne  ".import ${1} ${act}\n"
 }
 
-sl3_select_all(){
+sql_select_all(){
     echo -ne "SELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
 }
 
-sl3_select_preview(){
+sql_select_preview(){
     echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
-sl3_showpw(){
+sql_showpw(){
     echo -ne "SELECT ${pwf} FROM ${act} WHERE ${idf} = '${1}';"
 }

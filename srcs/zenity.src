@@ -50,7 +50,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sql3[@]}" "$(sl3_select_all_id_eq "${id}")") )
+	local -a rs=( $("${sql3[@]}" "$(sql_select_all_id_eq "${id}")") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -123,7 +123,7 @@ results_zenity(){
     local IFS=$'\|\t\n'
     while :; do
 	id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}"))" || return $?
-	local pw="$("${sql3[@]}" "$(sl3_showpw "${id}")")"
+	local pw="$("${sql3[@]}" "$(sql_showpw "${id}")")"
 	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null || return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done

@@ -2,5 +2,5 @@
 #
 # l10n stuff goes here...
 
-# mylang="${LANG:-en_US_UTF_8}"
+# mylang="${LANG:-"en_US.UTF-8"}"
 # export mylang="${mylang//[.-]/_}"
