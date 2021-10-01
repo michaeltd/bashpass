@@ -169,13 +169,8 @@ bashpass() {
     source "${scsd}/functions.src" || exit 1
 
     func_assignui # Assign ?UI related vars, Needs optional args set.
-
-    func_assignvars
-
-    [[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
-    export GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure from where to expect pinentry input.
-
-    func_assigncmds
+    func_assignvars # Vars we'll need
+    func_assigncmds # Commands we'll need
     
     # Sources to use
     declare -ra srcsfs=( 
@@ -189,14 +184,9 @@ bashpass() {
 
     func_check_prereqs || return $?
     func_check_mutex || return $?
+
     case "${be}" in
-	"mem")
-	    # GPG file not found? Let's make one and take it from there.
-	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
-	    func_check_decrypt || return $?
-	    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
-	    func_read_dbflds || func_do_quit $? 
-	    func_check_sql || func_do_quit $? ;;
+	"mem") func_show_err "${be}: SOON(tm)!!!"; return $? ;;
 	"sql")
 	    # GPG file not found? Let's make one and take it from there.
 	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.

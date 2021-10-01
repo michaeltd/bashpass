@@ -4,18 +4,22 @@
 #shellcheck disable=SC2207,SC2154
 
 func_assigncmds(){
+    [[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
+    export BP_KEY BP_EML
+    export GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure where to expect pinentry input from.
+
     # gpg commands
     type -P gpg  &>/dev/null && gpgc="$(type -P gpg)"
     type -P gpg2 &>/dev/null && gpgc="$(type -P gpg2)"
 
     if [[ -n "${BP_KEY}" ]]; then
-	export gpgec=("${gpgc}" "-q" "--trust-model" "always" "-r" "${BP_KEY}" "-e")
+	export gpgec=("${gpgc}" "--trust-model" "always" "-qer" "${BP_KEY}")
     elif [[ -n "${BP_EML}" ]]; then
-	export gpgec=("${gpgc}" "-q" "--trust-model" "always" "-r" "${BP_EML}" "-c" "-e")
+	export gpgec=("${gpgc}" "--trust-model" "always" "-qcer" "${BP_EML}")
     else
-	export gpgec=("${gpgc}" "-q" "-c" "-e")
+	export gpgec=("${gpgc}" "-qce")
     fi
-    export gpgdc=("${gpgc}" "-q" "-d")
+    export gpgdc=("${gpgc}" "-qd")
 
     # Shred commands
     type -P shred &> /dev/null && \
