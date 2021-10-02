@@ -5,7 +5,7 @@
 
 func_assigncmds(){
     [[ -r "${sdn}/.${sbn}.rc" ]] && source "${sdn}/.${sbn}.rc" # Source key details
-    export BP_KEY BP_EML
+    # export BP_KEY BP_EML
     export GPG_TTY="$(tty)" # Takes care issues when gpg is not so sure where to expect pinentry input from.
 
     # gpg commands
@@ -27,19 +27,28 @@ func_assigncmds(){
 	    export shrc=( "rm" "-P" "-f" )
 
     # SQLite commands
-    export dcm=( "sqlite3" "-list" "${rpdb}" ) \
-	     rcm=( "sqlite3" "-line" "${rpdb}" ) \
-	     icm=( "sqlite3" "-csv" "${rpdb}" ) \
-	     ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
-	     scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
-	     sql3=( "sqlite3" "${rpdb}" )
+    case "${be}" in
+	"mem")
+	    export dcm=( "sqlite3" "-list" ) \
+		   rcm=( "sqlite3" "-line" ) \
+		   icm=( "sqlite3" "-csv" ) \
+		   ccm=( "sqlite3" "-column" "-header" ) \
+		   scm=( "sqlite3" "-separator" " " ) \
+		   sl3=( "sqlite3" ) ;;
+	"dsk")
+	    export dcm=( "sqlite3" "-list" "${rpdb}" ) \
+		   rcm=( "sqlite3" "-line" "${rpdb}" ) \
+		   icm=( "sqlite3" "-csv" "${rpdb}" ) \
+		   ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
+		   scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
+		   sl3=( "sqlite3" "${rpdb}" ) ;;
+    esac
 }
 
 func_assignvars(){
     # GPG file, db file related vars
     case "${be}" in
-	"mem") [[ -z "${gpgf}" ]] && export gpgf="sample.sql.gpg" ;;
-	"sql") [[ -z "${gpgf}" ]] && export gpgf="sample.db.gpg" ;;
+	"mem"|"dsk") [[ -z "${gpgf}" ]] && export gpgf="sample.${be}.gpg" ;;
     esac
     export db="${gpgf//.gpg/}"
     export bngpgf="${gpgf}"
@@ -132,7 +141,7 @@ func_show_err() {
 
 func_do_quit() {
     # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    # "${sql3[@]}" "VACUUM;"
+    # "${sl3[@]}" "VACUUM;"
     # Upon successfull encryption ONLY shred files
     if ! "${gpgec[@]}" < "${rpdb}" > "${rpgpgf}"; then
 	func_show_err "Encryption failed or canceled!"
@@ -183,34 +192,41 @@ func_check_decrypt() {
         func_show_err "${bndb}, does not appear to be a valid SQLite 3.x database file."
         return $?
     else
-        # touch {"${mutex}","${tf}"}
 	touch "${mutex}"
-	# mkfifo "${mutex}"
     fi
 }
 
 # SQL or func_show_err.
-func_check_sql() {
-    if ! "${dcm[@]}" "$(sql_select_all)" &> /dev/null; then
+func_check_be() {
+    if ! "${be}_select_all" &> /dev/null; then
         func_show_err "Need a working db to function."
     fi
 }
 
+# SQL or func_show_err.
+func_check_mem() {
+    func_check_be
+}
+
+# SQL or func_show_err.
+func_check_dsk() {
+    func_check_be
+}
+
 func_read_dbflds(){
     # ADHOC db table fields extractor just for the lolz factor.
-    local -a tbls=($("${sql3[@]}" ".tables"))
-    local schm="$("${sql3[@]}" ".schema ${tbls[0]}")"
+    local -a tbls=($("${sl3[@]}" ".tables"))
+    local schm="$("${sl3[@]}" ".schema ${tbls[0]}")"
     schm="${schm^^}" # sqlite is case insensitive
     local -a brkdwn=(
-	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT" "EXISTS"
-	"INTEGER" "REAL" "TEXT" "BLOB" "TEXT" "NUMERIC"
-	"INTEGER" "REAL" "NONE" "INT" "INTEGER" "TINYINT"
-	"SMALLINT" "MEDIUMINT" "BIGINT" "UNSIGNED" "BIG"
-	"INT" "INT2" "INT8" "CHARACTER" "VARCHAR" "VARYING"
-	"CHARACTER" "NCHAR" "NATIVE" "NVARCHAR" "CLOB"
-	"DOUBLE" "PRECISION" "FLOAT" "NUMERIC" "DECIMAL"
-	"BOOLEAN" "DATE" "DATETIME" "100" "256" "PRIMARY"
-	"KEY" "(" ")" "," ";" "\""
+	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT"
+	"EXISTS" "INTEGER" "REAL" "TEXT" "BLOB" "TEXT"
+	"NUMERIC" "NONE" "INT" "INTEGER" "TINYINT" "SMALLINT"
+	"MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT2" "INT8"
+	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
+	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
+	"DECIMAL" "BOOLEAN" "DATE" "DATETIME" "100" "256"
+	"PRIMARY" "KEY" "(" ")" "," ";" "\""
     )
 
     for i in ${brkdwn[@]}; do
@@ -253,26 +269,10 @@ func_gpw() {
     echo "${pw//\\//}"
 }
 
-# RowID'S
-# func_rids() {
-#     "${dcm[@]}" "$(sql_rids)"
-# }
-
-# -.-
-func_maxid() {
-    local maxid="$("${dcm[@]}" "$(sql_maxid)")"
-    echo "${maxid:-0}" # check null values
-}
-
-# Row count
-func_rcount() {
-    "${dcm[@]}" "$(sql_rcount)"
-}
-
 # Build Row Lines (for (X)dialog check/radio lists)
 func_brl() {
     local IFS=$'\n'
-    local -a rs=( $("${sql3[@]}" "${1:-"$(sql_brl)"}") )
+    local -a rs=( $("${sl3[@]}" "${1:-"$(${be}_brl)"}") )
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
@@ -282,5 +282,5 @@ func_brl() {
 }
 
 func_brlzen(){
-    echo "$("${sql3[@]}" "$(sql_brl)")"
+    echo "$("${sl3[@]}" "$(${be}_brl)")"
 }

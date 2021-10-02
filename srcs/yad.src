@@ -10,11 +10,15 @@ declare -arx geometry_ops=( "--height=$H" "--width=$W" )
 
 declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${bngpgf} --no-markup"
 
+
+
 menu_yad(){
     local IFS=$'\|\t\n'
     local -ar menu_ops=( "${geometry_ops[@]}" "--text=Menu"
-			 "--list"  "--print-column=1" "--no-headers"
-			 "--column=Option" "--column=SDesc" "--column=LDesc")
+			 "--list" "--print-column=1" "--no-headers"
+			 "--column=Option" "--column=SDesc"
+			 "--column=LDesc")
+    
     usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
     export usrinpt="${usrinpt//\|}"
 }
@@ -35,7 +39,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sql3[@]}" "$(sql_select_all_id_eq "${id}")") )
+	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
         dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -67,9 +71,12 @@ retrieve_yad() {
 
 update_yad() {
     local IFS=$'\|\t\n'
-    local -ar update_ops=( "${geometry_ops[@]}" "--text=Select an account to ${FUNCNAME[@]:(-4):1}:"
+    local -ar update_ops=( "${geometry_ops[@]}"
+			   "--text=Select an account to ${FUNCNAME[@]:(-4):1}:"
 			   "--list" "--hide-column=1" "--print-column=1"
-			   "--column" "ID" "--column" "Domain" "--column" "Email" "--column" "Username" "--column" "Comments" )
+			   "--column" "ID" "--column" "Domain"
+			   "--column" "Email" "--column" "Username"
+			   "--column" "Comments" )
 
     id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
     id="${id//\|}"
@@ -106,13 +113,16 @@ results_yad(){
 			    "--column" "Email" "--column" "UserName"
 			    "--column" "Comments" )
 
-    local -ar showpw_ops=( "--text=Password selected:" "--entry" "--hide-text" )
+    local -ar showpw_ops=( "--text=Hit OK to preview (Insecure).\nPassword selected:" "--entry" "--hide-text" )
+    local -ar rlysow_ops=( "--text=Password selected:" "--entry" )
 
     local IFS=$'\|\t\n'
     while :; do
-	id="$("${DIALOG}" "${preview_ops[@]}" $("${sql3[@]}" "${1}"))" || return $?
-	local pw="$("${sql3[@]}" "$(sql_showpw "${id//\|}")")"
-	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null || return $?
+	id="$("${DIALOG}" "${preview_ops[@]}" $("${sl3[@]}" "${1}"))" || return $?
+	local pw="$(${be}_showpw "${id//\|}")"
+	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null && \
+	    "${DIALOG}" "${rlysow_ops[@]}" "--entry-text=${pw}" > /dev/null || \
+		return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }

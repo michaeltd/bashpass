@@ -52,7 +52,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sql3[@]}" "$(sql_select_all_id_eq "${id}")") )
+	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -100,7 +100,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sql3[@]}" "$(sql_select_all_id_eq "${id}")") )
+	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -245,12 +245,17 @@ results_dialog(){
 		    "${geops[@]}" 10 $(func_brl "${1}") 2> "${tf}" || return $?
 	id="$(cat "${tf}")"
 	[[ -z "${id}" ]] && return 1
-	pw="$("${sql3[@]}" "$(sql_showpw "${id}")")"
+	pw="$(${be}_showpw "${id}")"
 	"${DIALOG}" ${bt_ops[@]} \
 		    "--title" "Password" \
 		    "--insecure" \
-		    "--passwordbox" "#${id}'s Password Is:" \
-		    "${geops[@]}" "${pw}" 2> /dev/null || return $?
+		    "--passwordbox" "Hit OK ot preview (Inseure).\n#${id}'s Password Is:" \
+		    "${geops[@]}" "${pw}" 2> /dev/null && \
+	    "${DIALOG}" ${bt_ops[@]} \
+			"--title" "Password" \
+			"--inputbox" "#${id}'s Password Is:" \
+			"${geops[@]}" "${pw}" 2> /dev/null || \
+		return $?
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }

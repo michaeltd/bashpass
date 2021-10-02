@@ -31,7 +31,7 @@ create_terminal() {
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sql3[@]}" "$(sql_select_all_id_eq "${id}")") )
+	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -70,7 +70,7 @@ retrieve_terminal(){
 }
 
 update_terminal(){
-    "${ccm[@]}" "$(sql_select_preview)"
+    "${ccm[@]}" "$(${be}_select_preview)"
     myread "Select ID to ${FUNCNAME[@]:(-4):1}: (empty to cancel) " || return $?
     id="${input}"
     [[ -z "${id}" ]] && return 1
@@ -103,7 +103,7 @@ results_terminal(){
 	myread "Select ID to preview password: (empty to cancel) " || return $?
 	id="${input}"
 	[[ -z "${id}" ]] && return 1
-	pw="$("${sql3[@]}" "$(sql_showpw "${id}")")"
+	pw="$("${be}_showpw" "${id}")"
 	echo "Account: ${id}, Password: ${pw}"
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
