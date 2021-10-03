@@ -175,7 +175,7 @@ password generator, storage and reference for the terminal and/or X.
 
      It's more than likely to result in various errors.
 
-* TO-DOS [3/8] [37%]
+* TO-DOS [4/8] [50%]
 ** DONE ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
    Add pgp encryption
@@ -220,7 +220,8 @@ password generator, storage and reference for the terminal and/or X.
 
    This repo may help: [[https://github.com/dbohdan/structured-text-tools][structured-text-tools]]
 
-** TODO In memory only SQLite3 db
+** DONE In memory only SQLite3 db
+   CLOSED: [2021-10-02 Sat 23:42]
    For security reasons
 
 * Updates
@@ -285,6 +286,9 @@ password generator, storage and reference for the terminal and/or X.
    No way to set default values on zenity forms,
 
    so with that in mind, an editable list was the best way to go.
+   
+** <2021-10-02 Sat>
+   SQLite3 in :memory: option added!
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 

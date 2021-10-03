@@ -53,7 +53,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
+	local -a rs=( $(${be}_select_all_id_eq "${id}") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -89,7 +89,7 @@ update_zenity() {
 			   "--column" "Email" "--column" "Username"
 			   "--column" "Comments" )
     local IFS=$'\|\t\n'
-    id="$("${DIALOG}" "${update_ops[@]}" $(func_brlzen))" || return $?
+    id="$("${DIALOG}" "${update_ops[@]}" $(${be}_brl))" || return $?
     [[ -z "${id}" ]] && return 1
     export id
 }
@@ -127,7 +127,7 @@ results_zenity(){
 
     local IFS=$'\|\t\n'
     while :; do
-	id="$("${DIALOG}" "${preview_ops[@]}" $("${sl3[@]}" "${1}"))" || return $?
+	id="$("${DIALOG}" "${preview_ops[@]}" $("${be}_runcustomsql" "${1}"))" || return $?
 	local pw="$(${be}_showpw "${id}")"
 	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null && \
 	    "${DIALOG}" "${rlysow_ops[@]}" "--entry-text=${pw}" > /dev/null || \

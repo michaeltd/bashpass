@@ -47,9 +47,7 @@ func_assigncmds(){
 
 func_assignvars(){
     # GPG file, db file related vars
-    case "${be}" in
-	"mem"|"dsk") [[ -z "${gpgf}" ]] && export gpgf="sample.${be}.gpg" ;;
-    esac
+    [[ -z "${gpgf}" ]] && export gpgf="sample.${be}.gpg"
     export db="${gpgf//.gpg/}"
     export bngpgf="${gpgf}"
     export bndb="${db}"
@@ -120,8 +118,15 @@ func_setup(){
     echo -ne "\n  ${rpgpgf} Not found.\n  Would you like to build it? [y/N]: "
     if [[ "$(read -r r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	# exit on failed creates/encrypts.
-	sqlite3 "${rpdb}" < "${sdn}/examples/create.sql" || return $?
-	"${gpgec[@]}" < "${rpdb}" > "${rpgpgf}" || return $?
+	case "${be}" in
+	    "mem")
+		local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
+		echo -ne "${sql}" | "${sl3[@]}" | "${gpgec[@]}" > "${rpgpgf}" || return $? ;;
+	    "dsk")
+		"${sl3[@]}" < "${sdn}/examples/create.sql" || return $?
+		"${gpgec[@]}" < "${rpdb}" > "${rpgpgf}" || return $? ;;
+	esac
+	
     else
 	return 1
     fi
@@ -140,21 +145,25 @@ func_show_err() {
 }
 
 func_do_quit() {
-    # VACUUM on an sqlite db will safely delete erased records as per https://www.sqlite.org/lang_vacuum.html
-    # "${sl3[@]}" "VACUUM;"
-    # Upon successfull encryption ONLY shred files
-    if ! "${gpgec[@]}" < "${rpdb}" > "${rpgpgf}"; then
-	func_show_err "Encryption failed or canceled!"
-	return "${?}"
-    else
-	# local -ar f2d=( "${rpdb}" "${tf}" "${mutex}" )
-	local -ar f2d=( "${rpdb}" "${mutex}" )
-	for i in ${f2d[@]}; do
-	    ${shrc[@]} "${i}";
-	done
-	echo "${sbn} gracefull exit..."
-        return "${1:-0}"
-    fi
+    case ${be} in
+	"mem")
+	    ${shrc[@]} "${mutex}"
+	    echo "${sbn} gracefull exit..."
+	    return "${1:-0}";;
+	"dsk")
+	    local -ar f2d=( "${rpdb}" "${mutex}" )
+	    # Upon successfull encryption ONLY shred files
+	    if ! "${gpgec[@]}" < "${rpdb}" > "${rpgpgf}"; then
+		func_show_err "Encryption failed or canceled!"
+		return "${?}"
+	    else
+		for i in ${f2d[@]}; do
+		    ${shrc[@]} "${i}";
+		done
+		echo "${sbn} gracefull exit..."
+		return "${1:-0}"
+	    fi;;
+    esac
 }
 
 func_check_prereqs(){
@@ -183,22 +192,33 @@ func_check_mutex() {
 # Decrypt .sqlite, setup temp and mutex or func_show_err.
 func_check_decrypt() {
     if ! [[ "$(file -b "${rpgpgf}")" =~ ^PGP ]]; then
-        func_show_err "${bngpgf}, does not appear to be a valid PGP file."
-        return $?
-    elif ! "${gpgdc[@]}" < "${rpgpgf}" > "${rpdb}"; then
-        func_show_err "${bngpgf} decryption failed."
-        return $?
-    elif ! [[ "$(file -b "${rpdb}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
-        func_show_err "${bndb}, does not appear to be a valid SQLite 3.x database file."
-        return $?
-    else
-	touch "${mutex}"
+	func_show_err "${bngpgf}, does not appear to be a valid PGP file."
+	return $?
     fi
+    case "${be}" in
+	"mem")
+	    if ! "${gpgdc[@]}" < "${rpgpgf}" &> /dev/null ; then
+		func_show_err "${bngpgf} decryption failed."
+		return $?
+	    else
+		touch "${mutex}"
+	    fi;;
+	"dsk")
+	    if ! "${gpgdc[@]}" < "${rpgpgf}" > "${rpdb}"; then
+		func_show_err "${bngpgf} decryption failed."
+		return $?
+	    elif ! [[ "$(file -b "${rpdb}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
+		func_show_err "${bndb}, does not appear to be a valid SQLite 3.x database file."
+		return $?
+	    else
+		touch "${mutex}"
+	    fi;;
+    esac
 }
 
 # SQL or func_show_err.
 func_check_be() {
-    if ! "${be}_select_all" &> /dev/null; then
+    if ! "${be}_export" &> /dev/null; then
         func_show_err "Need a working db to function."
     fi
 }
@@ -215,8 +235,8 @@ func_check_dsk() {
 
 func_read_dbflds(){
     # ADHOC db table fields extractor just for the lolz factor.
-    local -a tbls=($("${sl3[@]}" ".tables"))
-    local schm="$("${sl3[@]}" ".schema ${tbls[0]}")"
+    local -a tbls=($(${be}_tables))
+    local schm="$(${be}_schema ${tbls[0]})"
     schm="${schm^^}" # sqlite is case insensitive
     local -a brkdwn=(
 	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT"
@@ -272,7 +292,7 @@ func_gpw() {
 # Build Row Lines (for (X)dialog check/radio lists)
 func_brl() {
     local IFS=$'\n'
-    local -a rs=( $("${sl3[@]}" "${1:-"$(${be}_brl)"}") )
+    local -a rs=( $(${be}_runcustomsql "${1:-$(${be}_brl_sql)}") )
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )
@@ -281,6 +301,6 @@ func_brl() {
     [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No|Records|Found OFF"
 }
 
-func_brlzen(){
-    echo "$("${sl3[@]}" "$(${be}_brl)")"
-}
+# func_brlzen(){
+#     echo "$("${sl3[@]}" "$(${be}_brl)")"
+# }

@@ -21,7 +21,7 @@ declare -r dbsd="dbs" \
 # cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 declare -r bpusage="Usage: ${sbn} [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [mem|dsk] [--debug] [--help]"
-declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="dsk"
+declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="mem"
 
 create() {
     local maxid="$(${be}_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
@@ -37,7 +37,7 @@ create() {
 
     if [[ -z "${1}" ]]; then
 	"${be}_insert_rec" "${dm}|${em}|${un}|${pw}|${cm}"
-	"results_${usrintrfce}" "$(${be}_select_newrecs "${maxid}")"
+	"results_${usrintrfce}" "$(${be}_newrecs_sql "${maxid}")"
     else
 	"${be}_update_rec" "${id}|${dm}|${em}|${un}|${pw}|${cm}"
     fi
@@ -48,20 +48,20 @@ create() {
 retrieve() {
     local criteria
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "results_${usrintrfce}" "$(${be}_select_dmemun_like "${criteria}")"
+    "results_${usrintrfce}" "$(${be}_criteria_sql "${criteria}")"
 }
 
 update() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     create "${id}" || return $?
-    "results_${usrintrfce}" "$(${be}_select_id_eq "${id}")"
+    "results_${usrintrfce}" "$(${be}_id_sql "${id}")"
 }
 
 delete() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${be}_delete_id_eq" "${id}"
+    "${be}_delete_ids" "${id}"
     "message_${usrintrfce}"
 }
 
@@ -70,13 +70,13 @@ importcsv() {
     maxid="$(func_maxid)"
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
     "${be}_importcsv_sql" "${csvf}"
-    "results_${usrintrfce}" "$(${be}_select_newrecs "${maxid}")"
+    "results_${usrintrfce}" "$(${be}_newrecs_sql "${maxid}")"
 }
 
 exportcsv(){
     local csvf
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${be}_select_all" > "${csvf}"
+    "${be}_export" > "${csvf}"
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
     elif [[ -x "$(type -P "${VISUAL}")"  ]]; then
@@ -114,7 +114,7 @@ menu() {
     done
 
     tui_menu+=( "\nChoose[0-$((${#tui_ops[*]}-1))]:" )
-    local tmp_hmsg="\naccounts table format is as follows:\n$("${sl3[@]}" ".schema ${act}")\n\n"
+    local tmp_hmsg="\naccounts table format is as follows:\n$("${be}_schema" "${act}")\n\n"
     tui_hmsg+=( "${tmp_hmsg}" )
     gui_hmsg+=( "${tmp_hmsg}" )
 
@@ -130,7 +130,7 @@ menu() {
                     "${gui_ops[3]}"|"3") delete ;;
                     "${gui_ops[4]}"|"4") importcsv ;;
                     "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") "${sl3[@]}" ;;
+                    "${gui_ops[6]}"|"6") [[ "${be}" == "mem" ]] && echo -ne "Sorry, no cookie 4 U!\n" || "${sl3[@]}";;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2 ;;
@@ -148,14 +148,12 @@ bashpass() {
     # Process optional arguments
     while [[ -n "${1}" ]]; do
 	case "${1}" in
-            *.gpg)
-		export gpgf="${1}" ;;
+            *.mem|*.dsk)
+		export gpgf="${1}.gpg"
+		[[ "${1}" =~ .mem$ ]] && export be="mem"
+		[[ "${1}" =~ .dsk$ ]] && export be="dsk";;
             yad|zenity|Xdialog|cdialog|dialog|terminal)
 		export usrintrfce="${1}" ;;
-	    mem|dsk)
-		export be="${1}" ;;
-	    csv|xml|json)
-		echo -ne "${1}: No such backend (yet)!\n${bpusage}\n" >&2; exit 1 ;;
             -d|--debug)
 		set -vx ;;
             -h|--help)
@@ -185,19 +183,12 @@ bashpass() {
     func_check_prereqs || return $?
     func_check_mutex || return $?
 
-    case "${be}" in
-	"mem")
-	    func_read_dbflds || func_do_quit $? 
-	    func_check_${be} || func_do_quit $? ;;
-	"dsk")
-	    # GPG file not found? Let's make one and take it from there.
-	    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
-	    func_check_decrypt || return $?
-	    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
-	    func_read_dbflds || func_do_quit $? 
-	    func_check_${be} || func_do_quit $? ;;
-	*) func_show_err "${be}: No such back end! (yet...)"; return $? ;;
-    esac
+    # GPG file not found? Let's make one and take it from there.
+    [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
+    func_check_decrypt || return $?
+    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
+    func_read_dbflds || func_do_quit $?
+    func_check_${be} || func_do_quit $?
 
     # From now on any exit, normal or erratic is a do_quit
     trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" # "${SIG_KILL}" "${SIG_TERM}" Don't trap kill-term signals coz... reasons...

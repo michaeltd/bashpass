@@ -1,6 +1,14 @@
 #!/bin/bash
 
-dsk_importcsv_sql(){
+dsk_tables(){
+    echo -ne "${crt}\n.tables\n" | "${sl3[@]}"
+}
+
+dsk_schema(){
+    echo -ne "${crt}\n.schema ${1}\n" | "${sl3[@]}"
+}
+
+dsk_import(){
     "${icm[@]}" ".import ${1} ${act}"
 }
 
@@ -17,8 +25,14 @@ dsk_update_rec(){
     "${sl3[@]}" "UPDATE ${act} SET ${dmf} = '${vals[1]}', ${emf} = '${vals[2]}', ${unf} = '${vals[3]}', ${pwf} = '${vals[4]}', ${cmf} = '${vals[5]}' WHERE ${idf} = '${vals[0]}';"
 }
 
-dsk_delete_id_eq(){
-    "${sl3[@]}" "DELETE FROM ${act} WHERE ${idf} = '${1}';"
+dsk_delete_ids(){
+    local where_clause="WHERE ${idf} = '${1}'"
+    shift
+    while [[ -n "${1}" ]]; do
+	local where_clause+=" OR ${idf} = '${1}'"
+	shift
+    done
+    "${sl3[@]}" "DELETE FROM ${act} ${where_clause};"
 }
 
 dsk_maxid(){
@@ -26,33 +40,45 @@ dsk_maxid(){
 }
 
 dsk_brl(){
-    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
-}
-
-dsk_select_newrecs(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
-}
-
-dsk_select_dmemun_like(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
-}
-
-dsk_select_id_eq(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+    "${sl3[@]}" "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 dsk_select_all_id_eq(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+    "${sl3[@]}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
-dsk_select_all(){
+dsk_export(){
     "${icm[@]}" "SELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 dsk_select_preview(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+    "${sl3[@]}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 dsk_showpw(){
     "${sl3[@]}" "SELECT ${pwf} FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+dsk_runcustomsql(){
+    echo -ne "${1}" | "${sl3[@]}"
+}
+
+dsk_preview_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+}
+
+dsk_brl_sql(){
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+}
+
+dsk_newrecs_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
+}
+
+dsk_criteria_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
+}
+
+dsk_id_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }

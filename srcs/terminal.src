@@ -31,7 +31,7 @@ create_terminal() {
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
+	local -a rs=( $(${be}_select_all_id_eq "${id}") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -70,7 +70,7 @@ retrieve_terminal(){
 }
 
 update_terminal(){
-    "${ccm[@]}" "$(${be}_select_preview)"
+    "${ccm[@]}" "$(${be}_preview_sql)"
     myread "Select ID to ${FUNCNAME[@]:(-4):1}: (empty to cancel) " || return $?
     id="${input}"
     [[ -z "${id}" ]] && return 1
@@ -99,7 +99,7 @@ exportcsv_terminal(){
 results_terminal(){
     local id pw
     while :; do
-	"${ccm[@]}" "${1}"
+	${be}_runcustomsql ".mode column\n${1}"
 	myread "Select ID to preview password: (empty to cancel) " || return $?
 	id="${input}"
 	[[ -z "${id}" ]] && return 1
