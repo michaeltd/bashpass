@@ -1,28 +1,28 @@
 #!/bin/bash
 
 dsk_tables(){
-    echo -ne "${crt}\n.tables\n" | "${sl3[@]}"
+    echo -ne "${crt}\n.tables\n" | "${sl3[@]}" "${rpdb}"
 }
 
 dsk_schema(){
-    echo -ne "${crt}\n.schema ${1}\n" | "${sl3[@]}"
+    echo -ne "${crt}\n.schema ${1}\n" | "${sl3[@]}" "${rpdb}" 
 }
 
 dsk_import(){
-    "${icm[@]}" ".import ${1} ${act}"
+    "${icm[@]}" "${rpdb}" ".import ${1} ${act}"
 }
 
 dsk_insert_rec(){
     local IFS=$'\|'
     local vals=( ${1} )
     local vals[0]=${vals[0]:-NULL} vals[1]=${vals[1]:-NULL} vals[2]=${vals[2]:-NULL} vals[3]=${vals[3]:-NULL} vals[4]=${vals[4]:-NULL}
-    "${sl3[@]}" "INSERT INTO ${act} VALUES('${vals[0]//:/\:}', '${vals[1]}', '${vals[2]}', '${vals[3]}', '${vals[4]}');"
+    "${sl3[@]}" "${rpdb}" "INSERT INTO ${act} VALUES('${vals[0]//:/\:}', '${vals[1]}', '${vals[2]}', '${vals[3]}', '${vals[4]}');"
 }
 
 dsk_update_rec(){
     local IFS=$'\|'
     local vals=( ${1} )
-    "${sl3[@]}" "UPDATE ${act} SET ${dmf} = '${vals[1]}', ${emf} = '${vals[2]}', ${unf} = '${vals[3]}', ${pwf} = '${vals[4]}', ${cmf} = '${vals[5]}' WHERE ${idf} = '${vals[0]}';"
+    "${sl3[@]}" "${rpdb}" "UPDATE ${act} SET ${dmf} = '${vals[1]}', ${emf} = '${vals[2]}', ${unf} = '${vals[3]}', ${pwf} = '${vals[4]}', ${cmf} = '${vals[5]}' WHERE ${idf} = '${vals[0]}';"
 }
 
 dsk_delete_ids(){
@@ -32,35 +32,35 @@ dsk_delete_ids(){
 	local where_clause+=" OR ${idf} = '${1}'"
 	shift
     done
-    "${sl3[@]}" "DELETE FROM ${act} ${where_clause};"
+    "${sl3[@]}" "${rpdb}" "DELETE FROM ${act} ${where_clause};"
 }
 
 dsk_maxid(){
-    "${sl3[@]}" "SELECT MAX(${idf}) FROM ${act};"
+    "${sl3[@]}" "${rpdb}" "SELECT MAX(${idf}) FROM ${act};"
 }
 
 dsk_brl(){
-    "${sl3[@]}" "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+    "${sl3[@]}" "${rpdb}" "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 dsk_select_all_id_eq(){
-    "${sl3[@]}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+    "${sl3[@]}" "${rpdb}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
 dsk_export(){
-    "${icm[@]}" "SELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
+    "${icm[@]}" "${rpdb}" "SELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 dsk_select_preview(){
-    "${sl3[@]}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+    "${sl3[@]}" "${rpdb}" "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 dsk_showpw(){
-    "${sl3[@]}" "SELECT ${pwf} FROM ${act} WHERE ${idf} = '${1}';"
+    "${sl3[@]}" "${rpdb}" "SELECT ${pwf} FROM ${act} WHERE ${idf} = '${1}';"
 }
 
 dsk_runcustomsql(){
-    echo -ne "${1}" | "${sl3[@]}"
+    echo -ne "${1}" | "${sl3[@]}" "${rpdb}" 
 }
 
 dsk_preview_sql(){

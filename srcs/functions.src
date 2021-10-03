@@ -26,28 +26,20 @@ func_assigncmds(){
 	export shrc=( "shred" "--zero" "--remove" ) || \
 	    export shrc=( "rm" "-P" "-f" )
 
-    # SQLite commands
-    case "${be}" in
-	"mem")
-	    export dcm=( "sqlite3" "-list" ) \
-		   rcm=( "sqlite3" "-line" ) \
-		   icm=( "sqlite3" "-csv" ) \
-		   ccm=( "sqlite3" "-column" "-header" ) \
-		   scm=( "sqlite3" "-separator" " " ) \
-		   sl3=( "sqlite3" ) ;;
-	"dsk")
-	    export dcm=( "sqlite3" "-list" "${rpdb}" ) \
-		   rcm=( "sqlite3" "-line" "${rpdb}" ) \
-		   icm=( "sqlite3" "-csv" "${rpdb}" ) \
-		   ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
-		   scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
-		   sl3=( "sqlite3" "${rpdb}" ) ;;
-    esac
+    export dcm=( "sqlite3" "-list" ) \
+	   rcm=( "sqlite3" "-line" ) \
+	   icm=( "sqlite3" "-csv" ) \
+	   ccm=( "sqlite3" "-column" "-header" ) \
+	   scm=( "sqlite3" "-separator" " " ) \
+	   sl3=( "sqlite3" )
 }
 
 func_assignvars(){
     # GPG file, db file related vars
-    [[ -z "${gpgf}" ]] && export gpgf="sample.${be}.gpg"
+    if [[ -z "${gpgf}" ]]; then
+	export be="mem"
+	export gpgf="sample.${be}.gpg"
+    fi
     export db="${gpgf//.gpg/}"
     export bngpgf="${gpgf}"
     export bndb="${db}"
@@ -123,7 +115,7 @@ func_setup(){
 		local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
 		echo -ne "${sql}" | "${sl3[@]}" | "${gpgec[@]}" > "${rpgpgf}" || return $? ;;
 	    "dsk")
-		"${sl3[@]}" < "${sdn}/examples/create.sql" || return $?
+		"${sl3[@]}" "${rpdb}" < "${sdn}/examples/create.sql" || return $?
 		"${gpgec[@]}" < "${rpdb}" > "${rpgpgf}" || return $? ;;
 	esac
 	
