@@ -26,12 +26,22 @@ func_assigncmds(){
 	export shrc=( "shred" "--zero" "--remove" ) || \
 	    export shrc=( "rm" "-P" "-f" )
 
-    export dcm=( "sqlite3" "-list" ) \
-	   rcm=( "sqlite3" "-line" ) \
-	   icm=( "sqlite3" "-csv" ) \
-	   ccm=( "sqlite3" "-column" "-header" ) \
-	   scm=( "sqlite3" "-separator" " " ) \
-	   sl3=( "sqlite3" )
+    case "${be}" in
+	"mem")
+	    export dcm=( "sqlite3" "-list" ) \
+		   rcm=( "sqlite3" "-line" ) \
+		   icm=( "sqlite3" "-csv" ) \
+		   ccm=( "sqlite3" "-column" "-header" ) \
+		   scm=( "sqlite3" "-separator" " " ) \
+		   sl3=( "sqlite3" );;
+	"dsk")
+	    export dcm=( "sqlite3" "-list" "${rpdb}" ) \
+		   rcm=( "sqlite3" "-line" "${rpdb}" ) \
+		   icm=( "sqlite3" "-csv" "${rpdb}" ) \
+		   ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
+		   scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
+		   sl3=( "sqlite3" "${rpdb}" );;
+    esac
 }
 
 func_assignvars(){
@@ -115,7 +125,7 @@ func_setup(){
 		local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
 		echo -ne "${sql}" | "${sl3[@]}" | "${gpgec[@]}" > "${rpgpgf}" || return $? ;;
 	    "dsk")
-		"${sl3[@]}" "${rpdb}" < "${sdn}/examples/create.sql" || return $?
+		"${sl3[@]}" < "${sdn}/examples/create.sql" || return $?
 		"${gpgec[@]}" < "${rpdb}" > "${rpgpgf}" || return $? ;;
 	esac
 	
