@@ -133,7 +133,7 @@ password generator, storage and reference for the terminal and/or X.
 
      That script needs to be encrypted to your personal keyring, have a ~.gpg~ extension and reside in [[file:dbs/][dbs]] folder.
 
-     If no such option is given the script will default to sample.mem
+     If no such option is given the script will default to sample.gpg
 
    - If you'd like to test other UI options try: ~bashpass [yad|zenity|Xdialog|cdialog|dialog]~, needless to say they have to be installed.
 
