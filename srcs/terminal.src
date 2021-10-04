@@ -70,7 +70,7 @@ retrieve_terminal(){
 }
 
 update_terminal(){
-    "${ccm[@]}" "$(${be}_preview_sql)"
+    ${be}_runcustomsql ".mode column\n.headers on\n$(${be}_preview_sql)"
     myread "Select ID to ${FUNCNAME[@]:(-4):1}: (empty to cancel) " || return $?
     id="${input}"
     [[ -z "${id}" ]] && return 1
@@ -99,7 +99,7 @@ exportcsv_terminal(){
 results_terminal(){
     local id pw
     while :; do
-	${be}_runcustomsql ".mode column\n${1}"
+	${be}_runcustomsql ".mode column\n.headers on\n${1}"
 	myread "Select ID to preview password: (empty to cancel) " || return $?
 	id="${input}"
 	[[ -z "${id}" ]] && return 1

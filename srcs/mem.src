@@ -1,5 +1,9 @@
 #!/bin/bash
 
+mem_shred(){
+    ${shrc[@]} "${rpdb}"
+}
+
 mem_crt(){
     echo "$("${gpgdc[@]}" < "${rpgpgf}")"
 }
@@ -7,24 +11,14 @@ mem_crt(){
 mem_mod(){
     local crt="$(${be}_crt)"
     echo -ne "${crt}\n${qry}\n.dump\n" | \
-	"${sl3[@]}" | \
+	"${sl3}" | \
 	"${gpgec[@]}" > "${rpgpgf}"
 }
 
 mem_prev(){
     local crt="$(${be}_crt)"
     echo -ne "${crt}\n${qry}\n" | \
-	"${sl3[@]}"
-}
-
-mem_tables(){
-    local qry="${crt}\n.tables\n"
-    "${be}_prev"
-}
-
-mem_schema(){
-    local qry="${crt}\n.schema ${1}\n"
-    "${be}_prev"
+	"${sl3}"
 }
 
 mem_import(){
@@ -58,6 +52,50 @@ mem_delete_ids(){
     done
     local qry="DELETE FROM ${act} ${where_clause};"
     "${be}_mod"
+}
+
+mem_session(){
+    "${gpgdc[@]}" < "${rpgpgf}" | "${sl3}" "${rpdb}"
+    "${sl3}" "${rpdb}"
+    "${be}_shred"
+}
+
+mem_tables(){
+    local qry="${crt}\n.tables"
+    "${be}_prev"
+}
+
+mem_schema(){
+    local qry="${crt}\n.schema ${1}"
+    "${be}_prev"
+}
+
+mem_read_dbflds(){
+    # ADHOC db table fields extractor just for the lolz factor.
+    local -a tbls=($(${be}_tables))
+    local schm="$(${be}_schema ${tbls[0]})"
+    schm="${schm^^}" # sqlite is case insensitive
+    local -a brkdwn=(
+	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT"
+	"EXISTS" "INTEGER" "REAL" "TEXT" "BLOB" "TEXT"
+	"NUMERIC" "NONE" "INT" "INTEGER" "TINYINT" "SMALLINT"
+	"MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT2" "INT8"
+	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
+	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
+	"DECIMAL" "BOOLEAN" "DATE" "DATETIME" "100" "256"
+	"PRIMARY" "KEY" "(" ")" "," ";" "\""
+    )
+
+    for i in ${brkdwn[@]}; do
+	schm="${schm//${i}/$' '}"
+    done
+    local -a arrflds=( ${schm} )
+    export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
+    unset tbls schm brkdwn arrflds
+}
+
+mem_self_test() {
+    "${be}_export" &> /dev/null
 }
 
 mem_maxid(){

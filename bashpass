@@ -67,9 +67,9 @@ delete() {
 
 importcsv() {
     local maxid csvf
-    maxid="$(func_maxid)"
+    maxid="$(${be}_maxid)"
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${be}_importcsv_sql" "${csvf}"
+    "${be}_import" "${csvf}"
     "results_${usrintrfce}" "$(${be}_newrecs_sql "${maxid}")"
 }
 
@@ -130,7 +130,7 @@ menu() {
                     "${gui_ops[3]}"|"3") delete ;;
                     "${gui_ops[4]}"|"4") importcsv ;;
                     "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") [[ "${be}" == "mem" ]] && echo -ne "Sorry, no cookie 4 U!\n" || "${sl3[@]}";;
+                    "${gui_ops[6]}"|"6") "${be}_session";;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2 ;;
@@ -148,18 +148,11 @@ bashpass() {
     # Process optional arguments
     while [[ -n "${1}" ]]; do
 	case "${1}" in
-            *.mem|*.dsk)
-		export gpgf="${1}.gpg"
-		[[ "${1}" =~ .mem$ ]] && export be="mem"
-		[[ "${1}" =~ .dsk$ ]] && export be="dsk";;
-            yad|zenity|Xdialog|cdialog|dialog|terminal)
-		export usrintrfce="${1}" ;;
-            -d|--debug)
-		set -vx ;;
-            -h|--help)
-		echo -ne "${bpusage}\n" >&2; exit 1 ;;
-            *)
-		echo -ne "${1}: Unknown option!\n${bpusage}\n" >&2; exit 1 ;;
+            *.gpg) export gpgf="${1}";;
+            yad|zenity|Xdialog|cdialog|dialog|terminal)	export usrintrfce="${1}" ;;
+            -d|--debug)	set -vx ;;
+            -h|--help) echo -ne "${bpusage}\n" >&2; exit 1 ;;
+            *) echo -ne "${1}: Unknown option!\n${bpusage}\n" >&2; exit 1 ;;
 	esac
 	shift
     done
@@ -171,7 +164,7 @@ bashpass() {
     func_assigncmds # Commands we'll need
     
     # Source backend/UI functions
-    declare -ra srcsfs=( 
+    declare -ra srcsfs=(
 	"${scsd}/${be}.src"
 	"${scsd}/${usrintrfce}.src"
     )
@@ -186,12 +179,13 @@ bashpass() {
     # GPG file not found? Let's make one and take it from there.
     [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
     func_check_decrypt || return $?
-    # Have $db and $mutex so from now on we're do_quit for propper housekeeping.
-    func_read_dbflds || func_do_quit $?
-    func_check_${be} || func_do_quit $?
+    [[ "${be}" == "mem" ]] && "${be}_read_dbflds"
+    func_check_${be} || return $?
+
+    touch "${mutex}"
 
     # From now on any exit, normal or erratic is a do_quit
-    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" # "${SIG_KILL}" "${SIG_TERM}" Don't trap kill-term signals coz... reasons...
+    trap func_do_quit "${SIG_NONE}" "${SIG_HUP}" "${SIG_INT}" "${SIG_QUIT}" "${SIG_TERM}" "${SIG_KILL}"
     menu
 }
 

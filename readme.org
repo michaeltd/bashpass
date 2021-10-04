@@ -50,7 +50,7 @@ password generator, storage and reference for the terminal and/or X.
      
      Accompanied functions.
 
-     Namely sqlite3, general and ?UI specific
+     Namely general, backend and ?UI specific
      
   3. [[file:examples/][examples]]
      
@@ -114,8 +114,6 @@ password generator, storage and reference for the terminal and/or X.
 
    * This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
-   * ~sample.dsk~ SQLite files used by this script get shredded upon quitting.
-
    * Backup never hurt nobody [+.-]
 
    * So with that out of the way and If you're still around, let's move along ...
@@ -125,23 +123,17 @@ password generator, storage and reference for the terminal and/or X.
    If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]].
 
 ** Basic usage:
-   ~bashpass [sample.mem] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]~
+   ~bashpass [sample.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]~
 
-   If ~*.mem~ file is unavailable (eg: first time use), It'll be created.
+   If ~*.gpg~ file is unavailable (eg: first time use), It'll be created.
    
 ** Optional command line arguments
 
-   - You can provide a gpg2 encrypted SQLite3 database create sql script for use with ~bashpass~.
+   - You can provide a gpg2 encrypted SQLite3 database create script for use with ~bashpass~.
 
      That script needs to be encrypted to your personal keyring, have a ~.gpg~ extension and reside in [[file:dbs/][dbs]] folder.
 
-     If started with a *.mem optional file it will set the back end to sqlite3 in :memory: database (safe/default).
-
-     If started with a *.dsk optional file it will set the back end to sqlite3 database file on disk,
-
-     which is unsafe but enables the SQLite3 session menu option for debuging purposes which is unavailable in :memory: databases.
-
-     If no such option is present this script will default to sample.mem
+     If no such option is given the script will default to sample.mem
 
    - If you'd like to test other UI options try: ~bashpass [yad|zenity|Xdialog|cdialog|dialog]~, needless to say they have to be installed.
 
@@ -155,13 +147,13 @@ password generator, storage and reference for the terminal and/or X.
 
 * Notes
 
-  1. You can only have one instance of each ~*.mem~ file open at any given time.
+  1. You can only have one instance of each ~*.gpg~ file open at any given time.
 
      This is internally enforced by MUTEX implementation.
      
   2. Consider launching [[file:bashpass][bashpass]] with launch from terminal option enabled
 
-     (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.mem]~)
+     (where available, eg in dmenu: ~xterm -hold -e /path/to/bashpass [sample.gpg]~)
 
      as it will not run otherwise.
      
@@ -173,13 +165,7 @@ password generator, storage and reference for the terminal and/or X.
 
      namely: backslash, backtick, pound, colon, comma, quotes(both).
 
-  4. Avoid creating the SQLite3 db by any other means beyond ~examples/create.sql~ 
-
-     or ~bashpass~ itself (which uses the exact same .sql script).
-
-     It's more than likely to result in various errors.
-
-* TO-DOS [4/8] [50%]
+* TO-DOS [5/8] [62%]
 ** DONE ✔ Encryption
    CLOSED: [2019-08-22 Thu 01:43]
    Add pgp encryption
@@ -208,7 +194,19 @@ password generator, storage and reference for the terminal and/or X.
 
 *** DONE ✔ zenity/yad support
     CLOSED: [2021-08-22 Sun 01:45]
-    Done
+    Done.
+
+** DONE NULL values
+   CLOSED: [2021-10-01 Fri 23:42]
+   Central null value handling for various ?UIs list building consistency.
+
+   Moved to ${be} insert function.
+   
+** DONE In memory only SQLite3 db
+   CLOSED: [2021-10-02 Sat 23:42]
+   For security reasons
+
+   Done!
 
 ** TODO pass mode
    Add a menu option for pass (password-store) compatibility mode
@@ -216,17 +214,10 @@ password generator, storage and reference for the terminal and/or X.
 ** TODO l10n support
    Source a ~l10n.src~ file that will feed translated strings according to ~${LANG}~ settings.
 
-** TODO NULL values
-   Central null value handling for various ?UIs list building consistency.
-   
-** TODO Variable back ends
-   Like: csv, xml, json, flat etc...
+** TODO Selectable back ends
+   Like: csv, xml, json etc...
 
    This repo may help: [[https://github.com/dbohdan/structured-text-tools][structured-text-tools]]
-
-** DONE In memory only SQLite3 db
-   CLOSED: [2021-10-02 Sat 23:42]
-   For security reasons
 
 * Updates
 
@@ -292,7 +283,7 @@ password generator, storage and reference for the terminal and/or X.
    so with that in mind, an editable list was the best way to go.
    
 ** <2021-10-02 Sat>
-   SQLite3 in :memory: option added!
+   For security reasons SQLite3 will work in :memory: mode only.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 

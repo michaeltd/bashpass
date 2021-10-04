@@ -3,6 +3,8 @@
 # Just to pickup syntax highlighting
 #shellcheck disable=SC2207,SC2154
 
+declare -xr YAD_OPTIONS="--window-icon=${sdn}/assets/gpa.png --center --title=${bngpgf} --no-markup"
+
 declare -rx H=$(( $(xwininfo -root | awk '$1=="Height:" {print $2}') / 2 )) \
 	W=$(( $(xwininfo -root | awk '$1=="Width:" {print $2}') / 2 ))
 
@@ -14,13 +16,20 @@ declare -arx gt_ops=( ${geometry_ops[@]} "${title_op}" )
 
 menu_zenity(){
     local IFS=$'\|\t\n'
-    declare -ar menu_ops=( "${geometry_ops[@]}" "${title_op[@]}"
-			   "--list" "--text=Menu" "--hide-header"
-			   "--column=Option" "--column=SDesc"
+    declare -ar menu_ops=( "${geometry_ops[@]}" \
+			   "${title_op[@]}" \
+			   "--list" "--text=Menu" \
+			   $([[ "${DIALOG}" =~ zenity$ ]] && echo -n "--hide-header" || echo  -n "--no-headers") \
+			   $([[ "${DIALOG}" =~ yad$ ]] && echo -n "--print-column=1") \
+			   "--column=Option" "--column=SDesc" \
 			   "--column=LDesc" )
 
     usrinpt="$("${DIALOG}" "${menu_ops[@]}" ${gui_menu})" || return $?
-    export usrinpt
+    export usrinpt="${usrinpt//\|}"
+}
+
+menu_yad(){
+    menu_zenity
 }
 
 create_zenity() {
@@ -74,74 +83,164 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     export dm em un pw pw1 cm
 }
 
+create_yad() {
+    local -a vals
+    local ttl="${FUNCNAME[@]:(-4):1} form"
+    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
+You can use a pword of your choice or a desired length (8-64 chars)
+or leave empty for auto (16 chars).
+Make sure you're not using any restricted characters as input.
+Like  : $(func_regex_forbid)
+Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
+    if [[ -z "${1}" ]]; then # Create mode
+	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	pw1="${pw}" cm="${cm:-"comments goes here..."}"
+    else # Update mode
+        id="${1}"
+	local IFS=$'\|'
+	local -a rs=( $(${be}_select_all_id_eq "${id}") )
+        dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+    fi
+
+    local -ar create_ops=( "${geometry_ops[@]}"
+			   "--text" "${ttl^}: Enter required details!\n${pwmsg}\n"
+			   "--form"
+			   "--field=Domain!${dm//\:/\|}" "${dm}"
+			   "--field=Email!${em}" "${em}"
+			   "--field=Uname!${un}" "${un}"
+			   "--field=Password!Insert pasword or length or empty for auto.:H" "${pw}"
+			   "--field=Pw check!Insert password again.:H" "${pw1}"
+			   "--field=Comment!${cm}" "${cm}" )
+
+    local IFS=$'\|\t\n'
+
+    vals=( $("${DIALOG}" "${create_ops[@]}") ) || return $?
+
+    export dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}" \
+	   pw="${vals[3]:-${pw}}" pw1="${vals[4]:-${pw1}}" cm="${vals[5]:-cm}"
+}
+
 retrieve_zenity() {
     local -ar retrieve_ops=( "${title_op}"
 			     "--text=Enter search term to look for (empty for All):"
 			     "--entry" )
     criteria="$("${DIALOG}" "${retrieve_ops[@]}")" || return $?
-    export criteria
+    export criteria="${criteria//\|}"
+}
+
+retrieve_yad() {
+    retrieve_zenity
 }
 
 update_zenity() {
-    local -ar update_ops=( "${gt_ops[@]}" "--text=Select account to ${FUNCNAME[@]:(-4):1}:"
-			   "--list" "--hide-column=1"
-			   "--column" "ID" "--column" "Domain"
-			   "--column" "Email" "--column" "Username"
-			   "--column" "Comments" )
+    local -ar update_ops=( "${gt_ops[@]}"
+			   "--text=Select account to ${FUNCNAME[@]:(-4):1}:"
+			   "--list" "--hide-column=1" $([[ "${DIALOG}" =~ yad$ ]] && echo -n "--print-column=1")
+			   "--column=ID" "--column=Domain"
+			   "--column=Email" "--column=Username"
+			   "--column=Comments" )
     local IFS=$'\|\t\n'
     id="$("${DIALOG}" "${update_ops[@]}" $(${be}_brl))" || return $?
     [[ -z "${id}" ]] && return 1
-    export id
+    export id="${id//\|}"
+}
+
+update_yad() {
+    update_zenity
 }
 
 delete_zenity() {
     update_zenity
 }
+ 
+delete_yad() {
+    update_yad
+}
 
 csv_zenity(){
-    local -ar csv_ops=( "${geometry_ops[@]}"
-			"--text=Select a csv file to ${FUNCNAME[1]:0:6}:"
-			"--file-selection" )
+    local desc="${FUNCNAME[@]:(-4):1}"
+    local -ar csv_ops=( "${geometry_ops[@]}" \
+			    "--text=Select a csv file to ${desc:0:6}:" \
+			    $([[ "${DIALOG}" =~ zenity$ ]] && echo -n "--file-selection" || echo -n "--file") \
+			    $([[ "${DIALOG}" =~ yad$ ]] && echo -n "${2} --file-name=${1}") )
     csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
     [[ -z "${csvf}" ]] && return 1
-    export csvf
+    export csvf="${csvf//\|}"
+}
+
+csv_yad(){
+    csv_zenity "${@}"
 }
 
 importcsv_zenity() {
     csv_zenity
 }
 
+importcsv_yad() {
+    csv_yad "${sdn}/examples/import.csv"
+}
+
 exportcsv_zenity() {
     csv_zenity
 }
 
+exportcsv_yad() {
+    csv_yad "${sdn}/examples/export.csv" "--save"
+}
+
 results_zenity(){
-    local -ar preview_ops=( "${gt_ops[@]}" "--text=Results. Select account to preview:"
-			    "--list" "--hide-column=1"
+    local -ar preview_ops=( "${gt_ops[@]}"
+			    "--text=Results. Select account to preview:"
+			    "--list"
+			    "--hide-column=1" $([[ "${DIALOG}" =~ yad$ ]] && echo -n "--print-column=1") \
 			    "--column=ID" "--column=Domain"
 			    "--column=Email" "--column=UName"
 			    "--column=Comments" )
 
-    local -ar showpw_ops=( "${title_op}" "--text=Hit OK to preview (Insecure).\nPassword selected:" "--entry" "--hide-text" )
-    local -ar rlysow_ops=( "${title_op}" "--text=Password selected:" "--entry" )
+    local -ar showpw_ops=( "${title_op}"
+			   "--text=Hit OK to preview (Insecure).\nPassword selected:"
+			   "--entry"
+			   "--hide-text" )
+    
+    local -ar rlysow_ops=( "${title_op}"
+			   "--text=Password selected:"
+			   "--entry" )
 
     local IFS=$'\|\t\n'
     while :; do
 	id="$("${DIALOG}" "${preview_ops[@]}" $("${be}_runcustomsql" "${1}"))" || return $?
-	local pw="$(${be}_showpw "${id}")"
+	local pw="$(${be}_showpw "${id//\|}")"
 	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null && \
-	    "${DIALOG}" "${rlysow_ops[@]}" "--entry-text=${pw}" > /dev/null || \
-		return $?
+	    "${DIALOG}" "${rlysow_ops[@]}" "--entry-text=${pw}" > /dev/null
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
 
+results_yad(){
+    results_zenity "${@}"
+}
+
 message_zenity(){
-    local -ar message_ops=( "${title_op}" "--info" "--no-wrap" )
-    "${DIALOG}" "${message_ops[@]}" "--text=Account #${id} deleted. No errors reported."
+    "${DIALOG}" "${title_op}" \
+		"--info" \
+		$([[ "${DIALOG}" =~ zenity$ ]] && echo -n "--no-wrap") \
+		"--text=Account #${id} deleted. No errors reported."
+}
+
+message_yad(){
+    message_zenity
 }
 
 usage_zenity() {
-    local -ar usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
+    local -ar usage_ops=( "${geometry_ops[@]}"
+			  "--info"
+			  "--title=Help screen" )
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
+}
+
+usage_yad() {
+    usage_zenity
 }

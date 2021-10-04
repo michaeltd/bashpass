@@ -26,30 +26,12 @@ func_assigncmds(){
 	export shrc=( "shred" "--zero" "--remove" ) || \
 	    export shrc=( "rm" "-P" "-f" )
 
-    case "${be}" in
-	"mem")
-	    export dcm=( "sqlite3" "-list" ) \
-		   rcm=( "sqlite3" "-line" ) \
-		   icm=( "sqlite3" "-csv" ) \
-		   ccm=( "sqlite3" "-column" "-header" ) \
-		   scm=( "sqlite3" "-separator" " " ) \
-		   sl3=( "sqlite3" );;
-	"dsk")
-	    export dcm=( "sqlite3" "-list" "${rpdb}" ) \
-		   rcm=( "sqlite3" "-line" "${rpdb}" ) \
-		   icm=( "sqlite3" "-csv" "${rpdb}" ) \
-		   ccm=( "sqlite3" "-column" "-header" "${rpdb}" ) \
-		   scm=( "sqlite3" "-separator" " " "${rpdb}" ) \
-		   sl3=( "sqlite3" "${rpdb}" );;
-    esac
+    export sl3="$(type -P sqlite3)"
 }
 
 func_assignvars(){
     # GPG file, db file related vars
-    if [[ -z "${gpgf}" ]]; then
-	export be="mem"
-	export gpgf="sample.${be}.gpg"
-    fi
+    [[ -z "${gpgf}" ]] && export gpgf="sample.gpg"
     export db="${gpgf//.gpg/}"
     export bngpgf="${gpgf}"
     export bndb="${db}"
@@ -120,15 +102,8 @@ func_setup(){
     echo -ne "\n  ${rpgpgf} Not found.\n  Would you like to build it? [y/N]: "
     if [[ "$(read -r r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	# exit on failed creates/encrypts.
-	case "${be}" in
-	    "mem")
-		local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
-		echo -ne "${sql}" | "${sl3[@]}" | "${gpgec[@]}" > "${rpgpgf}" || return $? ;;
-	    "dsk")
-		"${sl3[@]}" < "${sdn}/examples/create.sql" || return $?
-		"${gpgec[@]}" < "${rpdb}" > "${rpgpgf}" || return $? ;;
-	esac
-	
+	local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
+	echo -ne "${sql}" | "${sl3[@]}" | "${gpgec[@]}" > "${rpgpgf}" || return $?
     else
 	return 1
     fi
@@ -147,25 +122,8 @@ func_show_err() {
 }
 
 func_do_quit() {
-    case ${be} in
-	"mem")
-	    ${shrc[@]} "${mutex}"
-	    echo "${sbn} gracefull exit..."
-	    return "${1:-0}";;
-	"dsk")
-	    local -ar f2d=( "${rpdb}" "${mutex}" )
-	    # Upon successfull encryption ONLY shred files
-	    if ! "${gpgec[@]}" < "${rpdb}" > "${rpgpgf}"; then
-		func_show_err "Encryption failed or canceled!"
-		return "${?}"
-	    else
-		for i in ${f2d[@]}; do
-		    ${shrc[@]} "${i}";
-		done
-		echo "${sbn} gracefull exit..."
-		return "${1:-0}"
-	    fi;;
-    esac
+    ${shrc[@]} "${mutex}"
+    return "${1:-0}"
 }
 
 func_check_prereqs(){
@@ -191,72 +149,18 @@ func_check_mutex() {
     fi
 }
 
-# Decrypt .sqlite, setup temp and mutex or func_show_err.
 func_check_decrypt() {
     if ! [[ "$(file -b "${rpgpgf}")" =~ ^PGP ]]; then
 	func_show_err "${bngpgf}, does not appear to be a valid PGP file."
-	return $?
-    fi
-    case "${be}" in
-	"mem")
-	    if ! "${gpgdc[@]}" < "${rpgpgf}" &> /dev/null ; then
-		func_show_err "${bngpgf} decryption failed."
-		return $?
-	    else
-		touch "${mutex}"
-	    fi;;
-	"dsk")
-	    if ! "${gpgdc[@]}" < "${rpgpgf}" > "${rpdb}"; then
-		func_show_err "${bngpgf} decryption failed."
-		return $?
-	    elif ! [[ "$(file -b "${rpdb}")" =~ ^SQLite ]]; then # We do have an decrypted $db file so we might as well check it's validity.
-		func_show_err "${bndb}, does not appear to be a valid SQLite 3.x database file."
-		return $?
-	    else
-		touch "${mutex}"
-	    fi;;
-    esac
-}
-
-# SQL or func_show_err.
-func_check_be() {
-    if ! "${be}_export" &> /dev/null; then
-        func_show_err "Need a working db to function."
+    elif ! "${gpgdc[@]}" < "${rpgpgf}" &> /dev/null ; then
+	func_show_err "${bngpgf} decryption failed."
     fi
 }
 
-# SQL or func_show_err.
-func_check_mem() {
-    func_check_be
-}
-
-# SQL or func_show_err.
-func_check_dsk() {
-    func_check_be
-}
-
-func_read_dbflds(){
-    # ADHOC db table fields extractor just for the lolz factor.
-    local -a tbls=($(${be}_tables))
-    local schm="$(${be}_schema ${tbls[0]})"
-    schm="${schm^^}" # sqlite is case insensitive
-    local -a brkdwn=(
-	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT"
-	"EXISTS" "INTEGER" "REAL" "TEXT" "BLOB" "TEXT"
-	"NUMERIC" "NONE" "INT" "INTEGER" "TINYINT" "SMALLINT"
-	"MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT2" "INT8"
-	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
-	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
-	"DECIMAL" "BOOLEAN" "DATE" "DATETIME" "100" "256"
-	"PRIMARY" "KEY" "(" ")" "," ";" "\""
-    )
-
-    for i in ${brkdwn[@]}; do
-	schm="${schm//${i}/$' '}"
-    done
-    local -a arrflds=( ${schm} )
-    export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
-    unset tbls schm brkdwn arrflds
+func_check_mem(){
+    if ! "${be}_self_test"; then
+	func_show_err "${be} is having a bad day!"
+    fi
 }
 
 func_regex_allow(){
@@ -302,7 +206,3 @@ func_brl() {
     done
     [[ -n "${rl[*]}" ]] && echo -ne "${rl[*]}" || echo -ne "-1 No|Records|Found OFF"
 }
-
-# func_brlzen(){
-#     echo "$("${sl3[@]}" "$(${be}_brl)")"
-# }

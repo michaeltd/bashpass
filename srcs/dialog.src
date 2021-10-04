@@ -249,13 +249,12 @@ results_dialog(){
 	"${DIALOG}" ${bt_ops[@]} \
 		    "--title" "Password" \
 		    "--insecure" \
-		    "--passwordbox" "Hit OK ot preview (Inseure).\n#${id}'s Password Is:" \
+		    "--passwordbox" "Hit OK ot preview (Insecure).\n#${id}'s Password Is:" \
 		    "${geops[@]}" "${pw}" 2> /dev/null && \
 	    "${DIALOG}" ${bt_ops[@]} \
 			"--title" "Password" \
 			"--inputbox" "#${id}'s Password Is:" \
-			"${geops[@]}" "${pw}" 2> /dev/null || \
-		return $?
+			"${geops[@]}" "${pw}" 2> /dev/null
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
