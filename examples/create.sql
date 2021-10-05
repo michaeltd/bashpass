@@ -2,6 +2,8 @@
 --
 -- Initialize a demo SQLite3 db. usage: sqlite3 ../databases/sample < ./create.sql
 
+-- CREATE TABLE IF NOT EXISTS ACCOUNTS (ID INTEGER PRIMARY KEY, DM TEXT,EM TEXT,UN TEXT,PW TEXT,CM TEXT,UNIQUE(DM, EM)) WITHOUT ROWID;
+
 CREATE TABLE IF NOT EXISTS ACCOUNTS (DM TEXT,EM TEXT,UN TEXT,PW TEXT,CM TEXT,PRIMARY KEY(DM, EM));
 
 INSERT OR REPLACE INTO ACCOUNTS VALUES('https://facebook.com/','adummy@email.com' ,'emanresu','o6vA/*2HSt4a_h!]','foobuzzbar');

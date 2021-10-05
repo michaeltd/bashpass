@@ -31,7 +31,6 @@ func_assigncmds(){
 
 func_assignvars(){
     # GPG file, db file related vars
-    [[ -z "${gpgf}" ]] && export gpgf="sample.gpg"
     export db="${gpgf//.gpg/}"
     export bngpgf="${gpgf}"
     export bndb="${db}"
@@ -103,7 +102,7 @@ func_setup(){
     if [[ "$(read -r r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	# exit on failed creates/encrypts.
 	local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
-	echo -ne "${sql}" | "${sl3[@]}" | "${gpgec[@]}" > "${rpgpgf}" || return $?
+	echo -ne "${sql}" | "${sl3}" | "${gpgec[@]}" > "${rpgpgf}" || return $?
     else
 	return 1
     fi
@@ -198,7 +197,7 @@ func_gpw() {
 # Build Row Lines (for (X)dialog check/radio lists)
 func_brl() {
     local IFS=$'\n'
-    local -a rs=( $(${be}_runcustomsql "${1:-$(${be}_brl_sql)}") )
+    local -a rs=( $(${be}_runcustomquery "${1:-$(${be}_brl_sql)}") )
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )

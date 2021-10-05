@@ -1,9 +1,5 @@
 #!/bin/bash
 
-mem_shred(){
-    ${shrc[@]} "${rpdb}"
-}
-
 mem_crt(){
     echo "$("${gpgdc[@]}" < "${rpgpgf}")"
 }
@@ -57,7 +53,7 @@ mem_delete_ids(){
 mem_session(){
     "${gpgdc[@]}" < "${rpgpgf}" | "${sl3}" "${rpdb}"
     "${sl3}" "${rpdb}"
-    "${be}_shred"
+    ${shrc[@]} "${rpdb}"
 }
 
 mem_tables(){
@@ -114,7 +110,7 @@ mem_select_all_id_eq(){
 }
 
 mem_export(){
-    local qry=".mode csv\nSELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
+    local qry=".mode csv\n.header on\nSELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
     "${be}_prev"
 }
 
@@ -128,7 +124,7 @@ mem_showpw(){
     "${be}_prev"
 }
 
-mem_runcustomsql(){
+mem_runcustomquery(){
     local qry="${1}"
     "${be}_prev"
 }

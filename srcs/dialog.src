@@ -36,28 +36,31 @@ menu_Xdialog(){
     menu_dialog
 }
 
-create_dialog() {
-    local -a vals
-    local ttl="${FUNCNAME[@]:(-4):1} form"
-    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
-You can use a pword of your choice or a desired length (8-64 chars)
-or leave empty for auto (16 chars).
-Make sure you're not using any restricted characters as input.
-Like  : $(func_regex_forbid)
+create_commons(){
+    export -a vals
+    export ttl="${FUNCNAME[@]:(-4):1} form"
+    export pwmsg="Passwords can be alpha-numeric-punctuation characters.\n
+You can use a pword of your choice or a desired length (8-64 chars)\n
+or leave empty for auto (16 chars).\n
+Make sure you're not using any restricted characters as input.\n
+Like  : $(func_regex_forbid)\n
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     if [[ -z "${1}" ]]; then # Create mode
-	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	pw1="${pw}" cm="${cm:-"comments goes here..."}"
+	export dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	export un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	export pw1="${pw}" cm="${cm:-"comments goes here..."}"
     else # Update mode
-        id="${1}"
+        export id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $("${sl3[@]}" "$(${be}_select_all_id_eq "${id}")") )
-	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+	local -a rs=( $(${be}_select_all_id_eq "${id}") )
+	export dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	export un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	export pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
     fi
+}
 
+create_dialog() {
+    create_commons "${@}"
     local -arx create_ops=( "${bt_ops[@]}" \
 			    "--title" "${ttl^}" \
 			    "--ok-label" "Submit" \
@@ -71,7 +74,6 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			     "Password        :" 4 1 "$pw"  4 20 50 0 1 \
 			     "Verify Password :" 5 1 "$pw1" 5 20 50 0 1 \
 			     "Comments        :" 6 1 "$cm"  6 20 50 0 0 )
-
     local IFS=$'\|'
     exec 3>&1
     vals=( $("${DIALOG}" "${create_ops[@]}" 2>&1 1>&3) ) || return $?
@@ -81,73 +83,58 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 }
 
 create_cdialog(){
-    create_dialog "${1}"
+    create_dialog "${@}"
 }
 
 create_Xdialog() {
-    local -a vals
-    local ttl="${FUNCNAME[@]:(-4):1} form" input
-    local pwmsg="Passwords can be alpha-numeric-punctuation characters.\n
-You can use a pword of your choice or a desired length (8-64 chars)\n
-or leave empty for auto (16 chars).\n
-Make sure you're not using any restricted characters as input.\n
-Like  : $(func_regex_forbid)\n
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
-    if [[ -z "${1}" ]]; then # Create mode
-	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	pw1="${pw}" cm="${cm:-"comments goes here..."}"
-    else # Update mode
-        id="${1}"
-	local IFS=$'\|'
-	local -a rs=( $(${be}_select_all_id_eq "${id}") )
-	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
-    fi
+    create_commons "${@}"
+    local -ar create_ops=( "${bt_ops[@]}"
+				"--stdout"
+				"--title" "${ttl^}"
+				"--left"
+				"--separator" "|"
+				"--3inputsbox" "${ttl^}: Enter required details!\n${pwmsg}\n"
+				"${geops[@]}"
+				"Domain" "${dm}"
+				"Email" "${em}"
+				"UName" "${un}" )
 
+    local -ar pw_ops=( "${bt_ops[@]}"
+			"--stdout"
+			"--title" "Password"
+			"--left"
+			"--insecure"
+			"--passwordbox" "${pwmsg}"
+			"${geops[@]}" )
+
+    local -ar p1_ops=( "${bt_ops[@]}"
+			 "--stdout"
+    			 "--title" "Validate Password"
+			 "--left"
+			 "--insecure"
+			 "--passwordbox" "${pwmsg}"
+			 "${geops[@]}" )
+
+    local -ar cm_ops=( "${bt_ops[@]}"
+			 "--stdout"
+    			 "--title" "Comments"
+			 "--left"
+			 "--inputbox" "Any Comments?"
+			 "${geops[@]}" )
+    
     local IFS=$'\|'
-
-    vals=( $("${DIALOG}" "${bt_ops[@]}" \
-			 "--stdout" \
-			 "--title" "${ttl^}" \
-			 "--left" \
-			 "--separator" "|" \
-			 "--3inputsbox" "${ttl^}: Enter required details!\n${pwmsg}\n" \
-			 "${geops[@]}" \
-			 "Domain" "${dm}" \
-			 "Email" "${em}" \
-			 "UName" "${un}" ) ) || return $?
-
+    vals=( $("${DIALOG}" "${create_ops[@]}" ) ) || return $?
     local IFS=$'\ \t\n'
 
     dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}"
 
-    input="$("${DIALOG}" "${bt_ops[@]}" \
-			 "--stdout" \
-			 "--title" "Password" \
-			 "--left" \
-			 "--insecure" \
-			 "--passwordbox" "${pwmsg}" \
-			 "${geops[@]}" "${pw}")" || return $?
+    input="$("${DIALOG}" "${pw_ops[@]}" "${pw}")" || return $?
     pw="${input:-${pw}}"
 
-    input="$("${DIALOG}" "${bt_ops[@]}" \
-			 "--stdout" \
-    			 "--title" "Validate Password" \
-			 "--left" \
-			 "--insecure" \
-			 "--passwordbox" "${pwmsg}" \
-			 "${geops[@]}" "${pw1}")" || return $?
-
+    input="$("${DIALOG}" "${p1_ops[@]}" "${pw1}")" || return $?
     pw1="${input:-${pw1}}"
 
-    input="$("${DIALOG}" "${bt_ops[@]}" \
-			 "--stdout" \
-    			 "--title" "Comments" \
-			 "--left" \
-			 "--inputbox" "Any Comments?" \
-			 "${geops[@]}" "${cm}")" || return $?
+    input="$("${DIALOG}" "${cm_ops[@]}" "${cm}")" || return $?
     cm="${input:-${cm}}"
 
     export dm em un pw pw1 cm
@@ -237,34 +224,40 @@ exportcsv_Xdialog(){
 
 results_dialog(){
     local pw errlvl
+
+    local -ar preview_ops=( "${bt_ops[@]}"
+			    "--title" "${FUNCNAME[@]:(-4):1}"
+			    "--column-separator" "|"
+			    "--radiolist" "Select account to preview/copy password:"
+			    "${geops[@]}" 10 )
+
+    local -ar showpw_ops=( ${bt_ops[@]} 
+		    "--title" "Password" 
+		    "--insecure" 
+		    "--passwordbox" "Hit OK ot preview (Insecure).\n#${id}'s Password Is:" 
+		    "${geops[@]}" )
+
+    local -ar rlysow_pwo=( ${bt_ops[@]} \
+			"--title" "Password" \
+			"--inputbox" "#${id}'s Password Is:" \
+			"${geops[@]}" )
     while :; do
-	"${DIALOG}" "${bt_ops[@]}" \
-		    "--title" "${FUNCNAME[@]:(-4):1}" \
-		    "--column-separator" "|" \
-		    "--radiolist" "Select account to preview/copy password:" \
-		    "${geops[@]}" 10 $(func_brl "${1}") 2> "${tf}" || return $?
+	"${DIALOG}" "${preview_ops[@]}" $(func_brl "${1}") 2> "${tf}" || return $?
 	id="$(cat "${tf}")"
 	[[ -z "${id}" ]] && return 1
 	pw="$(${be}_showpw "${id}")"
-	"${DIALOG}" ${bt_ops[@]} \
-		    "--title" "Password" \
-		    "--insecure" \
-		    "--passwordbox" "Hit OK ot preview (Insecure).\n#${id}'s Password Is:" \
-		    "${geops[@]}" "${pw}" 2> /dev/null && \
-	    "${DIALOG}" ${bt_ops[@]} \
-			"--title" "Password" \
-			"--inputbox" "#${id}'s Password Is:" \
-			"${geops[@]}" "${pw}" 2> /dev/null
+	"${DIALOG}" "${showpw_ops[@]}" "${pw}" 2> /dev/null && \
+	    "${DIALOG}" "${rlysow_pwo[@]}" "${pw}" 2> /dev/null
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }
 
 results_cdialog(){
-    results_dialog "${1}"
+    results_dialog "${@}"
 }
 
 results_Xdialog(){
-    results_dialog "${1}"
+    results_dialog "${@}"
 }
 
 message_dialog(){

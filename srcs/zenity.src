@@ -32,44 +32,45 @@ menu_yad(){
     menu_zenity
 }
 
-create_zenity() {
-    local -a vals
-    local ttl="${FUNCNAME[@]:(-4):1} form"
-    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
+create_commons(){
+    export -a vals
+    export ttl="${FUNCNAME[@]:(-4):1} form"
+    export pwmsg="Passwords can be alpha-numeric-punctuation characters.
 You can use a pword of your choice or a desired length (8-64 chars)
 or leave empty for auto (16 chars).
 Make sure you're not using any restricted characters as input.
 Like  : $(func_regex_forbid)
 Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
-    local -ar review_ops=( "${gt_ops[@]}"
+    if [[ -z "${1}" ]]; then # Create mode
+	export dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	export un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	export pw1="${pw}" cm="${cm:-"comments goes here..."}"
+    else # Update mode
+        export id="${1}"
+	local IFS=$'\|'
+	local -a rs=( $(${be}_select_all_id_eq "${id}") )
+	export dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	export un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	export pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+    fi
+}
+
+create_zenity() {
+    create_commons "${@}"
+    local -ar create_ops=( "${gt_ops[@]}"
 			   "--text=${ttl^}: Enter required details!\n${pwmsg}\n"
 			   "--list" "--editable" "--print-column=ALL"
 			   "--column=Domain" "--column=Email"
-			   "--column=User Name" "--column=Comments" )
-
+			   "--column=User Name" "--column=Comments" )    
     local -ar pwd0_ops=( "--title=${ttl^}"
 			 "--text=${pwmsg}\n\nEnter password:\n"
 			 "--entry" "--hide-text" )
-
     local -ar pwd1_ops=( "--title=${ttl^}"
 			 "--text=${pwmsg}\n\nVerify password:\n"
 			 "--entry" "--hide-text" )
 
-    if [[ -z "${1}" ]]; then # Create mode
-	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	pw1="${pw}" cm="${cm:-"comments goes here..."}"
-    else # Update mode
-        id="${1}"
-	local IFS=$'\|'
-	local -a rs=( $(${be}_select_all_id_eq "${id}") )
-	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
-    fi
-
     local IFS=$'\|\t\n'
-    vals=( $("${DIALOG}" "${review_ops[@]}" "${dm}" "${em}" "${un}" "${cm}") ) || return $?
+    vals=( $("${DIALOG}" "${create_ops[@]}" "${dm}" "${em}" "${un}" "${cm}") ) || return $?
     local IFS=$'\ \t\n'
 
     dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}" cm="${vals[3]:-cm}"
@@ -84,27 +85,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 }
 
 create_yad() {
-    local -a vals
-    local ttl="${FUNCNAME[@]:(-4):1} form"
-    local pwmsg="Passwords can be alpha-numeric-punctuation characters.
-You can use a pword of your choice or a desired length (8-64 chars)
-or leave empty for auto (16 chars).
-Make sure you're not using any restricted characters as input.
-Like  : $(func_regex_forbid)
-Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
-    if [[ -z "${1}" ]]; then # Create mode
-	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
-	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
-	pw1="${pw}" cm="${cm:-"comments goes here..."}"
-    else # Update mode
-        id="${1}"
-	local IFS=$'\|'
-	local -a rs=( $(${be}_select_all_id_eq "${id}") )
-        dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
-	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
-	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
-    fi
-
+    create_commons "${@}"
     local -ar create_ops=( "${geometry_ops[@]}"
 			   "--text" "${ttl^}: Enter required details!\n${pwmsg}\n"
 			   "--form"
@@ -116,7 +97,6 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
 			   "--field=Comment!${cm}" "${cm}" )
 
     local IFS=$'\|\t\n'
-
     vals=( $("${DIALOG}" "${create_ops[@]}") ) || return $?
 
     export dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}" \
@@ -161,9 +141,8 @@ delete_yad() {
 }
 
 csv_zenity(){
-    local desc="${FUNCNAME[@]:(-4):1}"
     local -ar csv_ops=( "${geometry_ops[@]}" \
-			    "--text=Select a csv file to ${desc:0:6}:" \
+			    "--text=Select a csv file to ${FUNCNAME[1]:0:6}:" \
 			    $([[ "${DIALOG}" =~ zenity$ ]] && echo -n "--file-selection" || echo -n "--file") \
 			    $([[ "${DIALOG}" =~ yad$ ]] && echo -n "${2} --file-name=${1}") )
     csvf="$("${DIALOG}" "${csv_ops[@]}")" || return $?
@@ -171,16 +150,12 @@ csv_zenity(){
     export csvf="${csvf//\|}"
 }
 
-csv_yad(){
-    csv_zenity "${@}"
-}
-
 importcsv_zenity() {
     csv_zenity
 }
 
 importcsv_yad() {
-    csv_yad "${sdn}/examples/import.csv"
+    csv_zenity "${sdn}/examples/import.csv"
 }
 
 exportcsv_zenity() {
@@ -188,7 +163,7 @@ exportcsv_zenity() {
 }
 
 exportcsv_yad() {
-    csv_yad "${sdn}/examples/export.csv" "--save"
+    csv_zenity "${sdn}/examples/export.csv" "--save"
 }
 
 results_zenity(){
@@ -211,7 +186,7 @@ results_zenity(){
 
     local IFS=$'\|\t\n'
     while :; do
-	id="$("${DIALOG}" "${preview_ops[@]}" $("${be}_runcustomsql" "${1}"))" || return $?
+	id="$("${DIALOG}" "${preview_ops[@]}" $("${be}_runcustomquery" "${1}"))" || return $?
 	local pw="$(${be}_showpw "${id//\|}")"
 	"${DIALOG}" "${showpw_ops[@]}" "--entry-text=${pw}" > /dev/null && \
 	    "${DIALOG}" "${rlysow_ops[@]}" "--entry-text=${pw}" > /dev/null
@@ -224,8 +199,7 @@ results_yad(){
 }
 
 message_zenity(){
-    "${DIALOG}" "${title_op}" \
-		"--info" \
+    "${DIALOG}" "${title_op}" "--info" \
 		$([[ "${DIALOG}" =~ zenity$ ]] && echo -n "--no-wrap") \
 		"--text=Account #${id} deleted. No errors reported."
 }
@@ -235,9 +209,7 @@ message_yad(){
 }
 
 usage_zenity() {
-    local -ar usage_ops=( "${geometry_ops[@]}"
-			  "--info"
-			  "--title=Help screen" )
+    local -ar usage_ops=( "${geometry_ops[@]}" "--info" "--title=Help screen" )
     "${DIALOG}" "${usage_ops[@]}" "--text=${gui_hmsg[*]}"
 }
 

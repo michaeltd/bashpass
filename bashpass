@@ -20,8 +20,8 @@ declare -r dbsd="dbs" \
 	scsd="srcs"
 # cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
 # declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
-declare -r bpusage="Usage: ${sbn} [sample.mem] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
-declare usrintrfce gpgf db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="mem"
+declare -r bpusage="Usage: ${sbn} [default.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
+declare usrintrfce gpgf="default.gpg" db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="mem"
 
 create() {
     local maxid="$(${be}_maxid)" id="${1}" dm em un pw pw1 cm str2chk="|"
@@ -61,7 +61,7 @@ update() {
 delete() {
     local id
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
-    "${be}_delete_ids" "${id}"
+    "${be}_delete_ids" ${id[@]}
     "message_${usrintrfce}"
 }
 
@@ -179,7 +179,7 @@ bashpass() {
     # GPG file not found? Let's make one and take it from there.
     [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
     func_check_decrypt || return $?
-    [[ "${be}" == "mem" ]] && "${be}_read_dbflds"
+    [[ "${be}" == "mem" ]] && "${be}_read_dbflds" # Usefull only on sql backends in order to build queries.
     func_check_${be} || return $?
 
     touch "${mutex}"
