@@ -27,7 +27,13 @@ mem_insert_rec(){
     local vals=( ${1} )
     local IFS=$'\ \t\n'
     local vals[0]=${vals[0]:-NULL} vals[1]=${vals[1]:-NULL} vals[2]=${vals[2]:-NULL} vals[3]=${vals[3]:-NULL} vals[4]=${vals[4]:-NULL}
-    local qry="INSERT INTO ${act} VALUES('${vals[0]//:/\:}', '${vals[1]}', '${vals[2]}', '${vals[3]}', '${vals[4]}');"
+    local qry="INSERT INTO ${act} \n \
+    	  	      (${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf}) \n \
+    	       VALUES ('${vals[0]//:/\:}', \n \
+	       	      '${vals[1]}', \n \
+		      '${vals[2]}', \n \
+		      '${vals[3]}', \n \
+		      '${vals[4]}');"
     "${be}_mod"
 }
 
@@ -35,7 +41,13 @@ mem_update_rec(){
     local IFS=$'\|'
     local vals=( ${1} )
     local IFS=$'\ \t\n'
-    local qry="UPDATE ${act} SET ${dmf} = '${vals[1]}', ${emf} = '${vals[2]}', ${unf} = '${vals[3]}', ${pwf} = '${vals[4]}', ${cmf} = '${vals[5]}' WHERE ${idf} = '${vals[0]}';"
+    local qry="UPDATE ${act} \n \
+    	       SET ${dmf} = '${vals[1]}', \n \
+	       	   ${emf} = '${vals[2]}', \n \
+		   ${unf} = '${vals[3]}', \n \
+		   ${pwf} = '${vals[4]}', \n \
+		   ${cmf} = '${vals[5]}'  \n \
+	       WHERE ${idf} = '${vals[0]}';"
     "${be}_mod"
 }
 
@@ -66,31 +78,45 @@ mem_schema(){
     "${be}_prev"
 }
 
+mem_dfltcrtstmnt(){
+    cat "${sdn}/examples/create.sql" | while read -r line; do
+	if [[ "${line}" =~ ^CREATE ]]; then
+	    echo "${line}"
+	    break
+	fi
+    done
+}
+
 mem_read_dbflds(){
     # ADHOC db table fields extractor just for the lolz factor.
     local -a tbls=($(${be}_tables))
     local schm="$(${be}_schema ${tbls[0]})"
+    local dfst="$(${be}_dfltcrtstmnt)"
+    if [[ "${schm^^}" != "${dfst^^}" ]]; then
+	return "255" # Non standard create statement. (according to git)
+    fi
     schm="${schm^^}" # sqlite is case insensitive
     local -a brkdwn=(
-	"CREATE" "TABLE" "IF" "NOT" "NULL" "DEFAULT"
-	"EXISTS" "INTEGER" "REAL" "TEXT" "BLOB" "TEXT"
+	"CREATE" "TABLE" "IF" "NOT" "EXISTS" "NULL"
+	"DEFAULT" "PRIMARY" "KEY" "UNIQUE" "AUTOINCREMENT"
+	"INTEGER" "REAL" "TEXT" "BLOB" "TEXT"
 	"NUMERIC" "NONE" "INT" "INTEGER" "TINYINT" "SMALLINT"
 	"MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT2" "INT8"
 	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
 	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
-	"DECIMAL" "BOOLEAN" "DATE" "DATETIME" "100" "256"
-	"PRIMARY" "KEY" "(" ")" "," ";" "\""
+	"DECIMAL" "BOOLEAN" "DATE" "DATETIME"
+	"(" ")" "," ";" "\""
     )
-
     for i in ${brkdwn[@]}; do
 	schm="${schm//${i}/$' '}"
     done
     local -a arrflds=( ${schm} )
-    export idf="rowid" act="${arrflds[0]}" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
-    unset tbls schm brkdwn arrflds
+    export act="${arrflds[0]}" idf="${arrflds[1]}" dmf="${arrflds[2]}" emf="${arrflds[3]}" unf="${arrflds[4]}" pwf="${arrflds[5]}" cmf="${arrflds[6]}"
+    unset tbls schm dfst brkdwn arrflds
 }
 
 mem_self_test() {
+    "${be}_read_dbflds" || return $?
     "${be}_export" &> /dev/null
 }
 
@@ -105,17 +131,17 @@ mem_brl(){
 }
 
 mem_select_all_id_eq(){
-    local qry="SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+    local qry="SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
     "${be}_prev"
 }
 
 mem_export(){
-    local qry=".mode csv\n.header on\nSELECT ${idf} as ID,* FROM ${act} ORDER BY ${idf} ASC;"
+    local qry=".mode csv\n.header on\nSELECT * FROM ${act} ORDER BY ${idf} ASC;"
     "${be}_prev"
 }
 
 mem_select_preview(){
-    local qry="SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+    local qry="SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
     "${be}_prev"
 }
 
@@ -130,7 +156,7 @@ mem_runcustomquery(){
 }
 
 mem_preview_sql(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
 }
 
 mem_brl_sql(){
@@ -138,13 +164,13 @@ mem_brl_sql(){
 }
 
 mem_newrecs_sql(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
 }
 
 mem_criteria_sql(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
 }
 
 mem_id_sql(){
-    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }

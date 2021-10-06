@@ -114,6 +114,10 @@ password generator, storage and reference for the terminal and/or X.
 
    * This script assumes you can secure the safety of your computer hardware/software at least for the duration of its operations.
 
+   * There is no backwards compatibility maintanance plans between batabases of different versions of this script.
+
+     So if you thinking of a git pull/fetch, make sure to hit that csv export menu option first.
+
 ** [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]]
 
    If you don't already have one, make a [[https://www.gnupg.org/gph/en/manual/c14.html][gpg2 keyring]].
@@ -282,6 +286,9 @@ password generator, storage and reference for the terminal and/or X.
    
 ** <2021-10-02 Sat>
    For security reasons SQLite3 will work in :memory: mode only.
+   
+** <2021-10-05 Tue>
+   Basic file checks for csv import/export functions impemented.
 
 * Contributing [[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
 

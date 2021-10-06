@@ -105,6 +105,7 @@ results_terminal(){
 	[[ -z "${id}" ]] && return 1
 	pw="$("${be}_showpw" "${id}")"
 	echo "Account: ${id}, Password: ${pw}"
+	read -rp "Return to continue... "
 	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
     done
 }

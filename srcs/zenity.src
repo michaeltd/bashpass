@@ -61,24 +61,25 @@ create_zenity() {
 			   "--text=${ttl^}: Enter required details!\n${pwmsg}\n"
 			   "--list" "--editable" "--print-column=ALL"
 			   "--column=Domain" "--column=Email"
-			   "--column=User Name" "--column=Comments" )    
+			   "--column=User Name" "--column=Comments"
+			   "${dm}" "${em}" "${un}" "${cm}" )
     local -ar pwd0_ops=( "--title=${ttl^}"
 			 "--text=${pwmsg}\n\nEnter password:\n"
-			 "--entry" "--hide-text" )
+			 "--entry" "--hide-text" "--entry-text=${pw}" )
     local -ar pwd1_ops=( "--title=${ttl^}"
 			 "--text=${pwmsg}\n\nVerify password:\n"
-			 "--entry" "--hide-text" )
+			 "--entry" "--hide-text" "--entry-text=${pw1}" )
 
     local IFS=$'\|\t\n'
-    vals=( $("${DIALOG}" "${create_ops[@]}" "${dm}" "${em}" "${un}" "${cm}") ) || return $?
+    vals=( $("${DIALOG}" "${create_ops[@]}") ) || return $?
     local IFS=$'\ \t\n'
 
     dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}" cm="${vals[3]:-cm}"
 
-    input="$("${DIALOG}" "${pwd0_ops[@]}" "--entry-text=${pw}")" || return $?
+    input="$("${DIALOG}" "${pwd0_ops[@]}")" || return $?
     pw="${input:-${pw}}"
 
-    input="$("${DIALOG}" "${pwd1_ops[@]}" "--entry-text=${pw1}")" || return $?
+    input="$("${DIALOG}" "${pwd1_ops[@]}")" || return $?
     pw1="${input:-${pw1}}"
 
     export dm em un pw pw1 cm

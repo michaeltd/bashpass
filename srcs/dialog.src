@@ -105,7 +105,7 @@ create_Xdialog() {
 			"--left"
 			"--insecure"
 			"--passwordbox" "${pwmsg}"
-			"${geops[@]}" )
+			"${geops[@]}" "${pw}")
 
     local -ar p1_ops=( "${bt_ops[@]}"
 			 "--stdout"
@@ -113,14 +113,14 @@ create_Xdialog() {
 			 "--left"
 			 "--insecure"
 			 "--passwordbox" "${pwmsg}"
-			 "${geops[@]}" )
+			 "${geops[@]}" "${pw1}")
 
     local -ar cm_ops=( "${bt_ops[@]}"
 			 "--stdout"
     			 "--title" "Comments"
 			 "--left"
 			 "--inputbox" "Any Comments?"
-			 "${geops[@]}" )
+			 "${geops[@]}" "${cm}")
     
     local IFS=$'\|'
     vals=( $("${DIALOG}" "${create_ops[@]}" ) ) || return $?
@@ -128,13 +128,13 @@ create_Xdialog() {
 
     dm="${vals[0]:-${dm}}" em="${vals[1]:-${em}}" un="${vals[2]:-${un}}"
 
-    input="$("${DIALOG}" "${pw_ops[@]}" "${pw}")" || return $?
+    input="$("${DIALOG}" "${pw_ops[@]}")" || return $?
     pw="${input:-${pw}}"
 
-    input="$("${DIALOG}" "${p1_ops[@]}" "${pw1}")" || return $?
+    input="$("${DIALOG}" "${p1_ops[@]}")" || return $?
     pw1="${input:-${pw1}}"
 
-    input="$("${DIALOG}" "${cm_ops[@]}" "${cm}")" || return $?
+    input="$("${DIALOG}" "${cm_ops[@]}")" || return $?
     cm="${input:-${cm}}"
 
     export dm em un pw pw1 cm

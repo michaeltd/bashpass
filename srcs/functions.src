@@ -157,8 +157,14 @@ func_check_decrypt() {
 }
 
 func_check_mem(){
-    if ! "${be}_self_test"; then
+    "${be}_self_test"
+    local errlvl=$?
+    if [[ "${errlvl}" -eq "255" ]]; then
+	func_show_err "Please create your db by provided means."
+	return "${errlvl}"
+    elif [[ "${errlvl}" -ne "0" ]]; then
 	func_show_err "${be} is having a bad day!"
+	return "${errlvl}"
     fi
 }
 

@@ -69,6 +69,7 @@ importcsv() {
     local maxid csvf
     maxid="$(${be}_maxid)"
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
+    [[ ! -r "${csvf}" ]] && { func_show_err "${csvf##*/}: File not readable!"; return $?; }
     "${be}_import" "${csvf}"
     "results_${usrintrfce}" "$(${be}_newrecs_sql "${maxid}")"
 }
@@ -76,6 +77,7 @@ importcsv() {
 exportcsv(){
     local csvf
     "${FUNCNAME[0]}_${usrintrfce}" || return $?
+    [[ -e "${csvf}" ]] && { func_show_err "${csvf##*/}: File already exists!"; return $?; }
     "${be}_export" > "${csvf}"
     if [[ -x "$(type -P xdg-open)" ]]; then
     	"$(type -P xdg-open)" "${csvf}"
@@ -178,8 +180,8 @@ bashpass() {
 
     # GPG file not found? Let's make one and take it from there.
     [[ -r "${rpgpgf}" ]] || func_setup || return $? # Exit on failed attempts.
+
     func_check_decrypt || return $?
-    [[ "${be}" == "mem" ]] && "${be}_read_dbflds" # Usefull only on sql backends in order to build queries.
     func_check_${be} || return $?
 
     touch "${mutex}"
