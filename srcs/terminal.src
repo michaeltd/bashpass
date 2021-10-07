@@ -31,7 +31,7 @@ create_terminal() {
     else # Update mode
         id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $(${be}_select_all_id_eq "${id}") )
+	local -a rs=( $(${be}_allbyid "${id}") )
 	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"

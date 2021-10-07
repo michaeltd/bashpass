@@ -101,8 +101,7 @@ func_setup(){
     echo -ne "\n  ${rpgpgf} Not found.\n  Would you like to build it? [y/N]: "
     if [[ "$(read -r r;echo "${r:-n}")" =~ ^[Yy] ]]; then
 	# exit on failed creates/encrypts.
-	local sql="$(cat "${sdn}/examples/create.sql")\n.dump\n"
-	echo -ne "${sql}" | "${sl3}" | "${gpgec[@]}" > "${rpgpgf}" || return $?
+	${be}_mkdefaultdb || return $?
     else
 	return 1
     fi
@@ -203,7 +202,7 @@ func_gpw() {
 # Build Row Lines (for (X)dialog check/radio lists)
 func_brl() {
     local IFS=$'\n'
-    local -a rs=( $(${be}_runcustomquery "${1:-$(${be}_brl_sql)}") )
+    local -a rs=( $(${be}_runcustomquery "${1:-$(${be}_preview_sql)}") )
     for i in ${rs[@]}; do
 	local IFS=$'\|'
 	local -a rec=( ${i[@]} )

@@ -48,7 +48,7 @@ Namely: space,backslash,backtick,pound,colon,comma or quotes(both)."
     else # Update mode
         export id="${1}"
 	local IFS=$'\|'
-	local -a rs=( $(${be}_select_all_id_eq "${id}") )
+	local -a rs=( $(${be}_allbyid "${id}") )
 	export dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
 	export un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
 	export pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
@@ -124,7 +124,7 @@ update_zenity() {
 			   "--column=Email" "--column=Username"
 			   "--column=Comments" )
     local IFS=$'\|\t\n'
-    id="$("${DIALOG}" "${update_ops[@]}" $(${be}_brl))" || return $?
+    id="$("${DIALOG}" "${update_ops[@]}" $(${be}_preview))" || return $?
     [[ -z "${id}" ]] && return 1
     export id="${id//\|}"
 }

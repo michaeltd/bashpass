@@ -17,6 +17,11 @@ mem_prev(){
 	"${sl3}"
 }
 
+mem_mkdefaultdb(){
+    local qry="$(cat "${sdn}/examples/create.sql")\n.dump\n"
+    echo -ne "${qry}" | "${sl3}" | "${gpgec[@]}" > "${rpgpgf}" || return $?
+}
+
 mem_import(){
     local qry=".mode csv\n.import ${1} ${act}"
     "${be}_mod"
@@ -28,7 +33,6 @@ mem_insert_rec(){
     local IFS=$'\ \t\n'
     local vals[0]=${vals[0]:-NULL} vals[1]=${vals[1]:-NULL} vals[2]=${vals[2]:-NULL} vals[3]=${vals[3]:-NULL} vals[4]=${vals[4]:-NULL}
     local qry="INSERT INTO ${act} \n \
-    	  	      (${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf}) \n \
     	       VALUES ('${vals[0]//:/\:}', \n \
 	       	      '${vals[1]}', \n \
 		      '${vals[2]}', \n \
@@ -111,7 +115,7 @@ mem_read_dbflds(){
 	schm="${schm//${i}/$' '}"
     done
     local -a arrflds=( ${schm} )
-    export act="${arrflds[0]}" idf="${arrflds[1]}" dmf="${arrflds[2]}" emf="${arrflds[3]}" unf="${arrflds[4]}" pwf="${arrflds[5]}" cmf="${arrflds[6]}"
+    export act="${arrflds[0]}" idf="rowid" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
     unset tbls schm dfst brkdwn arrflds
 }
 
@@ -120,19 +124,34 @@ mem_self_test() {
     "${be}_export" &> /dev/null
 }
 
+mem_criteria_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
+}
+
+mem_newrecs_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > '${1}';"
+}
+
+mem_id_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+mem_allbyid_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+mem_preview_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+}
+
 mem_maxid(){
     local qry="SELECT MAX(${idf}) FROM ${act};"
     "${be}_prev"
 }
 
-mem_brl(){
-    local qry="SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
-    "${be}_prev"
-}
-
-mem_select_all_id_eq(){
-    local qry="SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
-    "${be}_prev"
+mem_allbyid(){
+     local qry="$(${be}_allbyid_sql "${@}")"
+     "${be}_prev"
 }
 
 mem_export(){
@@ -140,8 +159,8 @@ mem_export(){
     "${be}_prev"
 }
 
-mem_select_preview(){
-    local qry="SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+mem_preview(){
+    local qry="$(${be}_preview_sql)"
     "${be}_prev"
 }
 
@@ -153,24 +172,4 @@ mem_showpw(){
 mem_runcustomquery(){
     local qry="${1}"
     "${be}_prev"
-}
-
-mem_preview_sql(){
-    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
-}
-
-mem_brl_sql(){
-    echo "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
-}
-
-mem_newrecs_sql(){
-    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > ${1};"
-}
-
-mem_criteria_sql(){
-    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
-}
-
-mem_id_sql(){
-    echo -ne "SELECT ${idf}, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
 }

@@ -164,7 +164,7 @@ bashpass() {
     func_assignui # Assign ?UI related vars, Needs optional args set.
     func_assignvars # Vars we'll need
     func_assigncmds # Commands we'll need
-    
+
     # Source backend/UI functions
     declare -ra srcsfs=(
 	"${scsd}/${be}.src"
