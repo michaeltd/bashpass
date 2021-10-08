@@ -97,17 +97,18 @@ usage() {
 menu() {
     local usrinpt="" errlvl
     # Build menus and help messages.
-    local -a tui_ops=( "${green}Create${default}" "${blue}Search${default}" "${magenta}Update${default}" "${red}Delete${default}" "${yellow}Import${default}" "${yellow}Export${default}" "${cyan}SQLite3${default}" "${white}Help${default}" "${white}Quit${default}" )
-    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import" "Export" "SQLite3" "Help" "Quit" )
+    local -a gui_ops=( "Create" "Search" "Update" "Delete" "Import CSV" "Export CSV" "SQLite3" "Help" "Quit" )
+    local -a colors=( "${green}" "${blue}" "${magenta}" "${red}" "${yellow}" "${yellow}" "${cyan}" "${white}" "${white}" )
+    for i in ${!gui_ops[@]}; do local tui_ops[i]="${colors[i]}${gui_ops[i]}${default}"; done
     local -a sdesc=( "New entry" "Find account" "Regen password" "Remove entry" "Import a csv file" "Export a csv file" "Sqlite3 session" "Help screen" "Exit" )
-    local -a desc=( "gather details for a new account." "search records by domain. (empty for all)" "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message" "terminate script." )
+    local -a desc=( "gather details for a new account." "search records by domain/mail/uname (empty for all)." "regenerate an existing password." "remove an account." "prompt for csv file to import." "prompt for csv file to export." "start an sqlite session against ${bndb}." "show this message." "terminate script." )
 
     local -a tui_menu=( )
     local -a tui_hmsg=( "\n${bpusage[*]}\n\n" )
     local gui_menu=""
     local -a gui_hmsg=( "\n${bpusage[*]}\n\n" )
 
-    for (( x = 0; x < ${#tui_ops[@]}; x++ )); do
+    for x in ${!gui_ops[@]}; do
 	tui_menu+=( "${x}:${tui_ops[x]}" )
 	(( ( x + 1 ) % 4 == 0 )) && tui_menu+=( "\n" ) || tui_menu+=( "\t" )
         tui_hmsg+=( "Use ${x}, for ${tui_ops[x]}, which will ${desc[x]}\n" )
@@ -115,7 +116,7 @@ menu() {
         gui_hmsg+=( "Use ${gui_ops[x]}, to ${desc[x]}\n" )
     done
 
-    tui_menu+=( "\nChoose[0-$((${#tui_ops[*]}-1))]:" )
+    tui_menu+=( "\nChoose[0-$((${#gui_ops[*]}-1))]:" )
     local tmp_hmsg="\naccounts table format is as follows:\n$("${be}_schema" "${act}")\n\n"
     tui_hmsg+=( "${tmp_hmsg}" )
     gui_hmsg+=( "${tmp_hmsg}" )
@@ -135,7 +136,7 @@ menu() {
                     "${gui_ops[6]}"|"6") "${be}_session";;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
-                    *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#tui_ops[*]}-1))\n" >&2 ;;
+                    *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#gui_ops[*]}-1))\n" >&2 ;;
                 esac ;;
             "1"|"${DIALOG_CANCEL}") exit ;;
             [2-4]|"${DIALOG_HELP}"|"${DIALOG_EXTRA}"|"${DIALOG_ITEM_HELP}") usage ;;
