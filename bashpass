@@ -3,14 +3,11 @@
 #
 # bashpass yad/zenity/Xdialog/cdialog/dialog/terminal assisted password management.
 
-# Restrict permissions
-umask 077
-# Set verbose xtrace off (unless specified by user option) and disable globbing.
-set +vx -f
+umask 077 # Restrict permissions
+set +vx # Set verbose xtrace off (unless specified by user option) and ... 
+set -f # ...disable globbing
 # Timeout settings for Xdialog, Xmessage
-# xmessage timeout is in seconds...
-declare -rx XMTO="30"
-declare -rx XDTO="$((XMTO * 1000))" # ... Xdialog/dialog is in milliseconds
+declare -rx XDTO="$((30 * 1000))" # ... Xdialog/dialog is in milliseconds
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15
 #link free (S)cript: (D)ir(N)ame, (B)ase(N)ame.
@@ -133,7 +130,7 @@ menu() {
                     "${gui_ops[3]}"|"3") delete ;;
                     "${gui_ops[4]}"|"4") importcsv ;;
                     "${gui_ops[5]}"|"5") exportcsv ;;
-                    "${gui_ops[6]}"|"6") "${be}_session";;
+                    "${gui_ops[6]}"|"6") "${be}_session" ;;
                     "${gui_ops[7]}"|"7") usage ;;
                     "${gui_ops[8]}"|"8") exit ;;
                     *) echo -ne "Unknown input: ${usrinpt}. Choose from 0 to $((${#gui_ops[*]}-1))\n" >&2 ;;
@@ -151,7 +148,7 @@ bashpass() {
     # Process optional arguments
     while [[ -n "${1}" ]]; do
 	case "${1}" in
-            *.gpg) export gpgf="${1}";;
+            *.gpg) export gpgf="${1}" ;;
             yad|zenity|Xdialog|cdialog|dialog|terminal)	export usrintrfce="${1}" ;;
             -d|--debug)	set -vx ;;
             -h|--help) echo -ne "${bpusage}\n" >&2; exit 1 ;;

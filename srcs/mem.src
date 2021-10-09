@@ -1,25 +1,31 @@
 #!/bin/bash
 
-mem_crt(){
-    echo "$("${gpgdc[@]}" < "${rpgpgf}")"
+mem_enc(){
+    "${gpgec[@]}" > "${rpgpgf}"
+}
+
+mem_dec(){
+    "${gpgdc[@]}" < "${rpgpgf}"
 }
 
 mem_mod(){
-    local crt="$(${be}_crt)"
+    local crt="$(${be}_dec)"
     echo -ne "${crt}\n${qry}\n.dump\n" | \
 	"${sl3}" | \
-	"${gpgec[@]}" > "${rpgpgf}"
+	"${be}_enc"
 }
 
 mem_prev(){
-    local crt="$(${be}_crt)"
+    local crt="$(${be}_dec)"
     echo -ne "${crt}\n${qry}\n" | \
 	"${sl3}"
 }
 
 mem_mkdefaultdb(){
     local qry="$(cat "${sdn}/examples/create.sql")\n.dump\n"
-    echo -ne "${qry}" | "${sl3}" | "${gpgec[@]}" > "${rpgpgf}" || return $?
+    echo -ne "${qry}" | \
+	"${sl3}" | \
+	"${be}_enc" || return $?
 }
 
 mem_import(){
@@ -67,18 +73,18 @@ mem_delete_ids(){
 }
 
 mem_session(){
-    "${gpgdc[@]}" < "${rpgpgf}" | "${sl3}" "${rpdb}"
+    "${be}_dec" | "${sl3}" "${rpdb}"
     "${sl3}" "${rpdb}"
     ${shrc[@]} "${rpdb}"
 }
 
 mem_tables(){
-    local qry="${crt}\n.tables"
+    local qry="\n.tables"
     "${be}_prev"
 }
 
 mem_schema(){
-    local qry="${crt}\n.schema ${1}"
+    local qry="\n.schema ${1}"
     "${be}_prev"
 }
 
