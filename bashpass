@@ -6,7 +6,7 @@
 umask 077 # Restrict permissions
 set +vx # Set verbose xtrace off (unless specified by user option) and ... 
 set -f # ...disable globbing
-# Timeout settings for Xdialog, Xmessage
+# Timeout settings for Xdialog
 declare -rx XDTO="$((30 * 1000))" # ... Xdialog/dialog is in milliseconds
 # Signals to trap
 declare -rx SIG_NONE=0 SIG_HUP=1 SIG_INT=2 SIG_QUIT=3 SIG_KILL=9 SIG_TERM=15

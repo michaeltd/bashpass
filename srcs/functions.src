@@ -192,11 +192,11 @@ func_chkpwd(){
 
 # Generate PassWord
 func_gpw() {
-    local pw="$(
+    local gpw="$(
         LC_ALL=C tr -dc [$(func_regex_allow)] < /dev/urandom | \
 		 tr -d "$(func_regex_forbid)" | \
 		 dd ibs=1 obs=1 count="${1:-64}" 2>/dev/null)"
-    echo "${pw//\\//}"
+    echo "${gpw//\\//}"
 }
 
 # Build Row Lines (for (X)dialog check/radio lists)
