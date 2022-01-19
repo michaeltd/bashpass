@@ -15,8 +15,8 @@ declare -r sdn="$(dirname "$(realpath "${BASH_SOURCE[0]}")")" \
 	sbn="$(basename "$(realpath "${BASH_SOURCE[0]}")")"
 declare -r dbsd="dbs" \
 	scsd="srcs"
-# cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
-# declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
+cd "${sdn}" && [[ -r "${dbsd}" ]] && [[ -r "${scsd}" ]] || { echo "Something's not quite right..." >&2; exit 1; }
+declare cnfd="${XDG_CONFIG_HOME:-${HOME}/.config}"
 declare -r bpusage="Usage: ${sbn} [default.gpg] [yad|zenity|Xdialog|cdialog|dialog|terminal] [--debug] [--help]"
 declare usrintrfce gpgf="default.gpg" db bngpgf bndb rpgpgf rpdb fpgpgf fpdb be="mem"
 
